@@ -2,11 +2,12 @@
 
 #pragma region StateMachine Code
 
-void UProcStateMachine::Initialize(AActor* POwner) {
+void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 	this->Owner = POwner;
 	for (auto& pair : this->Graph) {
 		auto& StateName = pair.Key;
 		auto& StateData = pair.Value;
+		/*
 		if (StateData.Node == nullptr) {
 			StateData.Node = NewObject<UStateNode>(
 				this, 
@@ -16,6 +17,7 @@ void UProcStateMachine::Initialize(AActor* POwner) {
 				StateData.NodeClass.GetDefaultObject(), 
 				true);			
 		}
+		*/
 		StateData.Node->Initialize(this);
 	}
 }
@@ -74,11 +76,19 @@ void UProcStateMachine::Event(FName EName) {
 	}
 }
 
+bool UProcStateMachine::NeedsTick() {
+	if (this->CurrentStateName == NAME_None) {
+		return false;
+	} else {
+		return this->GetCurrentState().Node->bNeedsTick;
+	}
+}
+
 #pragma endregion
 
 #pragma region NodeCode
 
-void UStateNode::Initialize(UProcStateMachine* POwner) {
+void UStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
 	this->Owner = POwner;
 }
 

@@ -3,7 +3,7 @@
 
 #include "StateMachine/HierarchyNode.h"
 
-void UHierarchyNode::Initialize(UProcStateMachine* POwner) {
+void UHierarchyNode::Initialize_Implementation(UProcStateMachine* POwner) {
 	UStateNode::Initialize(POwner);
 
 	if (this->MachineClass.Get() != nullptr) {

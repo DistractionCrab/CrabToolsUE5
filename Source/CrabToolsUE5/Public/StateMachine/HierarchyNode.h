@@ -19,6 +19,5 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	UProcStateMachine* Machine;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
-	virtual void Initialize(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
 };

@@ -30,9 +30,9 @@ struct  FStateData
 {
 	GENERATED_USTRUCT_BODY()
 public:
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	TSubclassOf<UStateNode> NodeClass;
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	//UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	//TSubclassOf<UStateNode> NodeClass;
+	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	UStateNode* Node;
 	// Map from Event Name to StateName
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
@@ -44,7 +44,7 @@ public:
 /**
  *
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
@@ -52,7 +52,14 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	UProcStateMachine* Owner;
 
 public:
-	virtual void Initialize(UProcStateMachine* POwner);
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	bool bNeedsTick = false;
+
+public:
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	void Initialize(UProcStateMachine* POwner);
+	virtual void Initialize_Implementation(UProcStateMachine* POwner);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Enter();
 	virtual void Enter_Implementation() {}
@@ -111,8 +118,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 public:
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
-	virtual void Initialize(AActor* POwner);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	void Initialize(AActor* POwner);
+	virtual void Initialize_Implementation(AActor* POwner);
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	AActor* GetOwner();
 	/* 
@@ -122,6 +130,9 @@ public:
 	void Reset();
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	bool NeedsTick();
 
 	/* 
 	* Tick function to be called regularly. This is managed by the owner object.
