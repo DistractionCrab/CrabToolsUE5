@@ -1,7 +1,7 @@
 #include "StateMachine/MovementStateNode.h"
 
-UMovementStateNode::UMovementStateNode() {
-	this->bNeedsTick = true;
+void UMovementStateNode::Tick_Implementation(float DeltaTime) {
+	this->ApplyMovement();
 }
 
 void UMovementStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
@@ -23,11 +23,11 @@ void UMovementStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
 
 void UMovementStateNode::ApplyMovement_Implementation() {
 	// If our owner isn't a pawn, then we ignore it.
-	if (this->PawnOwner == nullptr) { return; }
+	if (!this->PawnOwner.IsValid()) { return; }
 
 	FRotator Rotation;
 
-	if (this->Perspective !=nullptr && Perspective->IsBound()) {
+	if (this->Perspective.IsValid() && Perspective->IsBound()) {
 		Rotation = Perspective->GetPerspective();
 	}
 	else {

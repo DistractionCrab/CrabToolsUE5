@@ -14,7 +14,6 @@ class CRABTOOLSUE5_API UProcStateMachineComponent : public UActorComponent
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	TSubclassOf<UProcStateMachine> MachineClass;
 	UProcStateMachine* Machine;
 
 public:	
@@ -29,5 +28,9 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void Event(FName EName);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta=(ExpandEnumAsExecs="Branches"))
+	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
 };

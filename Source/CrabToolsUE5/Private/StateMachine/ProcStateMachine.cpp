@@ -1,9 +1,13 @@
 #include "StateMachine/ProcStateMachine.h"
+#include "Logging/StructuredLog.h"
 
 #pragma region StateMachine Code
 
 void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 	this->Owner = POwner;
+	this->CurrentStateName = this->StartState;
+	if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Initializing the State Machine!"));
 	for (auto& pair : this->Graph) {
 		auto& StateName = pair.Key;
 		auto& StateData = pair.Value;
@@ -18,7 +22,13 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 				true);			
 		}
 		*/
-		StateData.Node->Initialize(this);
+		
+		if (StateData.Node) {
+			StateData.Node->Initialize(this);	
+		} else {
+			UE_LOGFMT(LogCore, Error, "Attempted to Initialize on Null Node in State {0}", StateName);
+		}
+		
 	}
 }
 
@@ -40,16 +50,21 @@ void UProcStateMachine::UpdateState(FName Name) {
 		}
 		// Only transition if no other state update has occurred.
 		if (this->TRANSITION.Valid(TID)) {
-			CurrentState.Node->Exit();
+			CurrentState->Node->Exit();
 			this->CurrentStateName = Name;
-			CurrentState.Node->Enter();
+			CurrentState->Node->Enter();
 		}
 	}
 }
 
 void UProcStateMachine::Tick(float DeltaTime) {
 	if (this->CurrentStateName != NAME_None) {
-		this->GetCurrentState().Node->Tick(DeltaTime);
+		//if (GEngine)
+			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Ticking in the machine!"));
+		auto State = this->GetCurrentState();
+		if (State && State->Node) {
+			State->Node->Tick(DeltaTime);	
+		}		
 	}
 }
 
@@ -65,23 +80,39 @@ void UProcStateMachine::Event(FName EName) {
 	// Need to validate possible transitions.
 	auto TID = this->TRANSITION.EnterTransition();
 	auto CurrentState = this->GetCurrentState();
-	CurrentState.Node->Event(EName);
 
-	// If the current node's event code didn't change the graph's state, then we check for
-	// static event transitions.
-	if (this->TRANSITION.Valid(TID)) {
-		if (CurrentState.EventTransitions.Contains(EName)) {
-			this->UpdateState(CurrentState.EventTransitions[EName]);
+	if (CurrentState) {
+		CurrentState->Node->Event(EName);
+
+		// If the current node's event code didn't change the graph's state, then we check for
+		// static event transitions.
+		if (this->TRANSITION.Valid(TID)) {
+			if (CurrentState->EventTransitions.Contains(EName)) {
+				this->UpdateState(CurrentState->EventTransitions[EName]);
+			}
 		}
 	}
+	else {
+		UE_LOGFMT(LogCore, Error, "Attempted to Call Event on Null Node in State {0}", this->CurrentStateName);
+	}
+	
 }
 
-bool UProcStateMachine::NeedsTick() {
-	if (this->CurrentStateName == NAME_None) {
-		return false;
-	} else {
-		return this->GetCurrentState().Node->bNeedsTick;
+UStateNode* UProcStateMachine::FindNode(FName NodeName, ENodeSearchResult& Branches) {
+	if (this->Graph.Contains(NodeName)) {		
+		auto Node = this->Graph[NodeName].Node;
+		if (Node) {
+			Branches = ENodeSearchResult::FOUND;
+		} else {
+			Branches = ENodeSearchResult::NOTFOUND;
+		}
+		return Node;
 	}
+	else {
+		Branches = ENodeSearchResult::NOTFOUND;
+		return nullptr;
+	}
+	
 }
 
 #pragma endregion

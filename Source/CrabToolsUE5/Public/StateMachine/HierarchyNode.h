@@ -16,6 +16,7 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UProcStateMachine> MachineClass;
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	UProcStateMachine* Machine;
 
 public:

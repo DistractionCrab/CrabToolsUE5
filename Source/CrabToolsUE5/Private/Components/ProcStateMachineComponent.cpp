@@ -17,7 +17,8 @@ UProcStateMachineComponent::UProcStateMachineComponent()
 void UProcStateMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (this->MachineClass.Get() != nullptr) {
+	if (this->Machine != nullptr) {
+		/*
 		this->Machine = NewObject<UProcStateMachine>(
 			this, 
 			this->MachineClass,
@@ -25,6 +26,7 @@ void UProcStateMachineComponent::BeginPlay()
 			RF_NoFlags, 
 			this->MachineClass.GetDefaultObject(), 
 			true);
+		*/
 		this->Machine->Initialize(this->GetOwner());
 	}
 }
@@ -40,3 +42,19 @@ void UProcStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickT
 	}
 }
 
+
+void UProcStateMachineComponent::Event(FName EName) {
+	if (this->Machine) {
+		this->Machine->Event(EName);
+	}
+}
+
+UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ENodeSearchResult& Branches) {
+	if (this->Machine) {
+		return this->Machine->FindNode(NodeName, Branches);
+	}
+	else {
+		Branches = ENodeSearchResult::NOTFOUND;
+		return nullptr;
+	}
+}

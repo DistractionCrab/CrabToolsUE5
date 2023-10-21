@@ -11,6 +11,12 @@ class UStateNode;
 class UProcStateMachine;
 class UNodeTransition;
 
+UENUM(BlueprintType)
+enum class ENodeSearchResult : uint8 {
+	FOUND          UMETA(DisplayName = "Found"),
+	NOTFOUND       UMETA(DisplayName = "Missing"),
+};
+
 USTRUCT(BlueprintType)
 struct  FTransitionData
 {
@@ -52,10 +58,6 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	UProcStateMachine* Owner;
 
 public:
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	bool bNeedsTick = false;
-
-public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize(UProcStateMachine* POwner);
@@ -85,7 +87,7 @@ DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, T
 /**
  *
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
 class CRABTOOLSUE5_API UProcStateMachine : public UObject
 {
 	GENERATED_BODY()
@@ -117,6 +119,7 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 public:
 	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
 	TArray<FStateChangeDispatcher> StateChangeEvents;
+
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize(AActor* POwner);
@@ -130,9 +133,8 @@ public:
 	void Reset();
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
-
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
-	bool NeedsTick();
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
 
 	/* 
 	* Tick function to be called regularly. This is managed by the owner object.
@@ -145,5 +147,6 @@ public:
 	void UpdateState(FName Name);
 	void ListenForChange(const FStateChangeDispatcher& obs);
 
-	FORCEINLINE FStateData& GetCurrentState() { return this->Graph[this->CurrentStateName]; }
+	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
+
 };
