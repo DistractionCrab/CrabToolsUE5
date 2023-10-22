@@ -6,29 +6,42 @@
 void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 	this->Owner = POwner;
 	this->CurrentStateName = this->StartState;
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Initializing the State Machine!"));
+
+
 	for (auto& pair : this->Graph) {
 		auto& StateName = pair.Key;
-		auto& StateData = pair.Value;
-		/*
-		if (StateData.Node == nullptr) {
-			StateData.Node = NewObject<UStateNode>(
-				this, 
-				StateData.NodeClass, 
-				StateName, 
-				RF_NoFlags, 
-				StateData.NodeClass.GetDefaultObject(), 
-				true);			
-		}
-		*/
+		auto& StateData = pair.Value;		
 		
 		if (StateData.Node) {
 			StateData.Node->Initialize(this);	
-		} else {
-			UE_LOGFMT(LogCore, Error, "Attempted to Initialize on Null Node in State {0}", StateName);
+		}				
+	}
+
+	// Now setup the inverse alias map.
+	for (const auto& pair : this->Aliases) {
+		for (const auto& StateName : pair.Value.States) {
+			auto Data = this->Graph.Find(StateName);
+			if (Data == nullptr) {
+				// Shouldn't happen unless someone edited the aliases directly outside of the editor.
+				UE_LOGFMT(LogTemp, Error, "Alias refers to nonexistent state: Alias: {0}, State: {1}", pair.Key, StateName);
+			}
+			else {
+				for (const auto& Transitions : pair.Value.Transitions) {
+					if (Data->EventTransitions.Contains(Transitions.Key)) {
+						UE_LOGFMT(
+							LogTemp, 
+							Error, 
+							"Alias overwrites event transition for state: Alias: {0}, State: {1}, Event {2}", 
+							pair.Key, 
+							StateName,
+							Transitions.Key);
+					}
+					else {
+						Data->EventTransitions.Add(Transitions.Key, Transitions.Value);
+					}
+				}
+			}
 		}
-		
 	}
 }
 
@@ -50,9 +63,10 @@ void UProcStateMachine::UpdateState(FName Name) {
 		}
 		// Only transition if no other state update has occurred.
 		if (this->TRANSITION.Valid(TID)) {
-			CurrentState->Node->Exit();
+			if (CurrentState->Node) CurrentState->Node->Exit();
 			this->CurrentStateName = Name;
-			CurrentState->Node->Enter();
+			CurrentState = this->GetCurrentState();
+			if (CurrentState->Node) CurrentState->Node->Enter();
 		}
 	}
 }
@@ -68,9 +82,6 @@ void UProcStateMachine::Tick(float DeltaTime) {
 	}
 }
 
-void UProcStateMachine::ListenForChange(const FStateChangeDispatcher& obs) {
-	this->StateChangeEvents.Add(obs);
-}
 
 void UProcStateMachine::Reset() {
 	this->CurrentStateName = this->StartState;
@@ -82,20 +93,21 @@ void UProcStateMachine::Event(FName EName) {
 	auto CurrentState = this->GetCurrentState();
 
 	if (CurrentState) {
-		CurrentState->Node->Event(EName);
+		// First we check if there are any declarative events to handle for this state.
+		if (CurrentState->EventTransitions.Contains(EName)) {
+			this->UpdateState(CurrentState->EventTransitions[EName]);
+		}
+		// If there were no declarative event transitions, then we check through aliases.
+		else {
+
+		}
 
 		// If the current node's event code didn't change the graph's state, then we check for
 		// static event transitions.
 		if (this->TRANSITION.Valid(TID)) {
-			if (CurrentState->EventTransitions.Contains(EName)) {
-				this->UpdateState(CurrentState->EventTransitions[EName]);
-			}
+			if (CurrentState->Node) CurrentState->Node->Event(EName);	
 		}
-	}
-	else {
-		UE_LOGFMT(LogCore, Error, "Attempted to Call Event on Null Node in State {0}", this->CurrentStateName);
-	}
-	
+	}	
 }
 
 UStateNode* UProcStateMachine::FindNode(FName NodeName, ENodeSearchResult& Branches) {
@@ -115,12 +127,98 @@ UStateNode* UProcStateMachine::FindNode(FName NodeName, ENodeSearchResult& Branc
 	
 }
 
+void UProcStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
+	this->StateChangeEvents.Add(Callback);
+}
+
+void UProcStateMachine::PreEditChange(FProperty* PropertyAboutToChange) {
+	Super::PreEditChange(PropertyAboutToChange);
+}
+
+void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& e) {
+	
+	FName PropertyName = (e.Property != NULL) ? e.Property->GetFName() : NAME_None;
+
+	if (PropertyName == "Graph_Key") {
+		FName OldValue = NAME_None;
+		FName NewValue = NAME_None;
+
+		for (const auto& Name : this->StateList) {
+			if (!this->Graph.Contains(Name)) {
+				OldValue = Name;
+				break;
+			}
+		}
+
+		if (OldValue != NAME_None) {
+			for (const auto& Node : this->Graph) {
+				if (!this->StateList.Contains(Node.Key)) {
+					NewValue = Node.Key;
+					break;
+				}
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("Found NewValue = %s"), *NewValue.ToString());
+
+			// Convert Alias Names.
+			for (auto& AliasNode : this->Aliases) {
+				AliasNode.Value.States.Remove(OldValue);
+				AliasNode.Value.States.Add(NewValue);
+
+				for (auto& TransNode : AliasNode.Value.Transitions) {
+					if (TransNode.Value == OldValue) {
+						AliasNode.Value.Transitions.Add(TransNode.Key, NewValue);
+					}
+				}
+			}
+
+			// Update Destination State Names for event transitions in aliases.
+		}
+	}
+	Super::PostEditChangeChainProperty(e);
+}
+
+void UProcStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
+	FName PropertyName = (e.Property != NULL) ? e.Property->GetFName() : NAME_None;
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UProcStateMachine, Aliases)) {
+		
+	} else if (PropertyName == GET_MEMBER_NAME_CHECKED(UProcStateMachine, Graph)) {
+		this->StateList.Reset();
+		for (const auto& States : this->Graph) {
+			if (!this->StateList.Contains(States.Key)) {
+				this->StateList.Add(States.Key);
+			}
+		}
+	}
+
+	
+    Super::PostEditChangeProperty(e);
+}
+
+FName UProcStateMachine::GetStateName(UStateNode* Node) {
+	FName Found = NAME_None;
+
+	for (const auto& Nodes : this->Graph) {
+		if (Nodes.Value.Node == Node) {
+			Found = Nodes.Key;
+			break;
+		}
+	}
+
+	return Found;
+}
+
 #pragma endregion
 
 #pragma region NodeCode
 
 void UStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
 	this->Owner = POwner;
+}
+
+UProcStateMachine* UStateNode::GetMachine() {
+	return this->Owner;
 }
 
 void UStateNode::GoTo(FName State) {

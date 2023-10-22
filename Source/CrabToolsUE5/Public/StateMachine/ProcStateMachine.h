@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Delegates/Delegate.h"
+#include "Templates/UniquePtr.h"
 #include "ProcStateMachine.generated.h"
 
 class UStateNode;
@@ -23,9 +24,7 @@ struct  FTransitionData
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	TSubclassOf<UNodeTransition> TranstionClass;
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	UNodeTransition* ProcTransition;
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
 	FName Destination;
@@ -41,16 +40,16 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	UStateNode* Node;
 	// Map from Event Name to StateName
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetValueOptions = "StateOptions"))
 	TMap<FName, FName> EventTransitions;
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	FTransitionData Transitions;
+	TArray<FTransitionData> Transitions;
 };
 
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(Blueprintable, EditInlineNew)
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
@@ -78,16 +77,33 @@ public:
 	void Event(FName EName);
 	virtual void Event_Implementation(FName EName);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	AActor* GetOwner();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UProcStateMachine* GetMachine();
 };
 
+
+USTRUCT(BlueprintType)
+struct FAliasData
+{
+	GENERATED_USTRUCT_BODY()
+public:
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta=(GetOptions="StateOptions"))
+	TSet<FName> States;
+
+	// Mapping of EventName -> StateName.
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetValueOptions="StateOptions"))
+	TMap<FName, FName> Transitions;
+	
+};
 
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(Blueprintable, EditInlineNew)
 class CRABTOOLSUE5_API UProcStateMachine : public UObject
 {
 	GENERATED_BODY()
@@ -112,12 +128,14 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 	FName StartState;
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	TMap<FName, FAliasData> Aliases;
+	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	TArray<FName> StateList;
+
+	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
 	AActor* Owner;
-
-
-public:
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
 public:
@@ -135,6 +153,10 @@ public:
 	void Event(FName EName);
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void StateChangeListen(const FStateChangeDispatcher& Callback);
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	FName GetStateName(UStateNode* Node);
 
 	/* 
 	* Tick function to be called regularly. This is managed by the owner object.
@@ -145,8 +167,19 @@ public:
 	 * specifically require a state to be forced regardless of the context.
 	 */
 	void UpdateState(FName Name);
-	void ListenForChange(const FStateChangeDispatcher& obs);
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
+	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 
 	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
 
+	UFUNCTION()
+	TArray<FString> StateOptions() {
+		UE_LOG(LogTemp, Warning, TEXT("Querying for State Options."));
+		TArray<FString> Names;
+		for (const auto& Nodes : this->Graph) {
+			Names.Add(Nodes.Key.ToString());
+		}
+		return Names;
+	}
 };

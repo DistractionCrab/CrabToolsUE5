@@ -9,16 +9,16 @@
 /**
  * 
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
 class CRABTOOLSUE5_API UVariableOperator : public UObject
 {
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Variable Operators")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "VariableOperators")
 	int ApplyInt(int Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Variable Operators")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "VariableOperators")
 	int ApplyFloat(float Value);
 
 	virtual int ApplyInt_Implementation(int Value) { return Value; }
