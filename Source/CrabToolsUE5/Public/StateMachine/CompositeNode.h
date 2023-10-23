@@ -10,12 +10,12 @@
 /**
  * State Machine Node that is a composite of other nodes.
  */
-UCLASS(Blueprintable, hidecategories=("ProcStateMachine"))
+UCLASS(Blueprintable)
 class CRABTOOLSUE5_API UCompositeNode : public UStateNode
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Instanced, Category = "CompositeNode", meta = (AllowPrivateAccess = "true"))
 	TArray<UStateNode*> Nodes;
 
 	// Whether or not this node is active. Used to determine whether or not to keep
