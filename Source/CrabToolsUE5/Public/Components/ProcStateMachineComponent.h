@@ -33,4 +33,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta=(ExpandEnumAsExecs="Branches"))
 	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
 };

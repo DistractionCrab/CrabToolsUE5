@@ -1,5 +1,6 @@
 #include "StateMachine/ProcStateMachine.h"
 #include "Logging/StructuredLog.h"
+#include "Algo/Reverse.h"
 
 #pragma region StateMachine Code
 
@@ -70,7 +71,7 @@ void UProcStateMachine::UpdateState(FName Name) {
 
 		// Only transition if no other state update has occurred.
 		if (this->TRANSITION.Valid(TID)) {
-				
+
 			this->CurrentStateName = Name;
 			CurrentState = this->GetCurrentState();
 			if (CurrentState->Node) CurrentState->Node->Enter();
@@ -216,6 +217,40 @@ FName UProcStateMachine::GetStateName(UStateNode* Node) {
 	return Found;
 }
 
+UStateNode* UProcStateMachine::FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches) {
+	TArray<FString> PathList;
+
+	Path.ParseIntoArray(PathList, TEXT("/"), true);
+	Algo::Reverse(PathList);
+
+	return this->FindNodeByArray(PathList, Branches);
+}
+
+UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) {
+	if (Path.Num() == 0) {
+		Branches = ENodeSearchResult::NOTFOUND;
+		return nullptr;
+	}
+	else {
+		FName Name(Path.Last());
+		if (this->Graph.Contains(Name)) {
+			if (Path.Num() == 1) {
+				Branches = ENodeSearchResult::FOUND;
+				return this->Graph[Name].Node;
+			}
+			else {
+				TArray<FString> Tail(Path);
+				Tail.Pop();
+				return this->Graph[Name].Node->FindNodeByArray(Tail, Branches);
+			}			
+		}
+		else {
+			Branches = ENodeSearchResult::NOTFOUND;
+			return nullptr;
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma region NodeCode
@@ -242,6 +277,16 @@ void UStateNode::Event_Implementation(FName EName) {
 
 void UStateNode::SetOwner(UProcStateMachine* Parent) {
 	this->Owner = Parent;
+}
+
+UStateNode* UStateNode::FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches) {
+	TArray<FString> PathList;
+	Path.ParseIntoArray(PathList, TEXT("/"), true);
+	return this->FindNodeByArray(PathList, Branches);
+}
+
+UStateNode* UStateNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) {
+	return nullptr;
 }
 
 #pragma endregion

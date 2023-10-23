@@ -16,7 +16,7 @@ class CRABTOOLSUE5_API UCompositeNode : public UStateNode
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, Instanced, Category = "CompositeNode", meta = (AllowPrivateAccess = "true"))
-	TArray<UStateNode*> Nodes;
+	TMap<FName, UStateNode*> Nodes;
 
 	// Whether or not this node is active. Used to determine whether or not to keep
 	// looping through nodes.
@@ -27,4 +27,5 @@ public:
 	virtual void Event_Implementation(FName Event) override;
 	virtual void Enter_Implementation() override;
 	virtual void Exit_Implementation() override;
+	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) override;
 };

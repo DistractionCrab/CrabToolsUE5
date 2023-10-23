@@ -68,15 +68,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	AActor* GetOwner();
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	UProcStateMachine* GetMachine();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Enter();
 	virtual void Enter_Implementation() {}
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Tick(float DeltaTime);
 	virtual void Tick_Implementation(float DeltaTime) {}
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Exit();
 	virtual void Exit_Implementation() {}
@@ -86,6 +89,25 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	virtual void SetOwner(UProcStateMachine* Parent);
+
+	/* 
+	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
+	 * can be combersome for long paths, so avoid using frequently.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
+	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches);
+
+	/*
+	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
+	 * can be combersome for long paths, so avoid using frequently.
+	 * 
+	 * The Path is also in reverse order to speed things up a bit. i.e. if your top level node is A with child C, to Get C, 
+	 * the array ['C', 'A'] should be passed.
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UStateNode* FindNodeByArray(const TArray<FString>& Path, ENodeSearchResult& Branches);
+	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches);
 };
 
 
@@ -131,10 +153,13 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	FName StartState;
+
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
+
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FAliasData> Aliases;
+
 	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TArray<FName> StateList;
 
@@ -146,22 +171,37 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize(AActor* POwner);
+
 	virtual void Initialize_Implementation(AActor* POwner);
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	AActor* GetOwner();
+
 	/* 
 	* Resets the state machine to its start state. Does not trigger StateChanged Events.
 	*/
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Reset();
+
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
+
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))	
+	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
+	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))	
+	UStateNode* FindNodeByArray(const TArray<FString>& Path, ENodeSearchResult& Branches);
+	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches);
+
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
+
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	FName GetStateName(UStateNode* Node);
+
 
 	/* 
 	* Tick function to be called regularly. This is managed by the owner object.

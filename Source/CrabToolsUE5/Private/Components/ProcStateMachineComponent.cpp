@@ -58,3 +58,13 @@ UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ENodeSearchResu
 		return nullptr;
 	}
 }
+
+UStateNode* UProcStateMachineComponent::FindNodeByPath(const FString& Path, ENodeSearchResult& Branches) {
+	if (this->Machine) {
+		return this->Machine->FindNodeByPath(Path, Branches);
+	}
+	else {
+		Branches = ENodeSearchResult::NOTFOUND;
+		return nullptr;
+	}
+}
