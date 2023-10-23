@@ -13,7 +13,7 @@ class CRABTOOLSUE5_API UProcStateMachineComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	UProcStateMachine* Machine;
 
 public:	
