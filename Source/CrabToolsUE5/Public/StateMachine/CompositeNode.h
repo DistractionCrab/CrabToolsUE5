@@ -23,6 +23,7 @@ class CRABTOOLSUE5_API UCompositeNode : public UStateNode
 	bool active = false;
 public:
 
+	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	virtual void Event_Implementation(FName Event) override;
 	virtual void Enter_Implementation() override;

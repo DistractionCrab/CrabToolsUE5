@@ -3,6 +3,12 @@
 
 #include "StateMachine/CompositeNode.h"
 
+void UCompositeNode::Initialize_Implementation(UProcStateMachine* POwner) {
+	Super::Initialize_Implementation(POwner);
+	for (auto& NodePairs : this->Nodes) {
+		NodePairs.Value->Initialize(POwner);
+	}
+}
 
 void UCompositeNode::Tick_Implementation(float DeltaTime) {
 	for (const auto& Node : this->Nodes) {
