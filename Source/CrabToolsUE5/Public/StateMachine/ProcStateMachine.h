@@ -61,6 +61,16 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize(UProcStateMachine* POwner);
 	virtual void Initialize_Implementation(UProcStateMachine* POwner);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	void Event(FName EName);
+	virtual void Event_Implementation(FName EName);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	AActor* GetOwner();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UProcStateMachine* GetMachine();
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Enter();
 	virtual void Enter_Implementation() {}
@@ -71,16 +81,11 @@ public:
 	void Exit();
 	virtual void Exit_Implementation() {}
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (HideSelfPin, DefaultToSelf))
 	void GoTo(FName State);
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
-	void Event(FName EName);
-	virtual void Event_Implementation(FName EName);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
-	AActor* GetOwner();
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
-	UProcStateMachine* GetMachine();
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	virtual void SetOwner(UProcStateMachine* Parent);
 };
 
 

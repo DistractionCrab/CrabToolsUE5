@@ -50,9 +50,10 @@ AActor* UProcStateMachine::GetOwner() {
 }
 
 void UProcStateMachine::UpdateState(FName Name) {
-	if (this->Graph.Contains(Name)) {
+	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
 		auto TID = this->TRANSITION.EnterTransition();
+
 
 		// Alert all listeners, and if one of them changes the state, return.
 		for (const auto& Listener: this->StateChangeEvents) {
@@ -61,9 +62,15 @@ void UProcStateMachine::UpdateState(FName Name) {
 				return;
 			}
 		}
+
+		// Always exit on the node, regardless of further state transitions.
+		// If there were any updates to the state prior to this, then Exit will have
+		// called already, and this function will have returned;
+		if (CurrentState->Node) CurrentState->Node->Exit();
+
 		// Only transition if no other state update has occurred.
 		if (this->TRANSITION.Valid(TID)) {
-			if (CurrentState->Node) CurrentState->Node->Exit();
+				
 			this->CurrentStateName = Name;
 			CurrentState = this->GetCurrentState();
 			if (CurrentState->Node) CurrentState->Node->Enter();
@@ -231,6 +238,10 @@ AActor* UStateNode::GetOwner() {
 
 void UStateNode::Event_Implementation(FName EName) {
 	// Does Nothing by default.
+}
+
+void UStateNode::SetOwner(UProcStateMachine* Parent) {
+	this->Owner = Parent;
 }
 
 #pragma endregion
