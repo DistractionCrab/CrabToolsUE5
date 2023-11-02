@@ -16,7 +16,6 @@ void UMovementInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
 
 	if (Pawn != nullptr) {
 		this->PawnOwner = Pawn;
-
 		
 		if (UEnhancedInputComponent* Eic = CastChecked<UEnhancedInputComponent>(this->PawnOwner->InputComponent)) {
 			Eic->BindAction(this->MoveAction, ETriggerEvent::Triggered, this, &UMovementInputNode::MoveCallback);

@@ -18,6 +18,8 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 		}				
 	}
 
+	
+
 	// Now setup the inverse alias map.
 	for (const auto& pair : this->Aliases) {
 		for (const auto& StateName : pair.Value.States) {
@@ -43,6 +45,11 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 				}
 			}
 		}
+	}
+
+	auto CurrentState = this->GetCurrentState();
+	if (CurrentState->Node != nullptr) {
+		CurrentState->Node->Enter();
 	}
 }
 
