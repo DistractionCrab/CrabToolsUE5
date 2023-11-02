@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "StateMachine/ProcStateMachine.h"
+#include "UObject/WeakObjectPtrTemplates.h"
 #include "ProcStateMachineComponent.generated.h"
 
 
@@ -13,8 +14,9 @@ class CRABTOOLSUE5_API UProcStateMachineComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
-	UProcStateMachine* Machine;
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	TSubclassOf<UProcStateMachine> MachineClass;
+	TWeakObjectPtr<UProcStateMachine> Machine;
 
 public:	
 	// Sets default values for this component's properties
