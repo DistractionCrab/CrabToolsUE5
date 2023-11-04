@@ -18,8 +18,6 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 		}				
 	}
 
-	
-
 	// Now setup the inverse alias map.
 	for (const auto& pair : this->Aliases) {
 		for (const auto& StateName : pair.Value.States) {
@@ -47,6 +45,7 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 		}
 	}
 
+	this->UpdateState(this->StartState);
 	auto CurrentState = this->GetCurrentState();
 	if (CurrentState->Node != nullptr) {
 		CurrentState->Node->Enter();
@@ -144,6 +143,10 @@ UStateNode* UProcStateMachine::FindNode(FName NodeName, ENodeSearchResult& Branc
 
 void UProcStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	this->StateChangeEvents.Add(Callback);
+
+	if (this->CurrentStateName != NAME_None) {
+		Callback.ExecuteIfBound(this->CurrentStateName, this->CurrentStateName);
+	}
 }
 
 void UProcStateMachine::PreEditChange(FProperty* PropertyAboutToChange) {
@@ -258,6 +261,10 @@ UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FStri
 	}
 }
 
+FName UProcStateMachine::GetCurrentStateName() {
+	return this->CurrentStateName;
+}
+
 #pragma endregion
 
 #pragma region NodeCode
@@ -294,6 +301,18 @@ UStateNode* UStateNode::FindNodeByPath_Implementation(const FString& Path, ENode
 
 UStateNode* UStateNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) {
 	return nullptr;
+}
+
+FName UStateNode::GetStateName() {
+	FName Found = NAME_None;
+
+	if (this->Owner) {
+		return this->Owner->GetStateName(this);
+	}
+	else {
+		return NAME_None;
+	}
+	
 }
 
 #pragma endregion

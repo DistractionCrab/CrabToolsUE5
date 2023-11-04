@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Components/SceneComponent.h"
+#include "UObject/WeakObjectPtrTemplates.h"
+#include "Delegates/DelegateSignatureImpl.inl"
 #include "PerspectiveManager.generated.h"
 
 
@@ -20,13 +22,13 @@ class CRABTOOLSUE5_API UPerspectiveManager : public UActorComponent
 	float CurrentInterpolation = 0;
 
 	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
-	class AActor* DefaultPerspective;
+	TWeakObjectPtr<AActor> DefaultPerspective;
 
 	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
-	class AActor* PerspectiveCopy;
+	TWeakObjectPtr<AActor> PerspectiveCopy;
 
 	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
-	class USceneComponent* PerspectiveCopyComponent;
+	TWeakObjectPtr<USceneComponent> PerspectiveCopyComponent;
 
 public:	
 	// Sets default values for this component's properties

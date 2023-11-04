@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "StateMachine/ProcStateMachine.h"
-#include "UObject/WeakObjectPtrTemplates.h"
+#include "Delegates/DelegateSignatureImpl.inl"
 #include "ProcStateMachineComponent.generated.h"
 
 
@@ -16,7 +16,10 @@ class CRABTOOLSUE5_API UProcStateMachineComponent : public UActorComponent
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
 	TSubclassOf<UProcStateMachine> MachineClass;
-	TWeakObjectPtr<UProcStateMachine> Machine;
+	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
+	TObjectPtr<UProcStateMachine> Machine;
+	// Cache of State Change Listeners to add to the machine when it is initiated.
+	TArray<FStateChangeDispatcher> StateChangeListenerCache;
 
 public:	
 	// Sets default values for this component's properties
@@ -38,4 +41,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void StateChangeListen(const FStateChangeDispatcher& Callback);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	FName CurrentStateName();
+
+private:
+	bool HasMachine();
 };

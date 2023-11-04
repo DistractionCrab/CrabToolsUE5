@@ -27,7 +27,14 @@ void UProcStateMachineComponent::BeginPlay()
 			this->MachineClass.GetDefaultObject(), 
 			true);
 
-		this->Machine->Initialize(this->GetOwner());
+		
+
+		for (auto const& l : this->StateChangeListenerCache) {
+			this->Machine->StateChangeListen(l);
+		}
+
+		this->StateChangeListenerCache.Empty();
+		this->Machine->Initialize(this->GetOwner());		
 	}
 }
 
@@ -44,13 +51,13 @@ void UProcStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickT
 
 
 void UProcStateMachineComponent::Event(FName EName) {
-	if (this->Machine.IsValid()) {
+	if (this->HasMachine()) {
 		this->Machine->Event(EName);
 	}
 }
 
 UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ENodeSearchResult& Branches) {
-	if (this->Machine.IsValid()) {
+	if (this->HasMachine()) {
 		return this->Machine->FindNode(NodeName, Branches);
 	}
 	else {
@@ -60,11 +67,29 @@ UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ENodeSearchResu
 }
 
 UStateNode* UProcStateMachineComponent::FindNodeByPath(const FString& Path, ENodeSearchResult& Branches) {
-	if (this->Machine.IsValid()) {
+	if (this->HasMachine()) {
 		return this->Machine->FindNodeByPath(Path, Branches);
 	}
 	else {
 		Branches = ENodeSearchResult::NOTFOUND;
 		return nullptr;
 	}
+}
+
+
+void UProcStateMachineComponent::StateChangeListen(const FStateChangeDispatcher& Callback) {
+	if (this->HasMachine()) {
+		this->Machine->StateChangeListen(Callback);
+	}
+	else {
+		this->StateChangeListenerCache.Add(Callback);
+	}
+}
+
+FName UProcStateMachineComponent::CurrentStateName() {
+	return this->Machine->GetCurrentStateName();
+}
+
+bool UProcStateMachineComponent::HasMachine() {
+	return this->Machine != nullptr;
 }

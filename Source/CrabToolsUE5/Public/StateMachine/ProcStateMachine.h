@@ -90,6 +90,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	virtual void SetOwner(UProcStateMachine* Parent);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	FName GetStateName();
+
 	/* 
 	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
 	 * can be combersome for long paths, so avoid using frequently.
@@ -199,7 +202,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	FName GetStateName(UStateNode* Node);
 
 
@@ -218,9 +221,11 @@ public:
 
 	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	FName GetCurrentStateName();
+
 	UFUNCTION()
 	TArray<FString> StateOptions() {
-		UE_LOG(LogTemp, Warning, TEXT("Querying for State Options."));
 		TArray<FString> Names;
 		for (const auto& Nodes : this->Graph) {
 			Names.Add(Nodes.Key.ToString());

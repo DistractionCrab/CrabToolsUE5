@@ -38,7 +38,7 @@ bool UPerspectiveManager::IsBound() {
 }
 
 FRotator UPerspectiveManager::GetBasePerspective() {
-	if (this->DefaultPerspective == nullptr) {
+	if (!this->DefaultPerspective.IsValid()) {
 		AActor* Owner = this->GetOwner();
 
 		if (Owner == nullptr) {
@@ -63,7 +63,7 @@ FRotator UPerspectiveManager::GetBasePerspective() {
 
 FRotator UPerspectiveManager::GetPerspective() {
 	
-	if (this->PerspectiveCopyComponent != nullptr) {
+	if (this->PerspectiveCopyComponent.IsValid()) {
 		FRotator Base = this->GetBasePerspective();
 		FRotator Goal = this->PerspectiveCopyComponent->GetComponentRotation();
 
@@ -76,7 +76,7 @@ FRotator UPerspectiveManager::GetPerspective() {
 			return FMath::Lerp(Base, Goal, Alpha);
 		}		
 	}
-	else if (this->PerspectiveCopy != nullptr) {
+	else if (this->PerspectiveCopy.IsValid()) {
 		FRotator Base = this->GetBasePerspective();
 		FRotator Goal = this->PerspectiveCopy->GetActorRotation();
 
@@ -89,7 +89,7 @@ FRotator UPerspectiveManager::GetPerspective() {
 			return FMath::Lerp(Base, Goal, Alpha);
 		}		
 	}
-	else if (this->DefaultPerspective != nullptr) {
+	else if (this->DefaultPerspective.IsValid()) {
 		return this->DefaultPerspective->GetActorRotation();
 	}
 	else {
