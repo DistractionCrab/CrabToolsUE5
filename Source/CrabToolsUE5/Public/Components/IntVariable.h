@@ -9,12 +9,11 @@
 #include "Delegates/Delegate.h"
 #include "IntVariable.generated.h"
 
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FIntObserverCollection, int, Old, int, New, UIntVariable*, Variable);
 DECLARE_DYNAMIC_DELEGATE_ThreeParams(FIntObserver, int, Old, int, New, UIntVariable*, Variable);
 DECLARE_DYNAMIC_DELEGATE_RetVal_ThreeParams(int, FIntModifier, int, New, int, Old, UIntVariable*, Variable);
-
 DECLARE_DYNAMIC_DELEGATE_ThreeParams(FIntOperatorObserver, int, Old, UVariableOperator*, Opp, UIntVariable*, Variable);
+
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CRABTOOLSUE5_API UIntVariable : public UActorComponent
@@ -34,16 +33,16 @@ class CRABTOOLSUE5_API UIntVariable : public UActorComponent
 	FIntObserverCollection MinChangeObserversCollection;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintGetter = GetValue, Category = "Variables")
+	UPROPERTY(EditDefaultsOnly, BlueprintGetter = GetValue, Category = "Variables")
 	int Value;
 
-	UPROPERTY(EditAnywhere, Category = "Variables")
+	UPROPERTY(EditDefaultsOnly, Category = "Variables")
 	int Min = MIN_int32;
 
-	UPROPERTY(EditAnywhere, Category = "Variables")
+	UPROPERTY(EditDefaultsOnly, Category = "Variables")
 	int Max = MAX_int32;
 
-	UPROPERTY(EditAnywhere, Category = "Variables")
+	UPROPERTY(EditDefaultsOnly, Category = "Variables")
 	int TickAmount = 0;
 
 public:	
