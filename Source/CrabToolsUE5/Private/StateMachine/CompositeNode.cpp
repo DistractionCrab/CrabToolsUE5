@@ -6,7 +6,7 @@
 void UCompositeNode::Initialize_Implementation(UProcStateMachine* POwner) {
 	Super::Initialize_Implementation(POwner);
 	for (auto& NodePairs : this->Nodes) {
-		NodePairs.Value->Initialize(POwner);
+		NodePairs.Value->Initialize_Internal(POwner);
 	}
 }
 

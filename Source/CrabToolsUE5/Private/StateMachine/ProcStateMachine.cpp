@@ -4,19 +4,21 @@
 
 #pragma region StateMachine Code
 
-void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
+void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 	this->Owner = POwner;
 	this->CurrentStateName = this->StartState;
 
 
 	for (auto& pair : this->Graph) {
 		auto& StateName = pair.Key;
-		auto& StateData = pair.Value;		
-		
+		auto& StateData = pair.Value;
+
 		if (StateData.Node) {
-			StateData.Node->Initialize(this);	
-		}				
+			StateData.Node->Initialize_Internal(this);
+		}
 	}
+
+	this->Initialize(POwner);
 
 	// Now setup the inverse alias map.
 	for (const auto& pair : this->Aliases) {
@@ -30,10 +32,10 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 				for (const auto& Transitions : pair.Value.Transitions) {
 					if (Data->EventTransitions.Contains(Transitions.Key)) {
 						UE_LOGFMT(
-							LogTemp, 
-							Error, 
-							"Alias overwrites event transition for state: Alias: {0}, State: {1}, Event {2}", 
-							pair.Key, 
+							LogTemp,
+							Error,
+							"Alias overwrites event transition for state: Alias: {0}, State: {1}, Event {2}",
+							pair.Key,
 							StateName,
 							Transitions.Key);
 					}
@@ -50,6 +52,12 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 	if (CurrentState->Node != nullptr) {
 		CurrentState->Node->Enter();
 	}
+
+	
+}
+
+void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
+	
 }
 
 AActor* UProcStateMachine::GetOwner() {
@@ -269,8 +277,13 @@ FName UProcStateMachine::GetCurrentStateName() {
 
 #pragma region NodeCode
 
-void UStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UStateNode::Initialize_Internal(UProcStateMachine* POwner) {
 	this->Owner = POwner;
+	this->Initialize(POwner);
+}
+
+void UStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
+	
 }
 
 UProcStateMachine* UStateNode::GetMachine() {
@@ -314,5 +327,7 @@ FName UStateNode::GetStateName() {
 	}
 	
 }
+
+
 
 #pragma endregion

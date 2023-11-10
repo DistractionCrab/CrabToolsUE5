@@ -58,9 +58,17 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 
 public:
 
+	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize(UProcStateMachine* POwner);
 	virtual void Initialize_Implementation(UProcStateMachine* POwner);
+
+	/**
+	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a
+	 * state machine.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void Initialize_Internal(UProcStateMachine* POwner);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
@@ -111,6 +119,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByArray(const TArray<FString>& Path, ENodeSearchResult& Branches);
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches);
+
+	
 };
 
 
@@ -170,6 +180,8 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 	FName CurrentStateName;
 	AActor* Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
+
+	
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
@@ -232,4 +244,11 @@ public:
 		}
 		return Names;
 	}
+
+	/**
+	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a 	 
+	 * state machine.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void Initialize_Internal(AActor* POwner);
 };

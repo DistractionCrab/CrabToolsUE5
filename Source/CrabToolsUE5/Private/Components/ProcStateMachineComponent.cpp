@@ -34,7 +34,7 @@ void UProcStateMachineComponent::BeginPlay()
 		}
 
 		this->StateChangeListenerCache.Empty();
-		this->Machine->Initialize(this->GetOwner());		
+		this->Machine->Initialize_Internal(this->GetOwner());
 	}
 }
 
