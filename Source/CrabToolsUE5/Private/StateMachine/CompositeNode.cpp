@@ -11,41 +11,49 @@ void UCompositeNode::Initialize_Implementation(UProcStateMachine* POwner) {
 }
 
 void UCompositeNode::Tick_Implementation(float DeltaTime) {
+	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node.Value) {
-			Node.Value->Tick(DeltaTime);	
-		}
-		if (!this->active) {
-			break;
+			Node.Value->Tick_Internal(DeltaTime);
+			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
+				return;
+			}
 		}
 	}
 }
 
 void UCompositeNode::Event_Implementation(FName Event) {
+	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node.Value) {
-			Node.Value->Event(Event);	
-		}
-		if (!this->active) {
-			break;
+			Node.Value->Event_Internal(Event);
+			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
+				return;
+			}
 		}
 	}
 }
 
 void UCompositeNode::Enter_Implementation() {
-	this->active = true;
+	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node.Value) {
-			Node.Value->Enter();	
+			Node.Value->Enter_Internal();
+			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
+				return;
+			}
 		}
 	}
 }
 
 void UCompositeNode::Exit_Implementation() {
-	this->active = false;
+	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node.Value) {
-			Node.Value->Exit();	
+			Node.Value->Exit_Internal();	
+			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
+				return;
+			}
 		}
 	}
 }

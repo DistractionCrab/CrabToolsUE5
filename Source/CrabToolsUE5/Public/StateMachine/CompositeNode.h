@@ -18,9 +18,6 @@ class CRABTOOLSUE5_API UCompositeNode : public UStateNode
 	UPROPERTY(EditAnywhere, Instanced, Category = "CompositeNode", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, UStateNode*> Nodes;
 
-	// Whether or not this node is active. Used to determine whether or not to keep
-	// looping through nodes.
-	bool active = false;
 public:
 
 	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;

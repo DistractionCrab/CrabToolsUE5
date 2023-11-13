@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "UObject/WeakObjectPtrTemplates.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/Input/InputNode.h"
 #include "Components/PerspectiveManager.h"
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputComponent.h"
@@ -14,27 +14,22 @@
  *
  */
 UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
-class CRABTOOLSUE5_API UMovementInputNode : public UStateNode
+class CRABTOOLSUE5_API UMovementInputNode : public UInputNode
 {
 	GENERATED_BODY()
 
 	// Possible perspective of the owning pawn.
 	TWeakObjectPtr<UPerspectiveManager> Perspective;
-	// Saved reference to the owner if it is a Pawn.
-	TWeakObjectPtr<APawn>PawnOwner;
+	
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
-	class UInputAction* MoveAction;
-
-	bool Active = false;
 
 public:
 
+	UMovementInputNode();
+
 	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
-	virtual void Enter_Implementation() override;
-	virtual void Exit_Implementation() override;
+	virtual void TriggerCallback_Implementation(const FInputActionValue& Value);
 	
-	void MoveCallback(const FInputActionValue& Value);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void ApplyMovement(FVector2D InputAxis);

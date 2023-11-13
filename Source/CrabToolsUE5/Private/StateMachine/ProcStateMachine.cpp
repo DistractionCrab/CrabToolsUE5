@@ -30,7 +30,7 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 			}
 			else {
 				for (const auto& Transitions : pair.Value.Transitions) {
-					if (Data->EventTransitions.Contains(Transitions.Key)) {
+					if (Data->Transitions.Contains(Transitions.Key)) {
 						UE_LOGFMT(
 							LogTemp,
 							Error,
@@ -40,7 +40,8 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 							Transitions.Key);
 					}
 					else {
-						Data->EventTransitions.Add(Transitions.Key, Transitions.Value);
+						Data->Transitions.Add(Transitions.Key, Transitions.Value);
+						//Data->EventTransitions.Add(Transitions.Key, Transitions.Value);
 					}
 				}
 			}
@@ -49,11 +50,11 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 
 	this->UpdateState(this->StartState);
 	auto CurrentState = this->GetCurrentState();
-	if (CurrentState->Node != nullptr) {
+	if (CurrentState != nullptr && CurrentState->Node != nullptr) {
 		CurrentState->Node->Enter();
 	}
 
-	
+	this->RebindConditions();
 }
 
 void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
@@ -68,35 +69,32 @@ void UProcStateMachine::UpdateState(FName Name) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
 		auto TID = this->TRANSITION.EnterTransition();
-
-
-		// Alert all listeners, and if one of them changes the state, return.
-		for (const auto& Listener: this->StateChangeEvents) {
-			Listener.ExecuteIfBound(this->CurrentStateName, Name);
-			if (!this->TRANSITION.Valid(TID)) {
-				return;
-			}
-		}
-
 		// Always exit on the node, regardless of further state transitions.
 		// If there were any updates to the state prior to this, then Exit will have
 		// called already, and this function will have returned;
-		if (CurrentState->Node) CurrentState->Node->Exit();
+		if (CurrentState->Node) CurrentState->Node->Exit_Internal();
 
-		// Only transition if no other state update has occurred.
-		if (this->TRANSITION.Valid(TID)) {
-
+		if (this->TRANSITION.Valid(TID)) { 
 			this->CurrentStateName = Name;
 			CurrentState = this->GetCurrentState();
 			if (CurrentState->Node) CurrentState->Node->Enter();
-		}
+
+			
+			if (this->TRANSITION.Valid(TID)) {
+				// Alert all listeners, and if one of them changes the state, return.
+				for (const auto& Listener : this->StateChangeEvents) {
+					Listener.ExecuteIfBound(this->CurrentStateName, Name);
+					if (!this->TRANSITION.Valid(TID)) {
+						return;
+					}
+				}
+			}
+		}	
 	}
 }
 
 void UProcStateMachine::Tick(float DeltaTime) {
 	if (this->CurrentStateName != NAME_None) {
-		//if (GEngine)
-			//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Ticking in the machine!"));
 		auto State = this->GetCurrentState();
 		if (State && State->Node) {
 			State->Node->Tick(DeltaTime);	
@@ -106,23 +104,28 @@ void UProcStateMachine::Tick(float DeltaTime) {
 
 
 void UProcStateMachine::Reset() {
-	this->CurrentStateName = this->StartState;
+	this->UpdateState(this->StartState);
 }
 
 void UProcStateMachine::Event(FName EName) {
 	// Need to validate possible transitions.
-	auto TID = this->TRANSITION.EnterTransition();
+	auto TID = this->TRANSITION.CurrentID();
 	auto CurrentState = this->GetCurrentState();
 
 	if (CurrentState) {
 		// First we check if there are any declarative events to handle for this state.
-		if (CurrentState->EventTransitions.Contains(EName)) {
-			this->UpdateState(CurrentState->EventTransitions[EName]);
+		if (CurrentState->Transitions.Contains(EName)) {
+			auto TData = CurrentState->Transitions[EName];
+			if (TData.ConditionCallback.IsBound()) {
+				if (TData.ConditionCallback.Execute()) {
+					this->UpdateState(TData.Destination);
+				}
+			}
+			else {
+				UE_LOGFMT(LogTemp, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
+			}
 		}
-		// If there were no declarative event transitions, then we check through aliases.
-		else {
-
-		}
+		
 
 		// If the current node's event code didn't change the graph's state, then we check for
 		// static event transitions.
@@ -169,6 +172,7 @@ void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChain
 		FName OldValue = NAME_None;
 		FName NewValue = NAME_None;
 
+		// First find the old value of what was changed.
 		for (const auto& Name : this->StateList) {
 			if (!this->Graph.Contains(Name)) {
 				OldValue = Name;
@@ -176,7 +180,9 @@ void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChain
 			}
 		}
 
+		// If an old value was found, save it and continue.
 		if (OldValue != NAME_None) {
+			// Find the value the old value was changed to and save it.
 			for (const auto& Node : this->Graph) {
 				if (!this->StateList.Contains(Node.Key)) {
 					NewValue = Node.Key;
@@ -184,24 +190,36 @@ void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChain
 				}
 			}
 
-			UE_LOG(LogTemp, Warning, TEXT("Found NewValue = %s"), *NewValue.ToString());
-
-			// Convert Alias Names.
+			// Loop through aliases and remap state names in both what aliases refer to and what their
+			// transition destinations refer to.
 			for (auto& AliasNode : this->Aliases) {
 				AliasNode.Value.States.Remove(OldValue);
 				AliasNode.Value.States.Add(NewValue);
 
 				for (auto& TransNode : AliasNode.Value.Transitions) {
-					if (TransNode.Value == OldValue) {
-						AliasNode.Value.Transitions.Add(TransNode.Key, NewValue);
+					if (TransNode.Value.Destination == OldValue) {
+						TransNode.Value.Destination = NewValue;
 					}
 				}
 			}
-
-			// Update Destination State Names for event transitions in aliases.
 		}
 	}
 	Super::PostEditChangeChainProperty(e);
+}
+
+/* Simply iterates through the graph and rebinds condition callbacks. */
+void UProcStateMachine::RebindConditions() {
+	TArray<FString> ValidFunctions = this->ConditionOptions();
+	
+	for (auto& pairs : this->Graph) {
+		for (auto& tpairs : pairs.Value.Transitions) {
+			if (ValidFunctions.Contains(tpairs.Value.Condition.ToString())) {
+				tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
+				tpairs.Value.ConditionCallback.Execute();
+			}
+			
+		}
+	}
 }
 
 void UProcStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
@@ -218,7 +236,7 @@ void UProcStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) 
 		}
 	}
 
-	
+
     Super::PostEditChangeProperty(e);
 }
 
@@ -271,6 +289,33 @@ UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FStri
 
 FName UProcStateMachine::GetCurrentStateName() {
 	return this->CurrentStateName;
+}
+
+TArray<FString> UProcStateMachine::StateOptions() {
+	TArray<FString> Names;
+	for (const auto& Nodes : this->Graph) {
+		Names.Add(Nodes.Key.ToString());
+	}
+	return Names;
+}
+
+TArray<FString> UProcStateMachine::ConditionOptions() {
+	TArray<FString> Names;
+	for (TFieldIterator<UFunction> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
+		UFunction* f = *FIT;
+		
+		auto prop = f->GetReturnProperty();
+		if (prop) {
+			if (prop->IsA(FBoolProperty::StaticClass()) && f->NumParms == 1) {
+				Names.Add(f->GetName());
+			}
+		}		
+	}
+	return Names;
+}
+
+bool UProcStateMachine::TrueCondition() { 
+	return true; 
 }
 
 #pragma endregion
@@ -328,6 +373,30 @@ FName UStateNode::GetStateName() {
 	
 }
 
+void UStateNode::Tick_Internal(float DeltaTime) {
+	if (this->bActive) {
+		this->Tick(DeltaTime);
+	}
+}
 
+void UStateNode::Event_Internal(FName EName) {
+	if (this->bActive) {
+		this->Event(EName);
+	}
+}
+
+void UStateNode::Exit_Internal() {
+	if (this->bActive) {
+		this->bActive = false;
+		this->Exit();
+	}	
+}
+
+void UStateNode::Enter_Internal() {
+	if (!this->bActive) {
+		this->bActive = true;
+		this->Enter();
+	}
+}
 
 #pragma endregion

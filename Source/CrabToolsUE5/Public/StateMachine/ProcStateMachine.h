@@ -12,6 +12,9 @@ class UStateNode;
 class UProcStateMachine;
 class UNodeTransition;
 
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
+DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
+
 UENUM(BlueprintType)
 enum class ENodeSearchResult : uint8 {
 	FOUND          UMETA(DisplayName = "Found"),
@@ -24,11 +27,15 @@ struct  FTransitionData
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
-	UNodeTransition* ProcTransition;
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "StateOptions"))
 	FName Destination;
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "ConditionOptions"))
+	FName Condition;	
+	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
+	FTransitionDelegate ConditionCallback;
 };
+
+
 
 USTRUCT(BlueprintType)
 struct  FStateData
@@ -40,10 +47,22 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	UStateNode* Node;
 	// Map from Event Name to StateName
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetValueOptions = "StateOptions"))
-	TMap<FName, FName> EventTransitions;
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	TArray<FTransitionData> Transitions;
+	TMap<FName, FTransitionData> Transitions;
+};
+
+USTRUCT(BlueprintType)
+struct FAliasData
+{
+	GENERATED_USTRUCT_BODY()
+public:
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "StateOptions"))
+	TSet<FName> States;
+
+	// Mapping of EventName -> TransitionData.
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetValueOptions = "StateOptions"))
+	TMap<FName, FTransitionData> Transitions;
+
 };
 
 /**
@@ -55,6 +74,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	GENERATED_BODY()
 
 	UProcStateMachine* Owner;
+	bool bActive = false;
 
 public:
 
@@ -72,6 +92,7 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
+	void Event_Internal(FName EName);
 	virtual void Event_Implementation(FName EName);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
@@ -82,14 +103,17 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Enter();
+	void Enter_Internal();
 	virtual void Enter_Implementation() {}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Tick(float DeltaTime);
+	void Tick_Internal(float DeltaTime);
 	virtual void Tick_Implementation(float DeltaTime) {}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Exit();
+	void Exit_Internal();
 	virtual void Exit_Implementation() {}
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (HideSelfPin, DefaultToSelf))
@@ -120,26 +144,10 @@ public:
 	UStateNode* FindNodeByArray(const TArray<FString>& Path, ENodeSearchResult& Branches);
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches);
 
-	
+	FORCEINLINE bool Active() { return this->bActive; }
 };
 
 
-USTRUCT(BlueprintType)
-struct FAliasData
-{
-	GENERATED_USTRUCT_BODY()
-public:
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta=(GetOptions="StateOptions"))
-	TSet<FName> States;
-
-	// Mapping of EventName -> StateName.
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetValueOptions="StateOptions"))
-	TMap<FName, FName> Transitions;
-	
-};
-
-
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 /**
  *
  */
@@ -148,7 +156,7 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 {
 	GENERATED_BODY()
 
-	// Internal Structure used for keeping track of state transitions.
+	// Internal Structure used for keeping track of state transitions and maintain State ID.
 	struct Transition {
 	private:
 		int ID = 0;
@@ -161,6 +169,10 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 
 		bool Valid(int OID) {
 			return OID == this->ID;
+		}
+
+		int CurrentID() {
+			return this->ID;
 		}
 	} TRANSITION;
 
@@ -181,9 +193,10 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 	AActor* Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	
+	void RebindConditions();	
 
 public:
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize(AActor* POwner);
 
@@ -237,13 +250,10 @@ public:
 	FName GetCurrentStateName();
 
 	UFUNCTION()
-	TArray<FString> StateOptions() {
-		TArray<FString> Names;
-		for (const auto& Nodes : this->Graph) {
-			Names.Add(Nodes.Key.ToString());
-		}
-		return Names;
-	}
+	TArray<FString> StateOptions();
+
+	UFUNCTION(CallInEditor)
+	TArray<FString> ConditionOptions();
 
 	/**
 	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a 	 
@@ -251,4 +261,13 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Initialize_Internal(AActor* POwner);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	int GetStateID() { return this->TRANSITION.CurrentID(); }
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	bool IsInState(int ID) { return this->TRANSITION.Valid(ID); }
+
+	UFUNCTION()
+	bool TrueCondition();
 };
