@@ -14,6 +14,7 @@ class UNodeTransition;
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
+DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FTransitionDataDelegate, UObject*, Data);
 
 UENUM(BlueprintType)
 enum class ENodeSearchResult : uint8 {
@@ -30,9 +31,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "StateOptions"))
 	FName Destination;
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "ConditionOptions"))
-	FName Condition;	
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
+	FName Condition = "TrueCondition";
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "ConditionDataOptions"))
+	FName DataCondition = "TrueDataCondition";
+	
 	FTransitionDelegate ConditionCallback;
+	FTransitionDataDelegate DataConditionCallback;
 };
 
 
@@ -68,7 +72,7 @@ public:
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS(Blueprintable, EditInlineNew, CollapseCategories)
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
@@ -95,6 +99,11 @@ public:
 	void Event_Internal(FName EName);
 	virtual void Event_Implementation(FName EName);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	void EventWithData(FName EName, UObject* Data);
+	void EventWithData_Internal(FName EName, UObject* Data);
+	virtual void EventWithData_Implementation(FName EName, UObject* Data);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	AActor* GetOwner();
 
@@ -107,6 +116,11 @@ public:
 	virtual void Enter_Implementation() {}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	void EnterWithData(UObject* Data);
+	void EnterWithData_Internal(UObject* Data);
+	virtual void EnterWithData_Implementation(UObject* Data);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Tick(float DeltaTime);
 	void Tick_Internal(float DeltaTime);
 	virtual void Tick_Implementation(float DeltaTime) {}
@@ -115,6 +129,11 @@ public:
 	void Exit();
 	void Exit_Internal();
 	virtual void Exit_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	void ExitWithData(UObject* Data);
+	void ExitWithData_Internal(UObject* Data);
+	virtual void ExitWithData_Implementation(UObject* Data);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (HideSelfPin, DefaultToSelf))
 	void GoTo(FName State);
@@ -176,7 +195,7 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 		}
 	} TRANSITION;
 
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true", GetOptions = "StateOptions"))
 	FName StartState;
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
@@ -213,6 +232,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
 
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void EventWithData(FName EName, UObject* Data);
+
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
 
@@ -240,6 +262,7 @@ public:
 	 * specifically require a state to be forced regardless of the context.
 	 */
 	void UpdateState(FName Name);
+	void UpdateStateWithData(FName Name, UObject* Data);
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
@@ -252,8 +275,11 @@ public:
 	UFUNCTION()
 	TArray<FString> StateOptions();
 
-	UFUNCTION(CallInEditor)
+	UFUNCTION()
 	TArray<FString> ConditionOptions();
+
+	UFUNCTION()
+	TArray<FString> ConditionDataOptions();
 
 	/**
 	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a 	 
@@ -268,6 +294,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	bool IsInState(int ID) { return this->TRANSITION.Valid(ID); }
 
+	/* Condition function that always returns true. */
 	UFUNCTION()
 	bool TrueCondition();
+
+	UFUNCTION()
+	bool FalseCondition();
+
+	/* Condition function that always returns true. */
+	UFUNCTION()
+	bool TrueDataCondition(UObject* Data);
+
+	UFUNCTION()
+	bool FalseDataCondition(UObject* Data);
+
+	/* Condition function that returns true if Data is Valid. */
+	UFUNCTION()
+	bool ValidDataCondition(UObject* Data);
 };

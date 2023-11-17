@@ -36,6 +36,7 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 public:
 	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
 	virtual void Event_Implementation(FName EName) override;
+	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
 	virtual void Enter_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	virtual void Exit_Implementation() override;

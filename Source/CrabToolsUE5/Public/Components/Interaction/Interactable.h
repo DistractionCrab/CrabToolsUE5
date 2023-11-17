@@ -15,5 +15,5 @@ class IInteractableInterface
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
-    void Interact(AActor* User);
+	void Interact(AActor* User);
 };

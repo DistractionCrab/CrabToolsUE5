@@ -36,6 +36,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Event(FName EName);
 
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void EventWithData(FName EName, UObject* Data);
+
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta=(ExpandEnumAsExecs="Branches"))
 	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
 

@@ -6,18 +6,7 @@
 
 void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 	this->Owner = POwner;
-	this->CurrentStateName = this->StartState;
-
-
-	for (auto& pair : this->Graph) {
-		auto& StateName = pair.Key;
-		auto& StateData = pair.Value;
-
-		if (StateData.Node) {
-			StateData.Node->Initialize_Internal(this);
-		}
-	}
-
+	//this->CurrentStateName = this->StartState;
 	this->Initialize(POwner);
 
 	// Now setup the inverse alias map.
@@ -48,13 +37,17 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 		}
 	}
 
-	this->UpdateState(this->StartState);
-	auto CurrentState = this->GetCurrentState();
-	if (CurrentState != nullptr && CurrentState->Node != nullptr) {
-		CurrentState->Node->Enter();
+	for (auto& pair : this->Graph) {
+		auto& StateName = pair.Key;
+		auto& StateData = pair.Value;
+
+		if (StateData.Node) {
+			StateData.Node->Initialize_Internal(this);
+		}
 	}
 
 	this->RebindConditions();
+	this->UpdateState(this->StartState);
 }
 
 void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
@@ -68,28 +61,60 @@ AActor* UProcStateMachine::GetOwner() {
 void UProcStateMachine::UpdateState(FName Name) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
+		auto OldState = this->CurrentStateName;
+
 		auto TID = this->TRANSITION.EnterTransition();
 		// Always exit on the node, regardless of further state transitions.
 		// If there were any updates to the state prior to this, then Exit will have
 		// called already, and this function will have returned;
-		if (CurrentState->Node) CurrentState->Node->Exit_Internal();
+		if (CurrentState && CurrentState->Node) CurrentState->Node->Exit_Internal();
 
 		if (this->TRANSITION.Valid(TID)) { 
 			this->CurrentStateName = Name;
 			CurrentState = this->GetCurrentState();
-			if (CurrentState->Node) CurrentState->Node->Enter();
+			if (CurrentState->Node) CurrentState->Node->Enter_Internal();
 
 			
 			if (this->TRANSITION.Valid(TID)) {
 				// Alert all listeners, and if one of them changes the state, return.
 				for (const auto& Listener : this->StateChangeEvents) {
-					Listener.ExecuteIfBound(this->CurrentStateName, Name);
+					Listener.ExecuteIfBound(OldState, Name);
 					if (!this->TRANSITION.Valid(TID)) {
 						return;
 					}
 				}
 			}
 		}	
+	}
+}
+
+void UProcStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
+	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
+		auto CurrentState = this->GetCurrentState();
+		auto OldState = this->CurrentStateName;
+
+		auto TID = this->TRANSITION.EnterTransition();
+		// Always exit on the node, regardless of further state transitions.
+		// If there were any updates to the state prior to this, then Exit will have
+		// called already, and this function will have returned;
+		if (CurrentState && CurrentState->Node) CurrentState->Node->ExitWithData_Internal(Data);
+
+		if (this->TRANSITION.Valid(TID)) {
+			this->CurrentStateName = Name;
+			CurrentState = this->GetCurrentState();
+			if (CurrentState->Node) CurrentState->Node->EnterWithData_Internal(Data);
+
+
+			if (this->TRANSITION.Valid(TID)) {
+				// Alert all listeners, and if one of them changes the state, return.
+				for (const auto& Listener : this->StateChangeEvents) {
+					Listener.ExecuteIfBound(OldState, Name);
+					if (!this->TRANSITION.Valid(TID)) {
+						return;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -130,9 +155,38 @@ void UProcStateMachine::Event(FName EName) {
 		// If the current node's event code didn't change the graph's state, then we check for
 		// static event transitions.
 		if (this->TRANSITION.Valid(TID)) {
-			if (CurrentState->Node) CurrentState->Node->Event(EName);	
+			if (CurrentState->Node) CurrentState->Node->Event_Internal(EName);	
 		}
 	}	
+}
+
+
+void UProcStateMachine::EventWithData(FName EName, UObject* Data) {
+	// Need to validate possible transitions.
+	auto TID = this->TRANSITION.CurrentID();
+	auto CurrentState = this->GetCurrentState();
+
+	if (CurrentState) {
+		// First we check if there are any declarative events to handle for this state.
+		if (CurrentState->Transitions.Contains(EName)) {
+			auto TData = CurrentState->Transitions[EName];
+			if (TData.DataConditionCallback.IsBound()) {
+				if (TData.DataConditionCallback.Execute(Data)) {
+					this->UpdateStateWithData(TData.Destination, Data);
+				}
+			}
+			else {
+				UE_LOGFMT(LogTemp, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
+			}
+		}
+
+
+		// If the current node's event code didn't change the graph's state, then we check for
+		// static event transitions.
+		if (this->TRANSITION.Valid(TID)) {
+			if (CurrentState->Node) CurrentState->Node->EventWithData_Internal(EName, Data);
+		}
+	}
 }
 
 UStateNode* UProcStateMachine::FindNode(FName NodeName, ENodeSearchResult& Branches) {
@@ -215,7 +269,7 @@ void UProcStateMachine::RebindConditions() {
 		for (auto& tpairs : pairs.Value.Transitions) {
 			if (ValidFunctions.Contains(tpairs.Value.Condition.ToString())) {
 				tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
-				tpairs.Value.ConditionCallback.Execute();
+				tpairs.Value.DataConditionCallback.BindUFunction(this, tpairs.Value.DataCondition);
 			}
 			
 		}
@@ -301,21 +355,48 @@ TArray<FString> UProcStateMachine::StateOptions() {
 
 TArray<FString> UProcStateMachine::ConditionOptions() {
 	TArray<FString> Names;
+	auto base = this->FindFunction("TrueCondition");
 	for (TFieldIterator<UFunction> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
 		UFunction* f = *FIT;
 		
-		auto prop = f->GetReturnProperty();
-		if (prop) {
-			if (prop->IsA(FBoolProperty::StaticClass()) && f->NumParms == 1) {
-				Names.Add(f->GetName());
-			}
+		if (f->IsSignatureCompatibleWith(base)) {
+			Names.Add(f->GetName());
 		}		
+	}
+	return Names;
+}
+
+TArray<FString> UProcStateMachine::ConditionDataOptions() {
+	TArray<FString> Names;
+	auto base = this->FindFunction("TrueDataCondition");
+	for (TFieldIterator<UFunction> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
+		UFunction* f = *FIT;		
+		
+		if (f->IsSignatureCompatibleWith(base)) {
+			Names.Add(f->GetName());
+		}
 	}
 	return Names;
 }
 
 bool UProcStateMachine::TrueCondition() { 
 	return true; 
+}
+
+bool UProcStateMachine::FalseCondition() {
+	return false;
+}
+
+bool UProcStateMachine::TrueDataCondition(UObject* Data) {
+	return true;
+}
+
+bool UProcStateMachine::FalseDataCondition(UObject* Data) {
+	return false;
+}
+
+bool UProcStateMachine::ValidDataCondition(UObject* Data) {
+	return Data != nullptr;
 }
 
 #pragma endregion
@@ -343,8 +424,24 @@ AActor* UStateNode::GetOwner() {
 	return this->Owner->GetOwner();
 }
 
+void UStateNode::Event_Internal(FName EName) {
+	if (this->bActive) {
+		this->Event(EName);
+	}
+}
+
 void UStateNode::Event_Implementation(FName EName) {
 	// Does Nothing by default.
+}
+
+void UStateNode::EventWithData_Internal(FName EName, UObject* Data) {
+	if (this->bActive) {
+		this->EventWithData(EName, Data);
+	}
+}
+
+void UStateNode::EventWithData_Implementation(FName EName, UObject* Data) {
+	this->Event(EName);
 }
 
 void UStateNode::SetOwner(UProcStateMachine* Parent) {
@@ -379,12 +476,6 @@ void UStateNode::Tick_Internal(float DeltaTime) {
 	}
 }
 
-void UStateNode::Event_Internal(FName EName) {
-	if (this->bActive) {
-		this->Event(EName);
-	}
-}
-
 void UStateNode::Exit_Internal() {
 	if (this->bActive) {
 		this->bActive = false;
@@ -397,6 +488,28 @@ void UStateNode::Enter_Internal() {
 		this->bActive = true;
 		this->Enter();
 	}
+}
+
+void UStateNode::EnterWithData_Internal(UObject* Data) {
+	if (!this->bActive) {
+		this->bActive = true;
+		this->EnterWithData(Data);
+	}
+}
+
+void UStateNode::EnterWithData_Implementation(UObject* Data) {
+	this->Enter();
+}
+
+void UStateNode::ExitWithData_Internal(UObject* Data) {
+	if (!this->bActive) {
+		this->bActive = true;
+		this->ExitWithData(Data);
+	}
+}
+
+void UStateNode::ExitWithData_Implementation(UObject* Data) {
+	this->Exit();
 }
 
 #pragma endregion

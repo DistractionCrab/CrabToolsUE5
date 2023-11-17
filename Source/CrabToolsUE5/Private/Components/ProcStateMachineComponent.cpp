@@ -56,6 +56,12 @@ void UProcStateMachineComponent::Event(FName EName) {
 	}
 }
 
+void UProcStateMachineComponent::EventWithData(FName EName, UObject* Data) {
+	if (this->HasMachine()) {
+		this->Machine->EventWithData(EName, Data);
+	}
+}
+
 UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ENodeSearchResult& Branches) {
 	if (this->HasMachine()) {
 		return this->Machine->FindNode(NodeName, Branches);

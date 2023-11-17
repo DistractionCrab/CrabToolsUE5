@@ -8,7 +8,7 @@ void UHierarchyNode::Initialize_Implementation(UProcStateMachine* POwner) {
 
 	if (this->MachineClass.Get() != nullptr) {
 		this->SubMachine = NewObject<UProcStateMachine>(
-			this, 
+			this,
 			this->MachineClass, 
 			NAME_None, 
 			RF_NoFlags,
@@ -33,6 +33,13 @@ void UHierarchyNode::PerformExit() {
 void UHierarchyNode::Event_Implementation(FName EName){
 	if (this->SubMachine) {
 		this->SubMachine->Event(EName);
+		this->PerformExit();
+	}
+}
+
+void UHierarchyNode::EventWithData_Implementation(FName EName, UObject* Data) {
+	if (this->SubMachine) {
+		this->SubMachine->EventWithData(EName, Data);
 		this->PerformExit();
 	}
 }
