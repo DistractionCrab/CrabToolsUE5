@@ -6,15 +6,18 @@
 #include "UObject/NoExportTypes.h"
 #include "Delegates/Delegate.h"
 #include "Templates/UniquePtr.h"
+#include "StateChangeListener.h"
 #include "ProcStateMachine.generated.h"
 
 class UStateNode;
 class UProcStateMachine;
 class UNodeTransition;
 
+
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
 DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FTransitionDataDelegate, UObject*, Data);
+
 
 UENUM(BlueprintType)
 enum class ENodeSearchResult : uint8 {
@@ -248,6 +251,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	void StateChangeObject(UObject* Obj);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	FName GetStateName(UStateNode* Node);

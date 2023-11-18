@@ -77,7 +77,7 @@ void UProcStateMachine::UpdateState(FName Name) {
 			
 			if (this->TRANSITION.Valid(TID)) {
 				// Alert all listeners, and if one of them changes the state, return.
-				for (const auto& Listener : this->StateChangeEvents) {
+				for (auto& Listener : this->StateChangeEvents) {
 					Listener.ExecuteIfBound(OldState, Name);
 					if (!this->TRANSITION.Valid(TID)) {
 						return;
@@ -107,7 +107,7 @@ void UProcStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 
 			if (this->TRANSITION.Valid(TID)) {
 				// Alert all listeners, and if one of them changes the state, return.
-				for (const auto& Listener : this->StateChangeEvents) {
+				for (auto& Listener : this->StateChangeEvents) {
 					Listener.ExecuteIfBound(OldState, Name);
 					if (!this->TRANSITION.Valid(TID)) {
 						return;
@@ -211,6 +211,23 @@ void UProcStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback
 
 	if (this->CurrentStateName != NAME_None) {
 		Callback.ExecuteIfBound(this->CurrentStateName, this->CurrentStateName);
+	}
+}
+
+void UProcStateMachine::StateChangeObject(UObject* Obj) {
+	if (Obj->GetClass()->ImplementsInterface(UStateChangeListenerInterface::StaticClass())) {
+		auto UFn = Obj->FindFunction("Listen");
+
+		if (UFn) {
+			FStateChangeDispatcher Callback;
+			Callback.BindUFunction(Obj, "Listen");
+
+			this->StateChangeEvents.Add(Callback);
+
+			if (this->CurrentStateName != NAME_None) {
+				Callback.ExecuteIfBound(this->CurrentStateName, this->CurrentStateName);
+			}
+		}
 	}
 }
 
@@ -483,6 +500,17 @@ void UStateNode::Exit_Internal() {
 	}	
 }
 
+void UStateNode::ExitWithData_Internal(UObject* Data) {
+	if (this->bActive) {
+		this->bActive = false;
+		this->ExitWithData(Data);
+	}
+}
+
+void UStateNode::ExitWithData_Implementation(UObject* Data) {
+	this->Exit();
+}
+
 void UStateNode::Enter_Internal() {
 	if (!this->bActive) {
 		this->bActive = true;
@@ -501,15 +529,6 @@ void UStateNode::EnterWithData_Implementation(UObject* Data) {
 	this->Enter();
 }
 
-void UStateNode::ExitWithData_Internal(UObject* Data) {
-	if (!this->bActive) {
-		this->bActive = true;
-		this->ExitWithData(Data);
-	}
-}
 
-void UStateNode::ExitWithData_Implementation(UObject* Data) {
-	this->Exit();
-}
 
 #pragma endregion

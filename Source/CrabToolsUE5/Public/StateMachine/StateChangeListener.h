@@ -14,6 +14,6 @@ class IStateChangeListenerInterface
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="ProcStateMachine")
     bool Listen(FName From, FName To);
 };
