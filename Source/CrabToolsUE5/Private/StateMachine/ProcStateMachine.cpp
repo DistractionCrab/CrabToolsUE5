@@ -189,18 +189,18 @@ void UProcStateMachine::EventWithData(FName EName, UObject* Data) {
 	}
 }
 
-UStateNode* UProcStateMachine::FindNode(FName NodeName, ENodeSearchResult& Branches) {
+UStateNode* UProcStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
 	if (this->Graph.Contains(NodeName)) {		
 		auto Node = this->Graph[NodeName].Node;
 		if (Node) {
-			Branches = ENodeSearchResult::FOUND;
+			Branches = ESearchResult::Found;
 		} else {
-			Branches = ENodeSearchResult::NOTFOUND;
+			Branches = ESearchResult::NotFound;
 		}
 		return Node;
 	}
 	else {
-		Branches = ENodeSearchResult::NOTFOUND;
+		Branches = ESearchResult::NotFound;
 		return nullptr;
 	}
 	
@@ -324,7 +324,7 @@ FName UProcStateMachine::GetStateName(UStateNode* Node) {
 	return Found;
 }
 
-UStateNode* UProcStateMachine::FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches) {
+UStateNode* UProcStateMachine::FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches) {
 	TArray<FString> PathList;
 
 	Path.ParseIntoArray(PathList, TEXT("/"), true);
@@ -333,16 +333,16 @@ UStateNode* UProcStateMachine::FindNodeByPath_Implementation(const FString& Path
 	return this->FindNodeByArray(PathList, Branches);
 }
 
-UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) {
+UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
 	if (Path.Num() == 0) {
-		Branches = ENodeSearchResult::NOTFOUND;
+		Branches = ESearchResult::NotFound;
 		return nullptr;
 	}
 	else {
 		FName Name(Path.Last());
 		if (this->Graph.Contains(Name)) {
 			if (Path.Num() == 1) {
-				Branches = ENodeSearchResult::FOUND;
+				Branches = ESearchResult::Found;
 				return this->Graph[Name].Node;
 			}
 			else {
@@ -352,7 +352,7 @@ UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FStri
 			}			
 		}
 		else {
-			Branches = ENodeSearchResult::NOTFOUND;
+			Branches = ESearchResult::NotFound;
 			return nullptr;
 		}
 	}
@@ -465,13 +465,13 @@ void UStateNode::SetOwner(UProcStateMachine* Parent) {
 	this->Owner = Parent;
 }
 
-UStateNode* UStateNode::FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches) {
+UStateNode* UStateNode::FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches) {
 	TArray<FString> PathList;
 	Path.ParseIntoArray(PathList, TEXT("/"), true);
 	return this->FindNodeByArray(PathList, Branches);
 }
 
-UStateNode* UStateNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) {
+UStateNode* UStateNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
 	return nullptr;
 }
 

@@ -14,9 +14,11 @@ class ILockOnInterface
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
-	bool ActivateWidget();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="LockOnCamera")
+	void ActivateWidget();
+	virtual void ActivateWidget_Implementation() {}
 
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
-	bool DeactivateWidget();
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="LockOnCamera")
+	void DeactivateWidget();
+	virtual void DeactivateImplementation() {}
 };

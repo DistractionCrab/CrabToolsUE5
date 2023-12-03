@@ -41,6 +41,13 @@ void UInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
 					this, 
 					&UInputNode::CanceledCallback_Internal);	
 			}
+			else {
+				Eic->BindAction(
+					this->Action,
+					ETriggerEvent::Canceled,
+					this,
+					&UInputNode::FinishedCallback);
+			}
 
 			if (this->bCompleted){
 				Eic->BindAction(
@@ -49,6 +56,14 @@ void UInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
 					this, 
 					&UInputNode::CompletedCallback_Internal);	
 			}
+			else {
+				Eic->BindAction(
+					this->Action,
+					ETriggerEvent::Completed,
+					this,
+					&UInputNode::FinishedCallback);
+			}
+
 		}
 	}
 }
@@ -66,6 +81,7 @@ void UInputNode::TriggerCallback_Internal(const FInputActionValue& Value) {
 void UInputNode::StartCallback_Implementation(const FInputActionValue& Value) {}
 
 void UInputNode::StartCallback_Internal(const FInputActionValue& Value) {
+	this->bHasStarted = true;
 	if (this->Active()) {
 		this->StartCallback(Value);
 	}
@@ -74,6 +90,7 @@ void UInputNode::StartCallback_Internal(const FInputActionValue& Value) {
 void UInputNode::OngoingCallback_Implementation(const FInputActionValue& Value) {}
 
 void UInputNode::OngoingCallback_Internal(const FInputActionValue& Value) {
+	this->bHasStarted = false;
 	if (this->Active()) {
 		this->OngoingCallback(Value);
 	}
@@ -82,6 +99,7 @@ void UInputNode::OngoingCallback_Internal(const FInputActionValue& Value) {
 void UInputNode::CompletedCallback_Implementation(const FInputActionValue& Value) {}
 
 void UInputNode::CompletedCallback_Internal(const FInputActionValue& Value) {
+	this->bHasStarted = false;
 	if (this->Active()) {
 		this->CompletedCallback(Value);
 	}
@@ -93,4 +111,8 @@ void UInputNode::CanceledCallback_Internal(const FInputActionValue& Value) {
 	if (this->Active()) {
 		this->CanceledCallback(Value);
 	}
+}
+
+void UInputNode::FinishedCallback(const FInputActionValue& Value) {
+	this->bHasStarted = false;
 }

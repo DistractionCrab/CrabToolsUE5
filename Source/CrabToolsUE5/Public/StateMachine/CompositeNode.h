@@ -27,5 +27,5 @@ public:
 	virtual void EnterWithData_Implementation(UObject* Data) override;
 	virtual void Exit_Implementation() override;	
 	virtual void ExitWithData_Implementation(UObject* Data) override;
-	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches) override;
+	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) override;
 };

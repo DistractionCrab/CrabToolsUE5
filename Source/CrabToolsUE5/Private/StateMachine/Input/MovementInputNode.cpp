@@ -10,10 +10,7 @@ void UMovementInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
 
 	// If the owning actor has a perspective manager, store it for simple use.
 	auto Persp = POwner->GetOwner()->FindComponentByClass<UPerspectiveManager>();
-
-	if (Persp != nullptr) {
-		this->Perspective = Persp;
-	}
+	this->Perspective = Persp;
 }
 
 
@@ -42,6 +39,8 @@ void UMovementInputNode::ApplyMovement_Implementation(FVector2D InputAxis) {
 
 	// get right vector 
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	this->RecentInputAxis = FVector2D(InputAxis.X, InputAxis.Y);
 
 	// add movement 
 	Pawn->AddMovementInput(ForwardDirection, InputAxis.Y);

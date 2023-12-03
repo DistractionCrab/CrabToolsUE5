@@ -1,26 +1,20 @@
 #include "Components/LockOnCamera/LockOnCamera.h"
+#include "Components/LockOnCamera/LockOnInterface.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ULockOnCamera::ULockOnCamera(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
 {
-	this->bForcePawnRotation = false;
+	this->bForcePawnRotation = true;
 	this->TargetArmLength = 400.0f;
 	this->bUsePawnControlRotation = true; 
 
 	// Create a follow camera
 	this->FollowCamera = this->CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	this->FollowCamera->SetupAttachment(this, USpringArmComponent::SocketName); 
-	this->FollowCamera->bUsePawnControlRotation = false; 
+	this->FollowCamera->bUsePawnControlRotation = false;
 
-	//FAttachmentTransformRules r(EAttachmentRule::KeepRelative, false);
-	this->Detector = this->CreateDefaultSubobject<USphereComponent>(TEXT("Detector"));
-	this->Detector->SetupAttachment(this, NAME_None);
-	this->Detector->OnComponentBeginOverlap.AddDynamic(this, &ULockOnCamera::DetectCallback);
-	this->Detector->OnComponentEndOverlap.AddDynamic(this, &ULockOnCamera::EndDetectCallback);
-
-	this->Detector->SetCollisionProfileName("Custom");
-	// Set the detector to ignore everything, will change to only overlap the specified channel later.
-	this->Detector->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-
+	
 }
 
 void ULockOnCamera::BeginPlay() {
@@ -34,8 +28,9 @@ void ULockOnCamera::BeginPlay() {
 void ULockOnCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (this->PawnOwner.IsValid() && this->bForcePawnRotation) {
-		this->PawnOwner->GetController()->SetControlRotation(this->GetComponentRotation());
+	if (this->CurrentTarget.IsValid() && this->PawnOwner.IsValid() && this->bForcePawnRotation) {
+		auto CharRot = this->GetDesiredRotation();
+		this->PawnOwner->GetController()->SetControlRotation(CharRot);
 	}
 }
 
@@ -46,7 +41,7 @@ void ULockOnCamera::DetectCallback(UPrimitiveComponent* OverlappedComponent,
 	bool bFromSweep,
 	const FHitResult& SweepResult) {
 
-	UE_LOG(LogTemp, Warning, TEXT("Detected lock on target %s"), *OtherActor->GetFName().ToString());
+	this->AddTarget(OtherComp);
 }
 
 void ULockOnCamera::EndDetectCallback(UPrimitiveComponent* OverlappedComponent,
@@ -54,12 +49,12 @@ void ULockOnCamera::EndDetectCallback(UPrimitiveComponent* OverlappedComponent,
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex) {
 
-	UE_LOG(LogTemp, Warning, TEXT("Lost detection on target %s"), *OtherActor->GetFName().ToString());
+	this->RemoveTarget(OtherComp);
 }
 
 FRotator ULockOnCamera::GetDesiredRotation() const {
 	if (this->CurrentTarget.IsValid()) {
-		return FRotationMatrix::MakeFromX(this->CurrentTarget->GetComponentLocation() - this->GetComponentScale()).Rotator();
+		return FRotationMatrix::MakeFromX(this->CurrentTarget->GetComponentLocation() - this->GetComponentLocation()).Rotator();
 	}
 	else {
 		return Super::GetDesiredRotation();
@@ -68,5 +63,65 @@ FRotator ULockOnCamera::GetDesiredRotation() const {
 }
 
 void ULockOnCamera::LockOn() {
+	if (this->DetectedComponents.Num() > 0) {
+		this->bUsePawnControlRotation = false;
+		if (this->PawnOwner.IsValid()) {
+			this->PawnOwner->bUseControllerRotationYaw = true;
 
+			if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
+				c->GetCharacterMovement()->bOrientRotationToMovement = false;
+			}
+		}
+		this->CurrentTarget = this->DetectedComponents[0];
+	}
+}
+
+void ULockOnCamera::LockOff() {
+	if (this->PawnOwner.IsValid()) {
+		this->PawnOwner->bUseControllerRotationYaw = false;
+
+		if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
+			c->GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+	}
+	this->bUsePawnControlRotation = true;
+	this->CurrentTarget = nullptr;
+}
+
+void ULockOnCamera::Toggle() {
+	if (this->IsLocked()) {
+		this->LockOff();
+	}
+	else {
+		this->LockOn();
+	}
+}
+
+void ULockOnCamera::AddTarget(USceneComponent* Target) {
+	this->DetectedComponents.Add(Target);
+}
+
+void ULockOnCamera::RemoveTarget(USceneComponent* Target) {
+	this->DetectedComponents.Remove(Target);
+
+	if (this->CurrentTarget == Target) {
+		this->LockOff();
+	}
+}
+
+bool ULockOnCamera::IsLocked() {
+	return this->CurrentTarget.IsValid();
+}
+
+AActor* ULockOnCamera::GetLockedActor() {
+	if (this->CurrentTarget.IsValid()) {
+		return this->CurrentTarget->GetOwner();
+	}
+	else {
+		return nullptr;
+	}
+}
+
+USceneComponent* ULockOnCamera::GetLockedComponent() {
+	return this->CurrentTarget.Get();
 }

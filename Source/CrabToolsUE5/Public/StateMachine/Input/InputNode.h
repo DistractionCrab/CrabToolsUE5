@@ -18,30 +18,31 @@ class CRABTOOLSUE5_API UInputNode : public UStateNode
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ProcStateMachine|Input", meta=(AllowPrivateAccess = "true"))
-	class UInputAction* Action;
-
 	// Saved reference to the owner if it is a Pawn.
 	TWeakObjectPtr<APawn> PawnOwner;
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "ProcStateMachine|Input", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* Action;
+
+	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bTrigger = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bStart = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bOngoing = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bCompleted = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bCanceled = false;
 
-	
+	UPROPERTY(BlueprintReadOnly, Category = "ProcStateMachine|Input|Events", meta = (AllowPrivateAccess = "true"))
+	bool bHasStarted = false;
 
 public:
 
@@ -72,6 +73,9 @@ public:
 	void CanceledCallback(const FInputActionValue& Value);
 	virtual void CanceledCallback_Implementation(const FInputActionValue& Value);
 	void CanceledCallback_Internal(const FInputActionValue& Value);
+
+	/* Used only when canceled/completed are not used, but start is. */
+	void FinishedCallback(const FInputActionValue& Value);
 
 	
 

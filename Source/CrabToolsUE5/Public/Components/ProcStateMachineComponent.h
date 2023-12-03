@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "StateMachine/ProcStateMachine.h"
 #include "Delegates/DelegateSignatureImpl.inl"
+#include "Utils/Enums.h"
 #include "ProcStateMachineComponent.generated.h"
 
 
@@ -40,10 +41,10 @@ public:
 	void EventWithData(FName EName, UObject* Data);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta=(ExpandEnumAsExecs="Branches"))
-	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
+	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
+	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);

@@ -62,22 +62,22 @@ void UProcStateMachineComponent::EventWithData(FName EName, UObject* Data) {
 	}
 }
 
-UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ENodeSearchResult& Branches) {
+UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ESearchResult& Branches) {
 	if (this->HasMachine()) {
 		return this->Machine->FindNode(NodeName, Branches);
 	}
 	else {
-		Branches = ENodeSearchResult::NOTFOUND;
+		Branches = ESearchResult::NotFound;
 		return nullptr;
 	}
 }
 
-UStateNode* UProcStateMachineComponent::FindNodeByPath(const FString& Path, ENodeSearchResult& Branches) {
+UStateNode* UProcStateMachineComponent::FindNodeByPath(const FString& Path, ESearchResult& Branches) {
 	if (this->HasMachine()) {
 		return this->Machine->FindNodeByPath(Path, Branches);
 	}
 	else {
-		Branches = ENodeSearchResult::NOTFOUND;
+		Branches = ESearchResult::NotFound;
 		return nullptr;
 	}
 }

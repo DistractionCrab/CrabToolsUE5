@@ -7,6 +7,7 @@
 #include "Delegates/Delegate.h"
 #include "Templates/UniquePtr.h"
 #include "StateChangeListener.h"
+#include "Utils/Enums.h"
 #include "ProcStateMachine.generated.h"
 
 class UStateNode;
@@ -17,13 +18,6 @@ class UNodeTransition;
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
 DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FTransitionDataDelegate, UObject*, Data);
-
-
-UENUM(BlueprintType)
-enum class ENodeSearchResult : uint8 {
-	FOUND          UMETA(DisplayName = "Found"),
-	NOTFOUND       UMETA(DisplayName = "Missing"),
-};
 
 USTRUCT(BlueprintType)
 struct  FTransitionData
@@ -152,8 +146,8 @@ public:
 	 * can be combersome for long paths, so avoid using frequently.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
-	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches);
+	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
+	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
 
 	/*
 	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
@@ -163,8 +157,8 @@ public:
 	 * the array ['C', 'A'] should be passed.
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByArray(const TArray<FString>& Path, ENodeSearchResult& Branches);
-	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches);
+	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
+	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
 	FORCEINLINE bool Active() { return this->bActive; }
 };
@@ -239,15 +233,15 @@ public:
 	void EventWithData(FName EName, UObject* Data);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNode(FName NodeName, ENodeSearchResult& Branches);
+	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))	
-	UStateNode* FindNodeByPath(const FString& Path, ENodeSearchResult& Branches);
-	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ENodeSearchResult& Branches);
+	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
+	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))	
-	UStateNode* FindNodeByArray(const TArray<FString>& Path, ENodeSearchResult& Branches);
-	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ENodeSearchResult& Branches);
+	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
+	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);

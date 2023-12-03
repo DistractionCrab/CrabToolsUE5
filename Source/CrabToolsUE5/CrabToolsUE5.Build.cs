@@ -25,6 +25,7 @@ public class CrabToolsUE5 : ModuleRules
 			{
 				"Core",
 				"EnhancedInput",
+				"UMG",
 				// ... add other public dependencies that you statically link with here ...
 			});
 			
@@ -32,6 +33,7 @@ public class CrabToolsUE5 : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
 				"CoreUObject",
 				"Engine",
 				// ... add private dependencies that you statically link with here ...	
