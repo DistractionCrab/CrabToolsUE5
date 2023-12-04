@@ -6,8 +6,6 @@
 #include "RPGComponent.generated.h"
 
 
-
-
 UINTERFACE(MinimalAPI, Blueprintable)
 class UStatusInterface : public UInterface
 {
@@ -21,37 +19,45 @@ class IStatusInterface
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
 	void Tick(float DeltaTime);
-	void Tick_Implementation(float DeltaTime) {}
+	virtual void Tick_Implementation(float DeltaTime) {}
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
 	void Apply(URPGComponent* Comp);
-	void Apply_Implementation(URPGComponent* Comp) {}
+	virtual void Apply_Implementation(URPGComponent* Comp) {}
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
 	void Remove(URPGComponent* Comp);
-	void Remove_Implementation(URPGComponent* Comp) {}
+	virtual void Remove_Implementation(URPGComponent* Comp) {}
 };
 
 #pragma region Integer Attributes
 
-UINTERFACE(MinimalAPI, Blueprintable)
-class UIntOperatorInterface : public UInterface
-{
-	GENERATED_BODY()
-};
 
-class IIntOperatorInterface
+UCLASS(Blueprintable, DefaultToInstanced, CollapseCategories, EditInlineNew)
+class CRABTOOLSUE5_API UIntOperator: public UObject
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess=true))
+	int Priority;
+
+	URPGComponent* Owner;
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Attributes")
-	int Operate(int Value);
-	int Operate_Implementation(int Value) { return Value; }
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Attributes")
-	int Priority();
-	int Priority_Implementation() { return 0; }
+	UFUNCTION(BlueprintNativeEvent, Category = "RPG|Operators")
+	int Operate(int Value);
+	virtual int Operate_Implementation(int Value) { return Value; }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "RPG|Operators")
+	void Initialize();
+	virtual void Initialize_Implementation() {  }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "RPG|Operators")
+	URPGComponent* GetOwner() const { return this->Owner; }
+	void SetOwner(URPGComponent* UOwner) { this->Owner = UOwner; }
+
+	int GetPriority() const { return this->Priority; }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FIntAttributeObserver, int, Value, int, Min, int, Max);
@@ -72,7 +78,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta=(GetOptions="GetIntAttributeNames", AllowPrivateAccess = true))
 	FName MinAttribute;
 
-	TArray<TWeakObjectPtr<UObject>> Operators;
+	UPROPERTY(EditAnywhere, Instanced, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
+	TArray<UIntOperator*> Operators;
 
 	FIntAttribute* MaxRef;
 	FIntAttribute* MinRef;
@@ -87,7 +94,8 @@ public:
 	int GetMax();
 	int GetMin();
 	void Initialize(URPGComponent* Comp);
-	void Operate(UObject* Operator);
+	void Attach(URPGComponent* Comp);
+	void Operate(UIntOperator* Operator);
 	void Refresh();
 
 };
@@ -110,11 +118,11 @@ class IFloatOperatorInterface
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Attributes")
 	float Operate(float Value);
-	float Operate_Implementation(int Value) { return Value; }
+	virtual float Operate_Implementation(int Value) { return Value; }
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Attributes")
 	int Priority();
-	int Priority_Implementation() { return 0; }
+	virtual int Priority_Implementation() { return 0; }
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFloatAttributeObserver, int, Value, int, Min, int, Max);
@@ -190,12 +198,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "RPG")
 	void ObserveFloatAttribute(FName Key, const FFloatAttributeCallback& Callback);
 
+	UFUNCTION(BlueprintCallable, Category = "RPG")
+	void AddIntOperator(FName Attribute, UIntOperator* Op);
+
 	UFUNCTION()
 	TArray<FString> GetIntAttributeNames() const;
 
 	UFUNCTION()
 	TArray<FString> GetFloatAttributeNames() const;
 
+	UFUNCTION()
+	int IntPassThrough(int Value) { return Value; }
+
 	FIntAttribute* GetIntAttribute(FName Key) const;
 	FFloatAttribute* GetFloatAttribute(FName Key) const;
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& e) override;
+	virtual void PostLoad() override;
 };

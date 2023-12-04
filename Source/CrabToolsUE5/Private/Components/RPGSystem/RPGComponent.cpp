@@ -86,6 +86,25 @@ void URPGComponent::SetFloatAttributeValue(FName Key, float Value) {
 	}
 }
 
+void URPGComponent::AddIntOperator(FName Attribute, UIntOperator* Op) {
+	Op->SetOwner(this);
+	if (this->IntAttributes.Contains(Attribute)) {
+		this->IntAttributes[Attribute].Operate(Op);
+	}
+}
+
+void URPGComponent::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
+	
+}
+
+void URPGComponent::PostLoad() {
+	Super::PostLoad();
+	UE_LOG(LogTemp, Warning, TEXT("Loading in a class: %s?"), *this->GetReadableName());
+	if (this->GetOwner()) {
+		UE_LOG(LogTemp, Warning, TEXT("Had an Owner"));
+	}
+}
+
 #pragma endregion
 
 #pragma region Integer Attributes
@@ -128,11 +147,16 @@ void FIntAttribute::Initialize(URPGComponent* Comp) {
 	this->Refresh();
 }
 
-void FIntAttribute::Operate(UObject* Operator) {
-	if (Operator && Operator->GetClass()->ImplementsInterface(UIntOperatorInterface::StaticClass())) {
-		this->Operators.Add(Operator);
-		this->Refresh();
+void FIntAttribute::Attach(URPGComponent* Comp) {
+	for (auto& Op : this->Operators) {
+		Op->SetOwner(Comp);
 	}
+}
+
+void FIntAttribute::Operate(UIntOperator* Operator) {
+	this->Operators.Add(Operator);
+	this->Operators.Sort([](const UIntOperator& A, const UIntOperator& B) { return A.GetPriority() > B.GetPriority(); });
+	this->Refresh();
 }
 
 void FIntAttribute::Refresh() {
@@ -141,7 +165,7 @@ void FIntAttribute::Refresh() {
 	int Min = this->GetMin();
 
 	for (auto& Op : this->Operators) {
-		Base = IIntOperatorInterface::Execute_Operate(Op.Get(), Base);
+		Base = Op->Operate(Base);
 		Base = FMath::Clamp(Base, Min, Max);
 	}
 
@@ -154,6 +178,8 @@ void FIntAttribute::SetBase(int Value) {
 	this->BaseValue = FMath::Clamp(Value, this->GetMin(), this->GetMax());
 	this->Refresh();
 }
+
+
 
 #pragma endregion
 
