@@ -20,7 +20,7 @@ private:
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UtilityStructures")
-	float Time;
+	float Time = 0.0;
 
 
 public:

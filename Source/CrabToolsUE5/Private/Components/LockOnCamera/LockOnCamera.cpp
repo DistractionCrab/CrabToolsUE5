@@ -18,6 +18,7 @@ ULockOnCamera::ULockOnCamera(const FObjectInitializer& ObjectInitializer): Super
 }
 
 void ULockOnCamera::BeginPlay() {
+	Super::BeginPlay();
 	APawn* POwner = Cast<APawn>(this->GetOwner());
 
 	if (POwner) {

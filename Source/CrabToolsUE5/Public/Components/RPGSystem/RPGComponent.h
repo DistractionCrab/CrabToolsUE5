@@ -30,6 +30,7 @@ public:
 	virtual void Remove_Implementation(URPGComponent* Comp) {}
 };
 
+
 #pragma region Integer Attributes
 
 
@@ -53,153 +54,188 @@ public:
 	void Initialize();
 	virtual void Initialize_Implementation() {  }
 
-	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "RPG|Operators")
-	URPGComponent* GetOwner() const { return this->Owner; }
-	void SetOwner(URPGComponent* UOwner) { this->Owner = UOwner; }
 
 	int GetPriority() const { return this->Priority; }
+
+	void SetOwner(URPGComponent* UOwner) { this->Owner = UOwner; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="RPG|Operators")
+	URPGComponent* GetOwner() const { return this->Owner; }
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FIntAttributeObserver, int, Value, int, Min, int, Max);
-DECLARE_DYNAMIC_DELEGATE_ThreeParams(FIntAttributeCallback, int, Value, int, Min, int, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FIntAttributeObserver, int, Value);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FIntAttributeCallback, int, Value);
 
 USTRUCT(BlueprintType)
-struct FIntAttribute
+struct CRABTOOLSUE5_API FIntAttribute 
 {
 	GENERATED_USTRUCT_BODY()
 
-private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta=(AllowPrivateAccess=true))
-	int BaseValue;
-	// Computed value after applying operators.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="RPG|Attributes", meta=(AllowPrivateAccess=true))
+	int BaseValue = 0;
 	int CompValue;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta=(GetOptions="GetIntAttributeNames", AllowPrivateAccess = true))
-	FName MaxAttribute;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta=(GetOptions="GetIntAttributeNames", AllowPrivateAccess = true))
-	FName MinAttribute;
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
+	URPGComponent* Owner;
+
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
 	TArray<UIntOperator*> Operators;
 
-	FIntAttribute* MaxRef;
-	FIntAttribute* MinRef;
-
 public:
-	FIntAttributeObserver OnChangedEvent;
+	FIntAttributeObserver IntChangedEvent;
 
-public:
-	int GetValue();
-	void SetBase(int Value);
-	int GetBase();
-	int GetMax();
-	int GetMin();
-	void Initialize(URPGComponent* Comp);
-	void Attach(URPGComponent* Comp);
-	void Operate(UIntOperator* Operator);
+	int GetValue() const;
+	void Operate(UIntOperator* Op);
+	void UnOperate(UIntOperator* Op);
+	void SetOwner(URPGComponent* UOwner);
+	void Initialize(URPGComponent* UOwner);
 	void Refresh();
-
 };
-
-#pragma endregion
-
-#pragma region Float Attributes
-
-
-UINTERFACE(MinimalAPI, Blueprintable)
-class UFloatOperatorInterface : public UInterface
-{
-	GENERATED_BODY()
-};
-
-class IFloatOperatorInterface
-{
-	GENERATED_BODY()
-
-public:
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Attributes")
-	float Operate(float Value);
-	virtual float Operate_Implementation(int Value) { return Value; }
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Attributes")
-	int Priority();
-	virtual int Priority_Implementation() { return 0; }
-};
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFloatAttributeObserver, int, Value, int, Min, int, Max);
-DECLARE_DYNAMIC_DELEGATE_ThreeParams(FFloatAttributeCallback, int, Value, int, Min, int, Max);
 
 USTRUCT(BlueprintType)
-struct FFloatAttribute
+struct CRABTOOLSUE5_API FIntResource
 {
 	GENERATED_USTRUCT_BODY()
 
-private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
-	float BaseValue;
-	// Computed value after applying operators.
-	float CompValue;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (GetOptions = "GetFloatAttributeNames", AllowPrivateAccess = true))
-	FName MaxAttribute;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (GetOptions = "GetFloatAttributeNames", AllowPrivateAccess = true))
+	int Value = 0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true, GetOptions = "GetIntAttributeNames"))
 	FName MinAttribute;
+	FIntAttribute* MinAttributeRef;
 
-	TArray<TWeakObjectPtr<UObject>> Operators;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true, GetOptions="GetIntAttributeNames"))
+	FName MaxAttribute;
+	FIntAttribute* MaxAttributeRef;
 
-	FFloatAttribute* MaxRef;
-	FFloatAttribute* MinRef;
+	URPGComponent* Owner;
+
 
 public:
-	FFloatAttributeObserver OnChangedEvent;
+	FIntAttributeObserver IntChangedEvent;
 
-public:
-	float GetValue();
-	void SetBase(float Value);
-	float GetBase();
-	float GetMax();
-	float GetMin();
-	void Initialize(URPGComponent* Comp);
-	void Operate(UObject* Operator);
+	int GetValue() const { return this->Value; }
+	void SetValue(int UValue);
+	void SetOwner(URPGComponent* UOwner);
+	void Initialize(URPGComponent* UOwner);
 	void Refresh();
 
+	int GetMax();
+	int GetMin();
 };
 
 #pragma endregion
 
+#pragma region Float Attributes & Resources
+
+
+UCLASS(Blueprintable, DefaultToInstanced, CollapseCategories, EditInlineNew)
+class CRABTOOLSUE5_API UFloatOperator : public UObject
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+	int Priority;
+
+	URPGComponent* Owner;
+
+public:
+
+	UFUNCTION(BlueprintNativeEvent, Category = "RPG|Operators")
+	float Operate(float Value);
+	virtual float Operate_Implementation(float Value) { return Value; }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "RPG|Operators")
+	void Initialize();
+	virtual void Initialize_Implementation() {  }
+
+
+	int GetPriority() const { return this->Priority; }
+
+	void SetOwner(URPGComponent* UOwner) { this->Owner = UOwner; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "RPG|Operators")
+	URPGComponent* GetOwner() const { return this->Owner; }
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFloatAttributeObserver, float, Value);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FFloatAttributeCallback, float, Value);
+
+USTRUCT(BlueprintType)
+struct CRABTOOLSUE5_API FFloatAttribute
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
+	float BaseValue = 0;
+	float CompValue;
+
+	URPGComponent* Owner;
+
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
+	TArray<UFloatOperator*> Operators;
+
+public:
+	FFloatAttributeObserver FloatChangedEvent;
+
+	float GetValue() const;
+	void Operate(UFloatOperator* Op);
+	void UnOperate(UFloatOperator* Op);
+	void SetOwner(URPGComponent* UOwner);
+	void Initialize(URPGComponent* UOwner);
+	void Refresh();
+};
+
+USTRUCT(BlueprintType)
+struct CRABTOOLSUE5_API FFloatResource
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
+	float Value = 0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true, GetOptions = "GetFloatAttributeNames"))
+	FName MinAttribute;
+	FFloatAttribute* MinAttributeRef;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true, GetOptions = "GetFloatAttributeNames"))
+	FName MaxAttribute;
+	FFloatAttribute* MaxAttributeRef;
+
+	URPGComponent* Owner;
+
+
+public:
+	FFloatAttributeObserver FloatChangedEvent;
+
+	float GetValue() const { return this->Value; }
+	void SetValue(float UValue);
+	void SetOwner(URPGComponent* UOwner);
+	void Initialize(URPGComponent* UOwner);
+	void Refresh();
+
+	float GetMax();
+	float GetMin();
+};
+
+#pragma endregion
 
 UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CRABTOOLSUE5_API URPGComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "RPG", meta = (AllowPrivateAccess = "true"))
-	TMap<FName, FIntAttribute> IntAttributes;
-
-	UPROPERTY(EditAnywhere, Category = "RPG", meta = (AllowPrivateAccess = "true"))
-	TMap<FName, FFloatAttribute> FloatAttributes;
-
 	TArray<TWeakObjectPtr<UObject>> Statuses;
+
+public:
+	URPGComponent(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void InitializeComponent() override;
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "RPG")
-	int GetIntAttributeValue(FName Key);
-	UFUNCTION(BlueprintCallable, Category = "RPG")
-	void SetIntAttributeValue(FName Key, int Value);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "RPG")
-	float GetFloatAttributeValue(FName Key);
-	UFUNCTION(BlueprintCallable, Category = "RPG")
-	void SetFloatAttributeValue(FName Key, float Value);
-
-	UFUNCTION(BlueprintCallable, Category="RPG")
-	void ObserveIntAttribute(FName Key, const FIntAttributeCallback& Callback);
-	UFUNCTION(BlueprintCallable, Category = "RPG")
-	void ObserveFloatAttribute(FName Key, const FFloatAttributeCallback& Callback);
-
-	UFUNCTION(BlueprintCallable, Category = "RPG")
-	void AddIntOperator(FName Attribute, UIntOperator* Op);
+	UFUNCTION()
+	int IntPassThrough(int Value) { return Value; }
 
 	UFUNCTION()
 	TArray<FString> GetIntAttributeNames() const;
@@ -207,11 +243,7 @@ public:
 	UFUNCTION()
 	TArray<FString> GetFloatAttributeNames() const;
 
-	UFUNCTION()
-	int IntPassThrough(int Value) { return Value; }
-
-	FIntAttribute* GetIntAttribute(FName Key) const;
-	FFloatAttribute* GetFloatAttribute(FName Key) const;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& e) override;
 	virtual void PostLoad() override;
+	void Validate();
 };
