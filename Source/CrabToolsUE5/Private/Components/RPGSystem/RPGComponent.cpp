@@ -27,6 +27,16 @@ void URPGComponent::InitializeComponent() {
 			Value->SetOwner(this);
 			Value->Initialize(this);
 		}
+		else if (f->Struct == FFloatAttribute::StaticStruct()) {
+			auto Value = f->ContainerPtrToValuePtr<FFloatAttribute>(this);
+			Value->SetOwner(this);
+			Value->Initialize(this);
+		}
+		else if (f->Struct == FFloatResource::StaticStruct()) {
+			auto Value = f->ContainerPtrToValuePtr<FFloatResource>(this);
+			Value->SetOwner(this);
+			Value->Initialize(this);
+		}
 	}
 }
 
@@ -76,6 +86,14 @@ void URPGComponent::Validate() {
 		}
 		else if (f->Struct == FIntResource::StaticStruct()) {
 			auto Value = f->ContainerPtrToValuePtr<FIntResource>(this);
+			Value->SetOwner(this);
+		}
+		else if (f->Struct == FFloatAttribute::StaticStruct()) {
+			auto Value = f->ContainerPtrToValuePtr<FFloatAttribute>(this);
+			Value->SetOwner(this);
+		}
+		else if (f->Struct == FFloatResource::StaticStruct()) {
+			auto Value = f->ContainerPtrToValuePtr<FFloatResource>(this);
 			Value->SetOwner(this);
 		}
 	}
