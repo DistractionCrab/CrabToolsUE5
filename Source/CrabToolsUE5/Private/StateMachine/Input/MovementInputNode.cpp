@@ -26,7 +26,7 @@ void UMovementInputNode::ApplyMovement_Implementation(FVector2D InputAxis) {
 
 	FRotator Rotation;
 
-	if (this->Perspective.IsValid() && Perspective->IsBound()) {
+	if (this->Perspective.IsValid()) {
 		Rotation = Perspective->GetPerspective();
 	}
 	else {
@@ -39,8 +39,6 @@ void UMovementInputNode::ApplyMovement_Implementation(FVector2D InputAxis) {
 
 	// get right vector 
 	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-	this->RecentInputAxis = FVector2D(InputAxis.X, InputAxis.Y);
 
 	// add movement 
 	Pawn->AddMovementInput(ForwardDirection, InputAxis.Y);

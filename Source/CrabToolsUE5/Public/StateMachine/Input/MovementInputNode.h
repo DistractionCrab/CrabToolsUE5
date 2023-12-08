@@ -21,12 +21,6 @@ class CRABTOOLSUE5_API UMovementInputNode : public UInputNode
 	// Possible perspective of the owning pawn.
 	TWeakObjectPtr<UPerspectiveManager> Perspective;
 
-	/* Most recent input axis used for movement. Includes orientation transformations. */
-	UPROPERTY(BlueprintReadOnly, Category="Input", meta=(AllowPrivateAccess=true))
-	FVector2D RecentInputAxis;
-	
-
-
 public:
 
 	UMovementInputNode();

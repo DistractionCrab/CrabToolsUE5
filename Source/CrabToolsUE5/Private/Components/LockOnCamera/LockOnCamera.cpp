@@ -29,7 +29,7 @@ void ULockOnCamera::BeginPlay() {
 void ULockOnCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (this->CurrentTarget.IsValid() && this->PawnOwner.IsValid() && this->bForcePawnRotation) {
+	if (this->CurrentTarget.IsValid() && this->PawnOwner.IsValid()) {
 		auto CharRot = this->GetDesiredRotation();
 		this->PawnOwner->GetController()->SetControlRotation(CharRot);
 	}
@@ -66,11 +66,13 @@ FRotator ULockOnCamera::GetDesiredRotation() const {
 void ULockOnCamera::LockOn() {
 	if (this->DetectedComponents.Num() > 0) {
 		this->bUsePawnControlRotation = false;
-		if (this->PawnOwner.IsValid()) {
-			this->PawnOwner->bUseControllerRotationYaw = true;
+		if (this->PawnOwner.IsValid()) {		
 
-			if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
-				c->GetCharacterMovement()->bOrientRotationToMovement = false;
+			if (this->bForcePawnRotation) {
+				this->PawnOwner->bUseControllerRotationYaw = true;
+				if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
+					c->GetCharacterMovement()->bOrientRotationToMovement = false;
+				}			
 			}
 		}
 		this->CurrentTarget = this->DetectedComponents[0];
@@ -125,4 +127,14 @@ AActor* ULockOnCamera::GetLockedActor() {
 
 USceneComponent* ULockOnCamera::GetLockedComponent() {
 	return this->CurrentTarget.Get();
+}
+
+FRotator ULockOnCamera::GetLookRotation() {
+	if (this->CurrentTarget.IsValid()) {
+		return FRotationMatrix::MakeFromX(this->CurrentTarget->GetComponentLocation() - this->GetComponentLocation()).Rotator();
+	}
+	else {
+		return FRotator::ZeroRotator;
+	}
+	
 }

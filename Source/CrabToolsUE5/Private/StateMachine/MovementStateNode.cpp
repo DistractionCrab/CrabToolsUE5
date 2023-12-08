@@ -27,12 +27,13 @@ void UMovementStateNode::ApplyMovement_Implementation() {
 
 	FRotator Rotation;
 
-	if (this->Perspective.IsValid() && Perspective->IsBound()) {
+	if (this->Perspective.IsValid()) {
 		Rotation = Perspective->GetPerspective();
 	}
 	else {
 		Rotation = this->PawnOwner->Controller->GetControlRotation();
 	}
+
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 	// get forward vector

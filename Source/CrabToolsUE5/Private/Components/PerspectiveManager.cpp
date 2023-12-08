@@ -18,6 +18,9 @@ UPerspectiveManager::UPerspectiveManager()
 void UPerspectiveManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	this->PawnOwner = Cast<APawn>(this->GetOwner());
+	this->Target.SetSubtype<TWeakObjectPtr<AActor>>();
 }
 
 
@@ -26,80 +29,116 @@ void UPerspectiveManager::TickComponent(float DeltaTime, ELevelTick TickType, FA
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	this->CurrentInterpolation += DeltaTime;
+
+	if (this->InterpolationTime <= 0.0f || this->CurrentInterpolation >= this->InterpolationTime) {
+		this->CurrentRotation = this->GetRotation();
+	}
+	else {
+
+		float Alpha = FMath::Min(this->CurrentInterpolation / this->InterpolationTime, 1.0);
+		this->CurrentRotation =  FMath::Lerp(this->OldRotation, this->GetRotation(), Alpha);
+	}
 }
 
 void UPerspectiveManager::ResetPerspective() { 
-	this->PerspectiveCopy = nullptr;
-	this->PerspectiveCopyComponent = nullptr;
+	this->Target.SetSubtype<TWeakObjectPtr<AActor>>();
+	this->Target.GetSubtype<TWeakObjectPtr<AActor>>() = nullptr;
 }
 
-bool UPerspectiveManager::IsBound() { 
-	return this->PerspectiveCopy != nullptr || this->PerspectiveCopyComponent != nullptr;  
+
+FRotator UPerspectiveManager::GetPerspective() {	
+	return this->CurrentRotation;
 }
 
-FRotator UPerspectiveManager::GetBasePerspective() {
-	if (!this->DefaultPerspective.IsValid()) {
-		AActor* Owner = this->GetOwner();
+void UPerspectiveManager::SetPerspective(AActor* PCopy) {
+	this->CurrentInterpolation = 0;
+	this->OldRotation = this->CurrentRotation;
+	this->Target.SetSubtype<TWeakObjectPtr<AActor>>();
+	this->Target.GetSubtype<TWeakObjectPtr<AActor>>() = PCopy;
+}
 
-		if (Owner == nullptr) {
-			return FRotator();
+void UPerspectiveManager::SetPerspectiveComponent(USceneComponent* PCopy) {
+	this->CurrentInterpolation = 0;
+	this->OldRotation = this->CurrentRotation;
+	this->Target.SetSubtype<TWeakObjectPtr<USceneComponent>>();
+	this->Target.GetSubtype<TWeakObjectPtr<USceneComponent>>() = PCopy;
+}
+
+void UPerspectiveManager::InvertPerspective() {
+	this->Invert = !this->Invert;
+}
+
+FVector UPerspectiveManager::GetSourcePosition() {
+	if (this->PawnOwner) {
+		return this->PawnOwner->GetActorLocation();
+	}
+	else if (AActor* Owner = this->GetOwner()) {
+		return Owner->GetActorLocation();
+	}
+	else {
+		return FVector::ZeroVector;
+	}	
+}
+
+FVector UPerspectiveManager::GetTargetPosition() {
+	if (this->Target.GetCurrentSubtypeIndex() == 0) {
+		auto R = this->Target.GetSubtype<TWeakObjectPtr<AActor>>();
+
+		if (R.IsValid()) {
+			return R->GetActorLocation();
 		}
 		else {
-			APawn* Check = Cast<APawn>(Owner);
-			if (Check == nullptr) {
-				return Owner->GetActorRotation();	
-			} 
-			else 
-			{
-				return Check->Controller->GetControlRotation();
-			}
-			
+			return FVector::ZeroVector;
 		}
 	}
 	else {
-		return this->DefaultPerspective->GetActorRotation();
+		auto R = this->Target.GetSubtype<TWeakObjectPtr<USceneComponent>>();
+
+		if (R.IsValid()) {
+			return R->GetComponentLocation();
+		}
+		else {
+			return FVector::ZeroVector;
+		}
 	}
+
 }
 
-FRotator UPerspectiveManager::GetPerspective() {
-	
-	if (this->PerspectiveCopyComponent.IsValid()) {
-		FRotator Base = this->GetBasePerspective();
-		FRotator Goal = this->PerspectiveCopyComponent->GetComponentRotation();
-
-		if (this->InterpolationTime == 0.0f) {
-			return Goal;
+FRotator UPerspectiveManager::GetRotation() {
+	if (this->HasTarget()) {
+		if (this->Invert) {
+			return FRotationMatrix::MakeFromX(this->GetSourcePosition() - this->GetTargetPosition()).Rotator();
 		}
 		else {
-
-			float Alpha = FMath::Min(this->CurrentInterpolation / this->InterpolationTime, 1.0);
-			return FMath::Lerp(Base, Goal, Alpha);
+			return FRotationMatrix::MakeFromX(this->GetTargetPosition() - this->GetSourcePosition()).Rotator();
 		}		
-	}
-	else if (this->PerspectiveCopy.IsValid()) {
-		FRotator Base = this->GetBasePerspective();
-		FRotator Goal = this->PerspectiveCopy->GetActorRotation();
-
-		if (this->InterpolationTime == 0.0f) {
-			return Goal;
-		}
-		else {
-
-			float Alpha = FMath::Min(this->CurrentInterpolation / this->InterpolationTime, 1.0);
-			return FMath::Lerp(Base, Goal, Alpha);
-		}		
-	}
-	else if (this->DefaultPerspective.IsValid()) {
-		return this->DefaultPerspective->GetActorRotation();
 	}
 	else {
-		AActor* Owner = this->GetOwner();
+		return this->GetSourceRotation();
+	}	
+}
 
-		if (Owner == nullptr) {
-			return FRotator();
-		}
-		else {
+FRotator UPerspectiveManager::GetSourceRotation() {
+	if (this->PawnOwner) {
+		return this->PawnOwner->GetController()->GetControlRotation();
+	}
+	else {
+		if (AActor* Owner = this->GetOwner()) {
 			return Owner->GetActorRotation();
 		}
+		else {
+			return FRotator::ZeroRotator;
+		}		
+	}
+}
+
+bool UPerspectiveManager::HasTarget() {
+	if (this->Target.GetCurrentSubtypeIndex() == 0) {
+		auto R = this->Target.GetSubtype<TWeakObjectPtr<AActor>>();
+		return R.IsValid();
+	}
+	else {
+		auto R = this->Target.GetSubtype<TWeakObjectPtr<USceneComponent>>();
+		return R.IsValid();		
 	}
 }

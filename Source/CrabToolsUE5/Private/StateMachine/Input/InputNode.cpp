@@ -72,6 +72,7 @@ void UInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
 void UInputNode::TriggerCallback_Implementation(const FInputActionValue& Value) {}
 
 void UInputNode::TriggerCallback_Internal(const FInputActionValue& Value) {
+	this->RecentValue = Value;
 	if (this->Active()) {
 		this->TriggerCallback(Value);
 	}
@@ -82,6 +83,7 @@ void UInputNode::StartCallback_Implementation(const FInputActionValue& Value) {}
 
 void UInputNode::StartCallback_Internal(const FInputActionValue& Value) {
 	this->bHasStarted = true;
+	this->RecentValue = Value;
 	if (this->Active()) {
 		this->StartCallback(Value);
 	}
@@ -91,6 +93,7 @@ void UInputNode::OngoingCallback_Implementation(const FInputActionValue& Value) 
 
 void UInputNode::OngoingCallback_Internal(const FInputActionValue& Value) {
 	this->bHasStarted = false;
+	this->RecentValue = Value;
 	if (this->Active()) {
 		this->OngoingCallback(Value);
 	}
@@ -100,6 +103,7 @@ void UInputNode::CompletedCallback_Implementation(const FInputActionValue& Value
 
 void UInputNode::CompletedCallback_Internal(const FInputActionValue& Value) {
 	this->bHasStarted = false;
+	this->RecentValue = Value;
 	if (this->Active()) {
 		this->CompletedCallback(Value);
 	}
@@ -108,6 +112,7 @@ void UInputNode::CompletedCallback_Internal(const FInputActionValue& Value) {
 void UInputNode::CanceledCallback_Implementation(const FInputActionValue& Value) {}
 
 void UInputNode::CanceledCallback_Internal(const FInputActionValue& Value) {
+	this->RecentValue = Value;
 	if (this->Active()) {
 		this->CanceledCallback(Value);
 	}
@@ -115,4 +120,9 @@ void UInputNode::CanceledCallback_Internal(const FInputActionValue& Value) {
 
 void UInputNode::FinishedCallback(const FInputActionValue& Value) {
 	this->bHasStarted = false;
+	this->RecentValue = Value;
+}
+
+FVector2D UInputNode::GetVec2D() {
+	return this->RecentValue.Get<FVector2D>();
 }

@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "Components/SceneComponent.h"
 #include "UObject/WeakObjectPtrTemplates.h"
-#include "Delegates/DelegateSignatureImpl.inl"
+#include "Containers/Union.h"
 #include "PerspectiveManager.generated.h"
 
 
@@ -16,19 +16,17 @@ class CRABTOOLSUE5_API UPerspectiveManager : public UActorComponent
 	GENERATED_BODY()
 
 	/* The amount of time it should take until interpolation from the old perspective to the new perspective should take.*/
-	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "PerspectiveManager", meta = (AllowPrivateAccess = "true"))
 	float InterpolationTime;
 
 	float CurrentInterpolation = 0;
 
-	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<AActor> DefaultPerspective;
 
-	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<AActor> PerspectiveCopy;
-
-	UPROPERTY(EditAnywhere, Category = "Perspective Manager", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<USceneComponent> PerspectiveCopyComponent;
+	TUnion<TWeakObjectPtr<AActor>, TWeakObjectPtr<USceneComponent>> Target;
+	APawn* PawnOwner;
+	FRotator OldRotation;
+	FRotator CurrentRotation;
+	bool Invert = false;
 
 public:	
 	// Sets default values for this component's properties
@@ -42,27 +40,29 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PerspectiveManager")
 	FRotator GetPerspective();
-	FRotator GetBasePerspective();
 
-	UFUNCTION(BlueprintCallable, Category = "Perspective Manager")
-	void SetPerspective(AActor* PCopy) { 
-		this->PerspectiveCopy = PCopy; 
-		this->CurrentInterpolation = 0;
-	}
+	UFUNCTION(BlueprintCallable, Category = "PerspectiveManager")
+	void SetPerspective(AActor* PCopy);
 
-	UFUNCTION(BlueprintCallable, Category = "Perspective Manager")
-	void SetPerspectiveComponent(USceneComponent* PCopy) { 
-		this->PerspectiveCopyComponent = PCopy; 
-		this->CurrentInterpolation = 0;
-	}
+	UFUNCTION(BlueprintCallable, Category = "PerspectiveManager")
+	void SetPerspectiveComponent(USceneComponent* PCopy);
 
-	UFUNCTION(BlueprintCallable, Category = "Perspective Manager")
-	void SetDefaultPerspective(AActor* PCopy) { this->DefaultPerspective = PCopy; }
+	UFUNCTION(BlueprintCallable, Category = "PerspectiveManager")
+	void InvertPerspective();
 
-	UFUNCTION(BlueprintCallable, Category = "Perspective Manager")
+
+	UFUNCTION(BlueprintCallable, Category = "PerspectiveManager")
 	void ResetPerspective();
 
-	UFUNCTION(BlueprintCallable, Category = "Perspective Manager")
-	bool IsBound();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PerspectiveManager")
+	bool HasTarget();
+
+	FRotator GetSourceRotation();
+	FVector GetSourcePosition();
+	FVector GetTargetPosition();
+	FRotator GetRotation();
+
+	
 };

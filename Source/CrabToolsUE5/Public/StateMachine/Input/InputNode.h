@@ -44,41 +44,44 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "ProcStateMachine|Input|Events", meta = (AllowPrivateAccess = "true"))
 	bool bHasStarted = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "ProcStateMachine|Input|Events", meta = (AllowPrivateAccess = "true"))
+	FInputActionValue RecentValue;
+
 public:
 
 	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
 	
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
 	void TriggerCallback(const FInputActionValue& Value);
 	virtual void TriggerCallback_Implementation(const FInputActionValue& Value);
 	void TriggerCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
 	void StartCallback(const FInputActionValue& Value);
 	virtual void StartCallback_Implementation(const FInputActionValue& Value);
 	void StartCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
 	void OngoingCallback(const FInputActionValue& Value);
 	virtual void OngoingCallback_Implementation(const FInputActionValue& Value);
 	void OngoingCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
 	void CompletedCallback(const FInputActionValue& Value);
 	virtual void CompletedCallback_Implementation(const FInputActionValue& Value);
 	void CompletedCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
 	void CanceledCallback(const FInputActionValue& Value);
 	virtual void CanceledCallback_Implementation(const FInputActionValue& Value);
 	void CanceledCallback_Internal(const FInputActionValue& Value);
 
 	/* Used only when canceled/completed are not used, but start is. */
 	void FinishedCallback(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine|Input")
+	FVector2D GetVec2D();
 
-	
-
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine|Input")
 	APawn* GetPawn() { return this->PawnOwner.Get();  }
 };

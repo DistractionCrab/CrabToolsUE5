@@ -80,4 +80,7 @@ private:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "LockOnCamera")
 	USceneComponent* GetLockedComponent();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "LockOnCamera")
+	FRotator GetLookRotation();
 };
