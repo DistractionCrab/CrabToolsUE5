@@ -13,7 +13,7 @@
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(Blueprintable, EditInlineNew, DontCollapseCategories)
 class CRABTOOLSUE5_API UInputNode : public UStateNode
 {
 	GENERATED_BODY()
@@ -23,28 +23,28 @@ class CRABTOOLSUE5_API UInputNode : public UStateNode
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category = "ProcStateMachine|Input", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* Action;
 
-	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bTrigger = false;
 
-	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bStart = false;
 
-	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bOngoing = false;
 
-	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bCompleted = false;
 
-	UPROPERTY(EditDefaultsOnly, Category="ProcStateMachine|Input|Events", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category="Input|Events", meta=(AllowPrivateAccess = "true"))
 	bool bCanceled = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ProcStateMachine|Input|Events", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Input|Events", meta = (AllowPrivateAccess = "true"))
 	bool bHasStarted = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ProcStateMachine|Input|Events", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Input|Events", meta = (AllowPrivateAccess = "true"))
 	FInputActionValue RecentValue;
 
 public:
@@ -79,7 +79,8 @@ public:
 
 	/* Used only when canceled/completed are not used, but start is. */
 	void FinishedCallback(const FInputActionValue& Value);
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine|Input")
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine|Input")
 	FVector2D GetVec2D();
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine|Input")

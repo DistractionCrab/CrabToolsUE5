@@ -8,6 +8,7 @@
 #include "Templates/UniquePtr.h"
 #include "StateChangeListener.h"
 #include "Utils/Enums.h"
+#include "UObject/ObjectPtr.h"
 #include "ProcStateMachine.generated.h"
 
 class UStateNode;
@@ -46,7 +47,7 @@ public:
 	//UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
 	//TSubclassOf<UStateNode> NodeClass;
 	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
-	UStateNode* Node;
+	TObjectPtr<UStateNode> Node;
 	// Map from Event Name to StateName
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
 	TMap<FName, FTransitionData> Transitions;
@@ -74,7 +75,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
 
-	UProcStateMachine* Owner;
+	TObjectPtr<UProcStateMachine> Owner;
 	bool bActive = false;
 
 public:
@@ -206,7 +207,7 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 
 	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
-	AActor* Owner;
+	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
 	void RebindConditions();	
@@ -217,7 +218,7 @@ public:
 	void Initialize(AActor* POwner);
 
 	virtual void Initialize_Implementation(AActor* POwner);
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	AActor* GetOwner();
 
 	/* 

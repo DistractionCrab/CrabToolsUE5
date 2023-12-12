@@ -5,10 +5,8 @@
 #pragma region Component Code
 URPGComponent::URPGComponent(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer) {
 	this->bWantsInitializeComponent = true;
-}
-
-void URPGComponent::BeginPlay() {
-	Super::BeginPlay();
+	this->bAutoActivate = true;
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 void URPGComponent::InitializeComponent() {
@@ -36,6 +34,22 @@ void URPGComponent::InitializeComponent() {
 			auto Value = f->ContainerPtrToValuePtr<FFloatResource>(this);
 			Value->SetOwner(this);
 			Value->Initialize(this);
+		}
+	}
+
+	for (auto& Status : this->Statuses) {
+		if (Status) {
+			Status->Apply_Internal(this);
+		}
+	}
+}
+
+void URPGComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+		
+	for (auto& Status : this->Statuses) {
+		if (Status) {			
+			Status->Tick(DeltaTime);
 		}
 	}
 }
@@ -99,6 +113,27 @@ void URPGComponent::Validate() {
 	}
 }
 
+void URPGComponent::ApplyStatus(UStatus* Status) {
+	this->Statuses.Add(Status);
+	Status->Apply_Internal(this);
+}
+
+void URPGComponent::RemoveStatus(UStatus* Status) {
+	this->Statuses.Remove(Status);
+	Status->Remove_Internal();
+}
+
+UStatus* URPGComponent::GetStatus(TSubclassOf<UStatus> SClass, ESearchResult& Result) {
+	for (auto& Status : this->Statuses) {
+		if (Status->IsA(SClass.Get())) {
+			Result = ESearchResult::Found;
+			return Status;
+		}
+	}
+
+	Result = ESearchResult::NotFound;
+	return nullptr;
+}
 
 #pragma endregion
 
@@ -144,9 +179,7 @@ void FIntAttribute::Initialize(URPGComponent* UOwner) {
 			Op->SetOwner(UOwner);
 			Op->Initialize();
 		}
-	}
-
-	
+	}	
 	this->Refresh();
 }
 
@@ -166,6 +199,12 @@ void FIntAttribute::Refresh() {
 	this->IntChangedEvent.Broadcast(this->CompValue);
 }
 
+void FIntAttribute::AddDependency(FIntResource* Dep) {
+	if (Dep) {
+		this->Dependencies.Add(Dep);
+	}
+}
+
 void FIntResource::SetOwner(URPGComponent* UOwner) {
 	this->Owner = UOwner;
 }
@@ -178,12 +217,20 @@ void FIntResource::Initialize(URPGComponent* UOwner) {
 	if (FStructProperty* SProp = CastField<FStructProperty>(MaxProp)) {
 		if (SProp->Struct == FIntAttribute::StaticStruct()) {
 			this->MaxAttributeRef = SProp->ContainerPtrToValuePtr<FIntAttribute>(UOwner);
+
+			if (this->MaxAttributeRef) {
+				this->MaxAttributeRef->AddDependency(this);
+			}
 		}
 	}
 
 	if (FStructProperty* SProp = CastField<FStructProperty>(MinProp)) {
 		if (SProp->Struct == FIntAttribute::StaticStruct()) {
 			this->MinAttributeRef = SProp->ContainerPtrToValuePtr<FIntAttribute>(UOwner);
+
+			if (this->MinAttributeRef) {
+				this->MinAttributeRef->AddDependency(this);
+			}
 		}
 	}
 }
@@ -194,19 +241,11 @@ void FIntResource::SetValue(int UValue) {
 }
 
 void FIntResource::Refresh() {
-	if (!this->MaxAttributeRef) {
-		UE_LOG(LogTemp, Warning, TEXT("MaxAttriRef was null."));
-	}
-
-	if (!this->MinAttributeRef) {
-		UE_LOG(LogTemp, Warning, TEXT("MinAttriRef was null."));
-	}
-
 	this->Value = FMath::Clamp(this->Value, this->GetMin(), this->GetMax());
 	this->IntChangedEvent.Broadcast(this->Value);
 }
 
-int FIntResource::GetMax() {
+int FIntResource::GetMax() const {
 	if (this->MaxAttributeRef) {
 		return this->MaxAttributeRef->GetValue();
 	}
@@ -215,13 +254,31 @@ int FIntResource::GetMax() {
 	}
 }
 
-int FIntResource::GetMin() {
+int FIntResource::GetMin() const {
 	if (this->MinAttributeRef) {
 		return this->MinAttributeRef->GetValue();
 	}
 	else {
 		return MIN_int32;
 	}
+}
+
+float FIntResource::GetPercent() const {
+	int Min = this->GetMin();
+	int Max = this->GetMax();
+	int Diff = Max - Min;
+
+	if (Diff == 0) {
+		return 0.0;
+	}
+	else {
+		float MinFloat = (float) Min;
+		float MaxFloat = (float) Max;
+
+		return FMath::Clamp(this->GetValue() / (MaxFloat - MinFloat), 0.0, 1.0);
+	}
+
+	
 }
 
 #pragma endregion
@@ -271,7 +328,6 @@ void FFloatAttribute::Initialize(URPGComponent* UOwner) {
 		}
 	}
 
-
 	this->Refresh();
 }
 
@@ -291,6 +347,12 @@ void FFloatAttribute::Refresh() {
 	this->FloatChangedEvent.Broadcast(this->CompValue);
 }
 
+void FFloatAttribute::AddDependency(FFloatResource* Dep) {
+	if (Dep) {
+		this->Dependencies.Add(Dep);
+	}
+}
+
 void FFloatResource::SetOwner(URPGComponent* UOwner) {
 	this->Owner = UOwner;
 }
@@ -301,14 +363,22 @@ void FFloatResource::Initialize(URPGComponent* UOwner) {
 	FProperty* MinProp = UOwner->GetClass()->FindPropertyByName(this->MinAttribute);
 
 	if (FStructProperty* SProp = CastField<FStructProperty>(MaxProp)) {
-		if (SProp->Struct == FIntAttribute::StaticStruct()) {
+		if (SProp->Struct == FFloatAttribute::StaticStruct()) {
 			this->MaxAttributeRef = SProp->ContainerPtrToValuePtr<FFloatAttribute>(UOwner);
+
+			if (this->MaxAttributeRef) {
+				this->MaxAttributeRef->AddDependency(this);
+			}
 		}
 	}
 
 	if (FStructProperty* SProp = CastField<FStructProperty>(MinProp)) {
-		if (SProp->Struct == FIntAttribute::StaticStruct()) {
+		if (SProp->Struct == FFloatAttribute::StaticStruct()) {
 			this->MinAttributeRef = SProp->ContainerPtrToValuePtr<FFloatAttribute>(UOwner);
+
+			if (this->MinAttributeRef) {
+				this->MinAttributeRef->AddDependency(this);
+			}
 		}
 	}
 }
@@ -323,7 +393,7 @@ void FFloatResource::Refresh() {
 	this->FloatChangedEvent.Broadcast(this->Value);
 }
 
-float FFloatResource::GetMax() {
+float FFloatResource::GetMax() const {
 	if (this->MaxAttributeRef) {
 		return this->MaxAttributeRef->GetValue();
 	}
@@ -332,13 +402,41 @@ float FFloatResource::GetMax() {
 	}
 }
 
-float FFloatResource::GetMin() {
+float FFloatResource::GetMin() const {
 	if (this->MinAttributeRef) {
 		return this->MinAttributeRef->GetValue();
 	}
 	else {
 		return -std::numeric_limits<float>::infinity();
 	}
+}
+
+float FFloatResource::GetPercent() const {
+	float Min = this->GetMin();
+	float Max = this->GetMax();
+	bool IsMinFinite = FMath::IsFinite(Min);
+	bool IsMaxFinite = FMath::IsFinite(Max);
+
+	if (IsMinFinite && IsMaxFinite) {
+		return FMath::Clamp(this->GetValue() / (Max - Min), 0.0, 1.0);
+	}
+	else {
+		return 0.0;
+	}
+}
+
+#pragma endregion
+
+#pragma region Statuses
+
+void UStatus::Apply_Internal(URPGComponent* Comp) {
+	this->Owner = Comp;
+	this->Apply();
+}
+
+void UStatus::Remove_Internal() {	
+	this->Remove();
+	this->Owner = nullptr;
 }
 
 #pragma endregion

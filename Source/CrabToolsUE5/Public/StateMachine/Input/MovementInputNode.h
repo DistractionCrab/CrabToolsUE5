@@ -13,7 +13,7 @@
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(Blueprintable, EditInlineNew)
 class CRABTOOLSUE5_API UMovementInputNode : public UInputNode
 {
 	GENERATED_BODY()

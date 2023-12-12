@@ -6,15 +6,12 @@
 #include "RPGComponent.generated.h"
 
 
-UINTERFACE(MinimalAPI, Blueprintable)
-class UStatusInterface : public UInterface
+UCLASS(Blueprintable, DefaultToInstanced, CollapseCategories, EditInlineNew)
+class UStatus: public UObject
 {
 	GENERATED_BODY()
-};
 
-class IStatusInterface
-{
-	GENERATED_BODY()
+	URPGComponent* Owner;
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
@@ -22,12 +19,17 @@ public:
 	virtual void Tick_Implementation(float DeltaTime) {}
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
-	void Apply(URPGComponent* Comp);
-	virtual void Apply_Implementation(URPGComponent* Comp) {}
+	void Apply();
+	void Apply_Internal(URPGComponent* Comp);
+	virtual void Apply_Implementation() {}
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
-	void Remove(URPGComponent* Comp);
-	virtual void Remove_Implementation(URPGComponent* Comp) {}
+	void Remove();
+	void Remove_Internal();
+	virtual void Remove_Implementation() {}
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="RPG|Status", meta = (HideSelfPin, DefaultToSelf))
+	URPGComponent* GetOwner() const { return this->Owner; }
 };
 
 
@@ -80,6 +82,8 @@ struct CRABTOOLSUE5_API FIntAttribute
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
 	TArray<UIntOperator*> Operators;
 
+	TArray<FIntResource*> Dependencies;
+
 public:
 	FIntAttributeObserver IntChangedEvent;
 
@@ -89,6 +93,7 @@ public:
 	void SetOwner(URPGComponent* UOwner);
 	void Initialize(URPGComponent* UOwner);
 	void Refresh();
+	void AddDependency(FIntResource* Dep);
 };
 
 USTRUCT(BlueprintType)
@@ -119,8 +124,9 @@ public:
 	void Initialize(URPGComponent* UOwner);
 	void Refresh();
 
-	int GetMax();
-	int GetMin();
+	int GetMax() const;
+	int GetMin() const;
+	float GetPercent() const;
 };
 
 #pragma endregion
@@ -174,6 +180,8 @@ struct CRABTOOLSUE5_API FFloatAttribute
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "RPG|Attributes", meta = (AllowPrivateAccess = true))
 	TArray<UFloatOperator*> Operators;
 
+	TArray<FFloatResource*> Dependencies;
+
 public:
 	FFloatAttributeObserver FloatChangedEvent;
 
@@ -183,6 +191,7 @@ public:
 	void SetOwner(URPGComponent* UOwner);
 	void Initialize(URPGComponent* UOwner);
 	void Refresh();
+	void AddDependency(FFloatResource* Dep);
 };
 
 USTRUCT(BlueprintType)
@@ -213,8 +222,9 @@ public:
 	void Initialize(URPGComponent* UOwner);
 	void Refresh();
 
-	float GetMax();
-	float GetMin();
+	float GetMax() const;
+	float GetMin() const;
+	float GetPercent() const;
 };
 
 #pragma endregion
@@ -224,14 +234,19 @@ class CRABTOOLSUE5_API URPGComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	TArray<TWeakObjectPtr<UObject>> Statuses;
+	UPROPERTY(EditDefaultsOnly, Instanced, Category="RPG|Status")
+	TArray<UStatus*> Statuses;
 
 public:
 	URPGComponent(const FObjectInitializer& ObjectInitializer);
 
 protected:
-	virtual void BeginPlay() override;
 	virtual void InitializeComponent() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& e) override;
+	virtual void PostLoad() override;
+	void Validate();
 
 public:
 	UFUNCTION()
@@ -241,9 +256,14 @@ public:
 	TArray<FString> GetIntAttributeNames() const;
 
 	UFUNCTION()
-	TArray<FString> GetFloatAttributeNames() const;
+	TArray<FString> GetFloatAttributeNames() const;	
 
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& e) override;
-	virtual void PostLoad() override;
-	void Validate();
+	UFUNCTION(BlueprintCallable, Category="RPG|Status")
+	void ApplyStatus(UStatus* Status);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG|Status")
+	void RemoveStatus(UStatus* Status);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG|Status", meta=(ExpandEnumAsExecs="Result", DeterminesOutputType="SClass"))
+	UStatus* GetStatus(TSubclassOf<UStatus> SClass, ESearchResult& Result);
 };

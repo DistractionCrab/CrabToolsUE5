@@ -31,6 +31,16 @@ public:
 	UFUNCTION(Blueprintpure, Category = "UtilityFunctions",
 		meta = (DisplayName = "UnwrapInt", CompactNodeTitle = "->", BlueprintAutocast))
 	static int UnwrapIntResource(const FIntResource& input);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "UtilityFunctions")
+	static int MaxIntRescValue(const FIntResource& Input);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "UtilityFunctions")
+	static int MinIntRescValue(const FIntResource& Input);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "UtilityFunctions")
+	static float IntRescPercent(const FIntResource& Input);
+
 	#pragma endregion
 
 	#pragma region Float Attributes & Resources
@@ -44,11 +54,21 @@ public:
 	static void SetFloatResource(UPARAM(ref) FFloatResource& input, float Value);
 
 	UFUNCTION(Blueprintpure, Category = "UtilityFunctions",
-		meta = (DisplayName = "UnwrapInt", CompactNodeTitle = "->", BlueprintAutocast))
+		meta = (DisplayName = "UnwrapFloat", CompactNodeTitle = "->", BlueprintAutocast))
 	static float UnwrapFloatAttribute(const FFloatAttribute& input);
 
 	UFUNCTION(Blueprintpure, Category = "UtilityFunctions",
-		meta = (DisplayName = "UnwrapInt", CompactNodeTitle = "->", BlueprintAutocast))
+		meta = (DisplayName = "UnwrapFloat", CompactNodeTitle = "->", BlueprintAutocast))
 	static float UnwrapFloatResource(const FFloatResource& input);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "UtilityFunctions")
+	static float MaxFloatRescValue(const FFloatResource& Input);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "UtilityFunctions")
+	static float MinFloatRescValue(const FFloatResource& Input);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "UtilityFunctions")
+	static float FloatRescPercent(const FFloatResource& Input);
+
 	#pragma endregion
 };

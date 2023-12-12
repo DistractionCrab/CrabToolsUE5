@@ -1,5 +1,6 @@
 #include "Components/RPGSystem/RPGHelpers.h"
 
+#pragma region Integer Attributes and Resources
 void URPGHelpers::ObserveIntAttribute(UPARAM(ref) FIntAttribute& input, const FIntAttributeCallback& Callback) {
 	input.IntChangedEvent.Add(Callback);
 }
@@ -21,6 +22,24 @@ int URPGHelpers::UnwrapIntResource(const FIntResource& input) {
 }
 
 
+int URPGHelpers::MaxIntRescValue(const FIntResource& Input) {
+	return Input.GetMax();
+}
+
+
+int URPGHelpers::MinIntRescValue(const FIntResource& Input) {
+	return Input.GetMin();
+}
+
+float URPGHelpers::IntRescPercent(const FIntResource& Input) {
+	return Input.GetPercent();
+}
+
+#pragma endregion
+
+
+#pragma region Float Attributes and Resources
+
 void URPGHelpers::ObserveFloatAttribute(UPARAM(ref) FFloatAttribute& input, const FFloatAttributeCallback& Callback) {
 	input.FloatChangedEvent.Add(Callback);
 }
@@ -40,3 +59,17 @@ float URPGHelpers::UnwrapFloatAttribute(const FFloatAttribute& input) {
 float URPGHelpers::UnwrapFloatResource(const FFloatResource& input) {
 	return input.GetValue();
 }
+
+float URPGHelpers::MaxFloatRescValue(const FFloatResource& Input) {
+	return Input.GetMax();
+}
+
+float URPGHelpers::MinFloatRescValue(const FFloatResource& Input) {
+	return Input.GetMin();
+}
+
+float URPGHelpers::FloatRescPercent(const FFloatResource& Input) {
+	return Input.GetPercent();
+}
+
+#pragma endregion

@@ -21,10 +21,16 @@ class CRABTOOLSUE5_API ULockOnCamera : public USpringArmComponent
 		ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "180.0"))
 	float LockOnAngle = 90;
 
+	/* This value is used to control whether or not the camera will control the owning Pawn's control rotation. */
 	UPROPERTY(EditAnywhere, Category = "LockOnCamera", meta = (AllowPrivateAccess = "true"))
-	bool bForcePawnRotation;
+	bool bForcePawnRotation = false;
+	bool bIsMovementOrienting = false;
+	bool bLerpActorToTarget = false;
+
+	float AngleLerpSpeed = 360;
 
 	TWeakObjectPtr<APawn> PawnOwner;
+	TWeakObjectPtr<ACharacter> CharacterOwner;
 
 	/* The array of components that can be locked onto. */
 	TArray<TWeakObjectPtr<USceneComponent>> DetectedComponents;
@@ -83,4 +89,10 @@ private:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "LockOnCamera")
 	FRotator GetLookRotation();
+
+	UFUNCTION(BlueprintCallable, Category = "LockOnCamera")
+	void SetForceRotation(bool Force);
+
+	UFUNCTION(BlueprintCallable, Category="LockOnCamera")
+	void LerpControlRotation();
 };

@@ -1,6 +1,7 @@
 #include "Components/LockOnCamera/LockOnCamera.h"
 #include "Components/LockOnCamera/LockOnInterface.h"
 #include "GameFramework/Character.h"
+#include "Utils/UtilsLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ULockOnCamera::ULockOnCamera(const FObjectInitializer& ObjectInitializer): Super(ObjectInitializer)
@@ -24,15 +25,43 @@ void ULockOnCamera::BeginPlay() {
 	if (POwner) {
 		this->PawnOwner = POwner;
 	}
+
+	if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
+		this->CharacterOwner = c;
+		this->bIsMovementOrienting = c->GetCharacterMovement()->bOrientRotationToMovement;
+	}
+	else {
+		this->bIsMovementOrienting = false;
+	}
 }
 
 void ULockOnCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
 
-	if (this->CurrentTarget.IsValid() && this->PawnOwner.IsValid()) {
+	if (this->IsLocked() && this->PawnOwner.IsValid()) {
 		auto CharRot = this->GetDesiredRotation();
 		this->PawnOwner->GetController()->SetControlRotation(CharRot);
+
+		if (this->bForcePawnRotation) {
+			if (this->bIsMovementOrienting) {
+				FRotator Base = this->CharacterOwner->GetActorRotation();
+				FRotator Delta = this->CharacterOwner->GetCharacterMovement()->RotationRate * DeltaTime;
+				
+				FRotator Goal(
+					Delta.Pitch > 0 ? UUtilsLibrary::RotateAngleTo(Base.Pitch, CharRot.Pitch, Delta.Pitch) : Base.Pitch,
+					Delta.Yaw > 0 ? UUtilsLibrary::RotateAngleTo(Base.Yaw, CharRot.Yaw, Delta.Yaw) : Base.Yaw,
+					Delta.Roll > 0 ? UUtilsLibrary::RotateAngleTo(Base.Roll, CharRot.Roll, Delta.Roll) : Base.Roll);
+				
+
+				this->CharacterOwner->SetActorRotation(Goal);				
+			}
+			else {
+				this->GetOwner()->SetActorRotation(CharRot);
+			}
+		}		
 	}
+
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void ULockOnCamera::DetectCallback(UPrimitiveComponent* OverlappedComponent,
@@ -66,29 +95,21 @@ FRotator ULockOnCamera::GetDesiredRotation() const {
 void ULockOnCamera::LockOn() {
 	if (this->DetectedComponents.Num() > 0) {
 		this->bUsePawnControlRotation = false;
-		if (this->PawnOwner.IsValid()) {		
-
-			if (this->bForcePawnRotation) {
-				this->PawnOwner->bUseControllerRotationYaw = true;
-				if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
-					c->GetCharacterMovement()->bOrientRotationToMovement = false;
-				}			
-			}
-		}
 		this->CurrentTarget = this->DetectedComponents[0];
+
+		if (this->bIsMovementOrienting) {
+			this->CharacterOwner->GetCharacterMovement()->bOrientRotationToMovement = !this->bForcePawnRotation;
+		}
 	}
 }
 
 void ULockOnCamera::LockOff() {
-	if (this->PawnOwner.IsValid()) {
-		this->PawnOwner->bUseControllerRotationYaw = false;
-
-		if (ACharacter* c = Cast<ACharacter>(this->PawnOwner)) {
-			c->GetCharacterMovement()->bOrientRotationToMovement = true;
-		}
-	}
 	this->bUsePawnControlRotation = true;
 	this->CurrentTarget = nullptr;
+
+	if (this->bIsMovementOrienting) {
+		this->CharacterOwner->GetCharacterMovement()->bOrientRotationToMovement = true;
+	}
 }
 
 void ULockOnCamera::Toggle() {
@@ -137,4 +158,35 @@ FRotator ULockOnCamera::GetLookRotation() {
 		return FRotator::ZeroRotator;
 	}
 	
+}
+
+void ULockOnCamera::SetForceRotation(bool Force) {
+	this->bForcePawnRotation = Force;
+
+	if (this->IsLocked() && this->bIsMovementOrienting) {
+		this->CharacterOwner->GetCharacterMovement()->bOrientRotationToMovement = !Force;
+	}
+}
+
+void ULockOnCamera::LerpControlRotation() {
+	const float Add = 1.0 / 60;
+	if (this->IsLocked() && this->bForcePawnRotation) {
+		if (this->CharacterOwner.IsValid()) {
+			if (this->CharacterOwner->GetCharacterMovement()->bOrientRotationToMovement) {
+
+			}
+		}
+		else {
+			auto CurRot = this->PawnOwner->GetControlRotation();
+			auto CurDir = CurRot.RotateVector(FVector::ForwardVector);
+			auto TarRot = this->GetDesiredRotation();
+			auto TarDir = TarRot.RotateVector(FVector::ForwardVector);
+
+			float angle = TarDir.CosineAngle2D(CurDir);
+			
+			if (1 - angle < Add) {
+				this->PawnOwner->bUseControllerRotationYaw = true;
+			}
+		}
+	}
 }
