@@ -364,15 +364,19 @@ FName UProcStateMachine::GetCurrentStateName() {
 
 TArray<FString> UProcStateMachine::StateOptions() {
 	TArray<FString> Names;
+
 	for (const auto& Nodes : this->Graph) {
 		Names.Add(Nodes.Key.ToString());
 	}
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
 	return Names;
 }
 
 TArray<FString> UProcStateMachine::ConditionOptions() {
 	TArray<FString> Names;
 	auto base = this->FindFunction("TrueCondition");
+
 	for (TFieldIterator<UFunction> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
 		UFunction* f = *FIT;
 		
@@ -380,12 +384,16 @@ TArray<FString> UProcStateMachine::ConditionOptions() {
 			Names.Add(f->GetName());
 		}		
 	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
 	return Names;
 }
 
 TArray<FString> UProcStateMachine::ConditionDataOptions() {
 	TArray<FString> Names;
 	auto base = this->FindFunction("TrueDataCondition");
+
 	for (TFieldIterator<UFunction> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
 		UFunction* f = *FIT;		
 		
@@ -393,6 +401,9 @@ TArray<FString> UProcStateMachine::ConditionDataOptions() {
 			Names.Add(f->GetName());
 		}
 	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
 	return Names;
 }
 

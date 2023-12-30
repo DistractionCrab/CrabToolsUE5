@@ -26,6 +26,7 @@ public class CrabToolsUE5 : ModuleRules
 				"Core",
 				"EnhancedInput",
 				"UMG",
+				"Slate",
 				// ... add other public dependencies that you statically link with here ...
 			});
 			
@@ -36,6 +37,7 @@ public class CrabToolsUE5 : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"Slate",
 				// ... add private dependencies that you statically link with here ...	
 			});
 		

@@ -48,7 +48,7 @@ void ULockOnCamera::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 				FRotator Delta = this->CharacterOwner->GetCharacterMovement()->RotationRate * DeltaTime;
 				
 				FRotator Goal(
-					Delta.Pitch > 0 ? UUtilsLibrary::RotateAngleTo(Base.Pitch, CharRot.Pitch, Delta.Pitch) : Base.Pitch,
+					Delta.Pitch > 0 ? FMath::Clamp(UUtilsLibrary::RotateAngleTo(Base.Pitch, CharRot.Pitch, Delta.Pitch), -this->PitchAngle, this->PitchAngle) : Base.Pitch,
 					Delta.Yaw > 0 ? UUtilsLibrary::RotateAngleTo(Base.Yaw, CharRot.Yaw, Delta.Yaw) : Base.Yaw,
 					Delta.Roll > 0 ? UUtilsLibrary::RotateAngleTo(Base.Roll, CharRot.Roll, Delta.Roll) : Base.Roll);
 				

@@ -1,5 +1,6 @@
-#include "UObject/UnrealTypePrivate.h"
 #include "Components/RPGSystem/RPGComponent.h"
+#include "UObject/UnrealTypePrivate.h"
+
 
 
 #pragma region Component Code
@@ -64,6 +65,8 @@ TArray<FString> URPGComponent::GetIntAttributeNames() const {
 		}
 	}
 
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
 	return Names;
 }
 
@@ -76,6 +79,8 @@ TArray<FString> URPGComponent::GetFloatAttributeNames() const {
 			Names.Add(f->GetFName().ToString());
 		}
 	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
 
 	return Names;
 }

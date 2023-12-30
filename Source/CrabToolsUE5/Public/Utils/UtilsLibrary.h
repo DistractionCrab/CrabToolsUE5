@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Utils/TimeGatedBool.h"
+#include "Utils/SetGatedBool.h"
 #include "UtilsLibrary.generated.h"
 
 /**
@@ -20,6 +21,12 @@ public:
 	UFUNCTION(Blueprintpure, Category="Utility",
 		meta=(DisplayName="UnwrapGatedBool", CompactNodeTitle="->", BlueprintAutocast))
 	static bool TimeGatedBoolConvert(const FTimeGatedBool& input);
+
+	UFUNCTION(BlueprintCallable, Category = "Utility")
+	static bool Contains(const FSetGatedBool& Input, UObject* Obj);
+
+	UFUNCTION(BlueprintCallable, Category = "Utility")
+	static void GateObj(UPARAM(ref) FSetGatedBool& Input, UObject* Obj);
 
 	/* 
 	 * Rotates the Base angle to Goal angle by Delta Amount. If the difference between 

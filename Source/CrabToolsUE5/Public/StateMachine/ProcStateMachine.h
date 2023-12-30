@@ -75,6 +75,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
 	TObjectPtr<UProcStateMachine> Owner;
 	bool bActive = false;
 

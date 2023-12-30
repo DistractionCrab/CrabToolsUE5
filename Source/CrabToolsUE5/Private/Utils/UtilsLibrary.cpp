@@ -28,3 +28,11 @@ float UUtilsLibrary::RotateAngleTo(float Base, float Goal, float Delta) {
 		return Base + FMath::Sign(Diff)*Delta;
 	}
 }
+
+bool UUtilsLibrary::Contains(const FSetGatedBool& Input, UObject* Obj) {
+	return Input.ContainsObj(Obj);
+}
+
+void UUtilsLibrary::GateObj(FSetGatedBool& Input, UObject* Obj) {
+	Input.AddObj(Obj);
+}

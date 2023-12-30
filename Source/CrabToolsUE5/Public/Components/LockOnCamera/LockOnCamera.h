@@ -19,7 +19,7 @@ class CRABTOOLSUE5_API ULockOnCamera : public USpringArmComponent
 
 	UPROPERTY(EditAnywhere, Category = "LockOnCamera", meta = (AllowPrivateAccess = "true",
 		ClampMin = "0.0", ClampMax = "180.0", UIMin = "0.0", UIMax = "180.0"))
-	float LockOnAngle = 90;
+	float PitchAngle = 90;
 
 	/* This value is used to control whether or not the camera will control the owning Pawn's control rotation. */
 	UPROPERTY(EditAnywhere, Category = "LockOnCamera", meta = (AllowPrivateAccess = "true"))
