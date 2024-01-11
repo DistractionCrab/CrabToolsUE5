@@ -10,9 +10,11 @@ UInteractionSystem::UInteractionSystem() {
 void UInteractionSystem::AddInteractable(UObject* Obj) {
 	if (Obj && Obj->GetClass()->ImplementsInterface(UInteractableInterface::StaticClass())) {
 		this->InteractableObjects.Add(Obj);
+
+		TScriptInterface<IInteractableInterface> IFace = Obj;
+		this->InteractableAddedEvent.Broadcast(IFace);
 		if (this->InteractableObjects.Num() == 1) {
-			TScriptInterface<IInteractableInterface> IFace = Obj;
-			this->InteractableUpdatedEvent.Broadcast(IFace);
+			this->InteractableSelectedEvent.Broadcast(IFace);
 		}
 	}
 }
@@ -23,9 +25,14 @@ void UInteractionSystem::RemoveInteractable(UObject* Obj) {
 	this->InteractableObjects.Remove(Obj);
 	this->SelectedIndex = 0;
 
-	if (this->InteractableObjects.Num() > 0) {
+	if (Obj && Obj->GetClass()->ImplementsInterface(UInteractableInterface::StaticClass())) {
 		TScriptInterface<IInteractableInterface> IFace = Obj;
-		this->InteractableUpdatedEvent.Broadcast(IFace);
+		this->InteractableRemovedEvent.Broadcast(IFace);
+
+		if (this->InteractableObjects.Num() > 0) {
+			TScriptInterface<IInteractableInterface> NewIFace = this->InteractableObjects[0].Get();
+			this->InteractableSelectedEvent.Broadcast(NewIFace);
+		}
 	}
 }
 
@@ -53,8 +60,11 @@ void UInteractionSystem::Cycle() {
 	if (this->InteractableObjects.Num() == 0) { return; }
 	this->SelectedIndex = (this->SelectedIndex + 1) % this->InteractableObjects.Num();
 
-	TScriptInterface<IInteractableInterface> IFace = this->InteractableObjects[this->SelectedIndex].Get();
-	this->InteractableUpdatedEvent.Broadcast(IFace);
+	TScriptInterface<IInteractableInterface> NewIFace = this->InteractableObjects[this->SelectedIndex].Get();
+	this->InteractableSelectedEvent.Broadcast(NewIFace);
+
+	//TScriptInterface<IInteractableInterface> IFace = this->InteractableObjects[this->SelectedIndex].Get();
+	//this->InteractableUpdatedEvent.Broadcast(IFace);
 }
 
 TScriptInterface<IInteractableInterface> UInteractionSystem::GetSelected() {
@@ -64,4 +74,10 @@ TScriptInterface<IInteractableInterface> UInteractionSystem::GetSelected() {
 	}
 
 	return nullptr;
+}
+
+int UInteractionSystem::IndexOf(UObject* Obj) {
+	return this->InteractableObjects.IndexOfByPredicate([&](const TWeakObjectPtr<UObject> TObj) {
+		return 	TObj.IsValid() && TObj.Get() == Obj;
+	});
 }

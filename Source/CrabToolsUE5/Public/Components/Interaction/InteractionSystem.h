@@ -21,7 +21,13 @@ class CRABTOOLSUE5_API UInteractionSystem : public UActorComponent
 public:
 
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
-	FInteractionSelected InteractableUpdatedEvent;
+	FInteractionSelected InteractableAddedEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FInteractionSelected InteractableRemovedEvent;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FInteractionSelected InteractableSelectedEvent;
 
 public:	
 	// Sets default values for this component's properties
@@ -45,6 +51,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void Cycle();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
+	int Num() { return this->InteractableObjects.Num(); }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
+	UObject* GetObj(int index) { return index >= 0 && index < this->InteractableObjects.Num() ? this->InteractableObjects[index].Get() : nullptr; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
+	int IndexOf(UObject* Obj);
 
 	TScriptInterface<IInteractableInterface> GetSelected();
 };
