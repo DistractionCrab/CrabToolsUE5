@@ -35,4 +35,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Utility")
 	static float RotateAngleTo(float Base, float Goal, float Delta);
+
+	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
+	UObject* GetOwnerAs(UActorComponent* Component, TSubclassOf<AActor> SClass, ESearchResult& Result);
 };

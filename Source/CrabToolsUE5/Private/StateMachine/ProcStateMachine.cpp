@@ -54,6 +54,20 @@ void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
 	
 }
 
+UProcStateMachine* UStateNode::GetMachineAs(TSubclassOf<UProcStateMachine> SClass, ESearchResult& Result) {
+	auto Class = SClass.Get();
+	auto Machine = this->GetMachine();
+	if (Class && Machine) {
+		if (Machine->IsA(Class)) {
+			Result = ESearchResult::Found;
+			return Machine;
+		}
+	}
+
+	Result = ESearchResult::Found;
+	return nullptr;
+}
+
 AActor* UProcStateMachine::GetOwner() {
 	return this->Owner;
 }

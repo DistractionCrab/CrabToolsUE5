@@ -1,4 +1,5 @@
 #include "Utils/UtilsLibrary.h"
+#include "Utils/Enums.h"
 
 void UUtilsLibrary::ActivateTimeGatedBool(FTimeGatedBool& input) {
 	input.Reset();
@@ -7,6 +8,7 @@ void UUtilsLibrary::ActivateTimeGatedBool(FTimeGatedBool& input) {
 bool UUtilsLibrary::TimeGatedBoolConvert(const FTimeGatedBool& input) {
 	return input.GetValue();
 }
+
 float UUtilsLibrary::RotateAngleTo(float Base, float Goal, float Delta) {
 	// Normalize the angles to [-180, 180] and to [0, 360].
 	Base = FRotator::NormalizeAxis(Base);
@@ -35,4 +37,18 @@ bool UUtilsLibrary::Contains(const FSetGatedBool& Input, UObject* Obj) {
 
 void UUtilsLibrary::GateObj(FSetGatedBool& Input, UObject* Obj) {
 	Input.AddObj(Obj);
+}
+
+UObject* UUtilsLibrary::GetOwnerAs(UActorComponent* Component, TSubclassOf<AActor> SClass, ESearchResult& Result) {
+	auto Class = SClass.Get();
+	auto Owner = Component->GetOwner();
+	if (Class && Owner) {
+		if (Owner->IsA(Class)) {
+			Result = ESearchResult::Found;
+			return Owner;
+		}
+	}
+
+	Result = ESearchResult::Found;
+	return nullptr;
 }

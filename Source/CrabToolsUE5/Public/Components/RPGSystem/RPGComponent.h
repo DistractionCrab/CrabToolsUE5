@@ -266,4 +266,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "RPG|Status", meta=(ExpandEnumAsExecs="Result", DeterminesOutputType="SClass"))
 	UStatus* GetStatus(TSubclassOf<UStatus> SClass, ESearchResult& Result);
+
+	
 };

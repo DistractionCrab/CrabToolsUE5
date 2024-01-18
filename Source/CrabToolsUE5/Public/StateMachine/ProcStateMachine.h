@@ -109,6 +109,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	UProcStateMachine* GetMachine();
 
+	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
+	UProcStateMachine* GetMachineAs(TSubclassOf<UProcStateMachine> SClass, ESearchResult& Result);
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
 	void Enter();
 	void Enter_Internal();

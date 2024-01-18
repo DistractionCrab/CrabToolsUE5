@@ -15,7 +15,7 @@ void UInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
 					this->Action, 
 					ETriggerEvent::Triggered, 
 					this, 
-					&UInputNode::TriggerCallback_Internal);	
+					&UInputNode::TriggerCallback_Internal);
 			}
 
 			if (this->bStart){

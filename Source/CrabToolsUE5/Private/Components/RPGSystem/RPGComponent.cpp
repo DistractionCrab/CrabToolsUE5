@@ -55,6 +55,8 @@ void URPGComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FAc
 	}
 }
 
+
+
 TArray<FString> URPGComponent::GetIntAttributeNames() const {
 	TArray<FString> Names;
 	for (TFieldIterator<FStructProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
