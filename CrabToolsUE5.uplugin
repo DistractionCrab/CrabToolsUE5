@@ -23,7 +23,10 @@
 		{
 			"Name": "CrabEditorToolsUE5",
 			"Type": "Editor",
-			"LoadingPhase": "PostEngineInit"
+			"LoadingPhase": "PostEngineInit",
+			"AdditionalDependencies": [
+				"BlueprintGraph"
+			]
 		}
 	],
 	"Plugins": [
