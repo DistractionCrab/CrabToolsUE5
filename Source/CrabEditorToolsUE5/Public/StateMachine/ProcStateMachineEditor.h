@@ -2,7 +2,7 @@
 #include "Modules/ModuleInterface.h"
 #include "Modules/ModuleManager.h"
 #include "UnrealEd.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/ProcStateMachineAssetActions.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(PSMGraphEditor, All, All)
 
@@ -11,6 +11,8 @@ DECLARE_LOG_CATEGORY_EXTERN(PSMGraphEditor, All, All)
  */
 class FPSMEditorModule : public IModuleInterface
 {
+private:
+	TSharedPtr<FProcStateMachineAssetActions> ProcStateMachineAssetActions;
 
 public:
 	virtual void StartupModule() override;

@@ -4,6 +4,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Utils/TimeGatedBool.h"
 #include "Utils/SetGatedBool.h"
+#include "StateMachine/ProcStateMachine.h"
 #include "UtilsLibrary.generated.h"
 
 /**

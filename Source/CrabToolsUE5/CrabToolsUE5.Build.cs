@@ -38,6 +38,8 @@ public class CrabToolsUE5 : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
+				"BlueprintGraph",
+				"UnrealEd"
 				// ... add private dependencies that you statically link with here ...	
 			});
 		

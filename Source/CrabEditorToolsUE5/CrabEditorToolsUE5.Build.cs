@@ -27,7 +27,7 @@ public class CrabEditorToolsUE5 : ModuleRules
 				"Core",
 				"EnhancedInput",
 				"UnrealEd",
-
+				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 			});
 			
@@ -35,31 +35,23 @@ public class CrabEditorToolsUE5 : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"CrabToolsUE5",
+				"Core",
 				"CoreUObject",
 				"Engine",
 				"Slate",
+				"CrabToolsUE5",
+				"KismetCompiler",
+				"EditorFramework",
+				"UnrealEd",
+                "GraphEditor",
 				"SlateCore",
-				"EnhancedInput",
-				"AssetTools",
-				"Slate",
-				"InputCore",
-				"SlateCore",
-				"GraphEditor",
-				"PropertyEditor",
-				"EditorStyle",
-				"Kismet",
-				"KismetWidgets",
-				"ApplicationCore",
+                "Kismet",
+                "KismetWidgets",
+                "PropertyEditor",
 				"ToolMenus",
-				// ... add private dependencies that you statically link with here ...	
-			});
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
+				"AssetTools",
+				"EditorSubsystem",
+				"BlueprintGraph",
 			});
 	}
 }

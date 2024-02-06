@@ -1,6 +1,13 @@
 #include "StateMachine/ProcStateMachine.h"
+
 #include "Logging/StructuredLog.h"
 #include "Algo/Reverse.h"
+#include "EdGraphSchema_K2.h"
+#include "Kismet2/BlueprintEditorUtils.h"
+
+namespace Constants {
+
+}
 
 #pragma region StateMachine Code
 
@@ -30,7 +37,6 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 					}
 					else {
 						Data->Transitions.Add(Transitions.Key, Transitions.Value);
-						//Data->EventTransitions.Add(Transitions.Key, Transitions.Value);
 					}
 				}
 			}
@@ -292,6 +298,16 @@ void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChain
 	Super::PostEditChangeChainProperty(e);
 }
 
+void UProcStateMachine::PostCDOCompiled(const FPostCDOCompiledContext& Context) {
+	Super::PostCDOCompiled(Context);
+
+	this->ValidateEventProps();
+}
+
+void UProcStateMachine::PostCDOContruct() {
+	Super::PostCDOContruct();	
+}
+
 /* Simply iterates through the graph and rebinds condition callbacks. */
 void UProcStateMachine::RebindConditions() {
 	TArray<FString> ValidFunctions = this->ConditionOptions();
@@ -441,6 +457,86 @@ bool UProcStateMachine::ValidDataCondition(UObject* Data) {
 	return Data != nullptr;
 }
 
+TSet<FName> UProcStateMachine::GetEvents() const {
+	TSet<FName> List;
+
+	for (const auto& States : this->Graph) {
+		for (const auto& Event : States.Value.Transitions) {
+			List.Add(Event.Key);
+
+			if (!States.Value.Node) {
+				States.Value.Node->GetEvents(List);
+			}
+		}
+	}
+
+	return List;
+}
+
+void UProcStateMachine::ValidateEventProps() {
+	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass())) {
+		auto Events = this->GetEvents();
+
+
+		for (const auto& EName : Events) {
+			auto VName = this->GetEventVarName(EName);
+			this->AddEventRefStruct(BlueprintAsset, VName, EName);
+		}
+
+		//FBlueprintEditorUtils::RefreshVariables(BlueprintAsset);
+	}
+}
+
+bool UProcStateMachine::HasEventVariable(FName VName) {
+	auto Prop = this->GetClass()->FindPropertyByName(VName);
+
+	if (Prop) {
+		auto StructProp = CastField<FStructProperty>(Prop);
+
+		if (StructProp->Struct == FStateMachineEventRef::StaticStruct()) {
+			return true;
+		}
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("Found Conflicting variable. Cannot generate event property."));
+			return true;
+		}
+	}
+
+	return false;
+}
+
+FName UProcStateMachine::GetEventVarName(FName EName) {
+	return FName(EName.ToString() + FString("_SM_EVENT"));
+}
+
+void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {	
+	FEdGraphPinType PinType;
+	PinType.ContainerType = EPinContainerType::None;
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+	PinType.PinSubCategoryObject = FStateMachineEventRef::StaticStruct();
+
+	if (FBlueprintEditorUtils::AddMemberVariable(BlueprintAsset, VName, PinType)) {
+		const int32 VarIndex =
+			FBlueprintEditorUtils::FindNewVariableIndex(BlueprintAsset, VName);
+
+		if (VarIndex != INDEX_NONE)
+		{
+
+			auto& Variable = BlueprintAsset->NewVariables[VarIndex];
+			Variable.PropertyFlags |= CPF_EditConst;
+			Variable.PropertyFlags &= ~CPF_Edit;
+			Variable.PropertyFlags |= CPF_BlueprintReadOnly;
+
+			Variable.Category = FText::FromString("Generated|Events");
+
+			//Variable.DefaultValue = FString("FStateMachineEventRef(\"") + EName.ToString() + FString("\")");
+
+
+			FBlueprintEditorUtils::SetVariableSaveGameFlag(BlueprintAsset, VName, false);
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma region NodeCode
@@ -554,6 +650,21 @@ void UStateNode::EnterWithData_Implementation(UObject* Data) {
 	this->Enter();
 }
 
+void UStateNode::GetEvents(TSet<FName>& List) {
 
+}
 
 #pragma endregion
+
+
+void FStateMachineEventRef::Activate() {
+	if (this->Owner.IsValid()) {
+		this->Owner->Event(this->EventName);
+	}
+}
+
+void FStateMachineEventRef::ActivateWithData(UObject* Data) {
+	if (this->Owner.IsValid()) {
+		this->Owner->EventWithData(this->EventName, Data);
+	}
+}

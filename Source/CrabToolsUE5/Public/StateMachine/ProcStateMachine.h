@@ -37,15 +37,34 @@ public:
 	FTransitionDataDelegate DataConditionCallback;
 };
 
+USTRUCT(BlueprintType, meta = (DisableSplitPin))
+struct  FStateMachineEventRef
+{
+	GENERATED_USTRUCT_BODY()
+
+	TWeakObjectPtr<UProcStateMachine> Owner;
+
+	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine|Events")
+	FName EventName;
+
+public:
+
+	FStateMachineEventRef() {}
+	FStateMachineEventRef(FName EName) { this->EventName = EName; }
+
+	void Activate();
+	void ActivateWithData(UObject* Data);
+};
+
 
 
 USTRUCT(BlueprintType)
 struct  FStateData
 {
 	GENERATED_USTRUCT_BODY()
+
 public:
-	//UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	//TSubclassOf<UStateNode> NodeClass;
+
 	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	TObjectPtr<UStateNode> Node;
 	// Map from Event Name to StateName
@@ -166,6 +185,8 @@ public:
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
 	FORCEINLINE bool Active() { return this->bActive; }
+
+	void GetEvents(TSet<FName>& List);
 };
 
 
@@ -214,7 +235,11 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	void RebindConditions();	
+	void RebindConditions();
+	void ValidateEventProps();
+	void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
+	bool HasEventVariable(FName VName);
+	FName GetEventVarName(FName EName);
 
 public:
 
@@ -225,9 +250,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	AActor* GetOwner();
 
-	/* 
-	* Resets the state machine to its start state. Does not trigger StateChanged Events.
-	*/
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void Reset();
 
@@ -262,6 +284,7 @@ public:
 	* Tick function to be called regularly. This is managed by the owner object.
 	*/
 	void Tick(float DeltaTime);
+
 	/**
 	 * This function should not be called except by UStateNode Implementations or unless you
 	 * specifically require a state to be forced regardless of the context.
@@ -271,7 +294,9 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-
+	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
+	virtual void PostCDOContruct() override;
+	
 	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
@@ -316,4 +341,6 @@ public:
 	/* Condition function that returns true if Data is Valid. */
 	UFUNCTION()
 	bool ValidDataCondition(UObject* Data);
+
+	TSet<FName> GetEvents() const;
 };
