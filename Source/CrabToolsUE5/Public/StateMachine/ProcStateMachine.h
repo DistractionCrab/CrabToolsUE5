@@ -94,9 +94,13 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
 
+	friend class UProcStateMachine;
+
 	UPROPERTY()
 	TObjectPtr<UProcStateMachine> Owner;
 	bool bActive = false;
+
+	
 
 public:
 
@@ -187,6 +191,7 @@ public:
 	FORCEINLINE bool Active() { return this->bActive; }
 
 	void GetEvents(TSet<FName>& List);
+	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node);
 };
 
 
@@ -223,6 +228,9 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
+
+	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	TMap<FName, UStateNode*> SharedNodes;
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FAliasData> Aliases;
@@ -343,4 +351,6 @@ public:
 	bool ValidDataCondition(UObject* Data);
 
 	TSet<FName> GetEvents() const;
+
+	void Substitute(FName SlotName, UStateNode* Node);
 };

@@ -28,4 +28,5 @@ public:
 	virtual void Exit_Implementation() override;	
 	virtual void ExitWithData_Implementation(UObject* Data) override;
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) override;
+	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node) override;
 };

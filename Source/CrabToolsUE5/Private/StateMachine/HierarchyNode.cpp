@@ -15,6 +15,10 @@ void UHierarchyNode::Initialize_Implementation(UProcStateMachine* POwner) {
 			this->MachineClass.GetDefaultObject(), 
 			true);
 
+		for (auto& Pair : this->SubstituteNodes) {
+			this->SubMachine->Substitute(Pair.Key, Pair.Value);
+		}
+
 		this->SubMachine->Initialize_Internal(POwner->GetOwner());
 	}
 }
@@ -62,4 +66,12 @@ void UHierarchyNode::Tick_Implementation(float DeltaTime) {
 
 void UHierarchyNode::Exit_Implementation() {
 
+}
+
+UStateNode* UHierarchyNode::Substitute(FName SlotName, UStateNode* Node) {
+	for (auto& Pair : this->SubstituteNodes) {
+		this->SubstituteNodes[Pair.Key] = Pair.Value->Substitute(SlotName, Node);
+	}
+
+	return this;
 }

@@ -16,6 +16,10 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 	//this->CurrentStateName = this->StartState;
 	this->Initialize(POwner);
 
+	for (auto& Pair : this->SharedNodes) {
+		this->Substitute(Pair.Key, Pair.Value);
+	}
+
 	// Now setup the inverse alias map.
 	for (const auto& pair : this->Aliases) {
 		for (const auto& StateName : pair.Value.States) {
@@ -301,7 +305,7 @@ void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChain
 void UProcStateMachine::PostCDOCompiled(const FPostCDOCompiledContext& Context) {
 	Super::PostCDOCompiled(Context);
 
-	this->ValidateEventProps();
+	//this->ValidateEventProps();
 }
 
 void UProcStateMachine::PostCDOContruct() {
@@ -509,7 +513,9 @@ FName UProcStateMachine::GetEventVarName(FName EName) {
 	return FName(EName.ToString() + FString("_SM_EVENT"));
 }
 
-void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {	
+void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {
+	return;
+
 	FEdGraphPinType PinType;
 	PinType.ContainerType = EPinContainerType::None;
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
@@ -537,6 +543,14 @@ void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VNam
 	}
 }
 
+void UProcStateMachine::Substitute(FName SlotName, UStateNode* Node) {
+	for (auto& pair : this->Graph) {
+		if (pair.Value.Node) {
+			pair.Value.Node = pair.Value.Node->Substitute(SlotName, Node);
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma region NodeCode
@@ -548,6 +562,10 @@ void UStateNode::Initialize_Internal(UProcStateMachine* POwner) {
 
 void UStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
 	
+}
+
+UStateNode* UStateNode::Substitute(FName SlotName, UStateNode* Node) {
+	return this;
 }
 
 UProcStateMachine* UStateNode::GetMachine() {

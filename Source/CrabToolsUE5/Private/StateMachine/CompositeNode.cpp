@@ -118,3 +118,11 @@ UStateNode* UCompositeNode::FindNodeByArray_Implementation(const TArray<FString>
 		}
 	}
 }
+
+UStateNode* UCompositeNode::Substitute(FName SlotName, UStateNode* Node) {
+	for (auto& Pair : this->Nodes) {
+		this->Nodes[Pair.Key] = Pair.Value->Substitute(SlotName, Node);
+	}
+
+	return this;
+}
