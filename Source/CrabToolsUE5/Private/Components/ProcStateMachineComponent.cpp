@@ -19,15 +19,15 @@ void UProcStateMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	if (this->MachineClass.Get() != nullptr) {
-		this->Machine = NewObject<UProcStateMachine>(
-			this, 
-			this->MachineClass,
-			NAME_None,
-			RF_NoFlags, 
-			this->MachineClass.GetDefaultObject(), 
-			true);
-
-		
+		if (this->Machine != nullptr) {
+			this->Machine = NewObject<UProcStateMachine>(
+				this,
+				this->MachineClass,
+				NAME_None,
+				RF_NoFlags,
+				this->MachineClass.GetDefaultObject(),
+				true);
+		}		
 
 		for (auto const& l : this->StateChangeListenerCache) {
 			this->Machine->StateChangeListen(l);

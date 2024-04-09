@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Systems/PatrolPath.h"
+#include "Actors/PatrolPath.h"
 
 // Sets default values
 APatrolPath::APatrolPath()
@@ -65,4 +65,22 @@ int APatrolPath::FindClosestIndex(AActor* Patroller) {
 	}
 
 	return Goal;
+}
+
+AActor* FPatrolPathState::GetNextTarget(APatrolPath* Path) {
+	auto PointCount = Path->PatrolPoints.Num();
+
+	if (Path && PointCount > 0) {
+		auto Next = Path->PatrolPoints[this->Index];
+
+		this->Index %= PointCount;
+		return Next;
+	}
+	else {
+		return nullptr;
+	}
+}
+
+AActor* UPatrolPathLibrary::GetNextTarget(FPatrolPathState& State, APatrolPath* Path) {
+	return State.GetNextTarget(Path);
 }

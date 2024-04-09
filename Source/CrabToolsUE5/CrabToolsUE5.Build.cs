@@ -27,6 +27,7 @@ public class CrabToolsUE5 : ModuleRules
 				"EnhancedInput",
 				"UMG",
 				"Slate",
+				"AIModule",
 				// ... add other public dependencies that you statically link with here ...
 			});
 			
@@ -39,7 +40,7 @@ public class CrabToolsUE5 : ModuleRules
 				"Engine",
 				"Slate",
 				"BlueprintGraph",
-				"UnrealEd"
+				"UnrealEd",
 				// ... add private dependencies that you statically link with here ...	
 			});
 		

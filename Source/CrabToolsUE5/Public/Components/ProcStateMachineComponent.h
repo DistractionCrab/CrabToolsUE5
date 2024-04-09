@@ -10,14 +10,15 @@
 #include "ProcStateMachineComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(General), meta=(BlueprintSpawnableComponent) )
 class CRABTOOLSUE5_API UProcStateMachineComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
 	TSubclassOf<UProcStateMachine> MachineClass;
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine")
+
+	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
 	TObjectPtr<UProcStateMachine> Machine;
 	// Cache of State Change Listeners to add to the machine when it is initiated.
 	TArray<FStateChangeDispatcher> StateChangeListenerCache;

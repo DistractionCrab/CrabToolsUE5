@@ -237,6 +237,13 @@ class CRABTOOLSUE5_API URPGComponent : public UActorComponent
 	UPROPERTY(EditDefaultsOnly, Instanced, Category="RPG|Status")
 	TArray<UStatus*> Statuses;
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RPG", meta=(AllowPrivateAccess=true))
+	FIntAttribute ZeroInt;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RPG", meta = (AllowPrivateAccess = true))
+	FFloatAttribute ZeroFloat;
+
 public:
 	URPGComponent(const FObjectInitializer& ObjectInitializer);
 

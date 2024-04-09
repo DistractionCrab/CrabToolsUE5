@@ -551,6 +551,37 @@ void UProcStateMachine::Substitute(FName SlotName, UStateNode* Node) {
 	}
 }
 
+UStateNode* UProcStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
+	auto Node = this->GetCurrentState();
+	if (Class.Get() && Node) {		
+		if (Node->Node && Node->Node->IsA(Class.Get()->StaticClass())) {
+			Branches = ESearchResult::Found;
+
+			return Node->Node;
+		}
+	}
+	Branches = ESearchResult::NotFound;
+	return nullptr;
+}
+
+UStateNode* UProcStateMachine::FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
+	auto Node = this->GetCurrentState();
+
+	if (Node) {
+		if (Node->Node) {
+			auto Value = Node->Node->ExtractAs(Class);
+
+			if (Value) {
+				Branches = ESearchResult::Found;
+				return Value;
+			}	
+		}
+	}
+
+	Branches = ESearchResult::NotFound;
+	return nullptr;
+}
+
 #pragma endregion
 
 #pragma region NodeCode
@@ -670,6 +701,15 @@ void UStateNode::EnterWithData_Implementation(UObject* Data) {
 
 void UStateNode::GetEvents(TSet<FName>& List) {
 
+}
+
+UStateNode* UStateNode::ExtractAs(TSubclassOf<UStateNode> Class) {
+	if (this->IsA(Class.Get())) {
+		return this;
+	}
+	else {
+		return nullptr;
+	}
 }
 
 #pragma endregion

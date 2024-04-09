@@ -6,6 +6,33 @@
 #include "GameFramework/Actor.h"
 #include "PatrolPath.generated.h"
 
+USTRUCT(BlueprintType)
+struct FPatrolPathState {
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TWeakObjectPtr<APatrolPath> PatrolRef;
+
+	UPROPERTY()
+	int Index = 0;
+
+	AActor* GetNextTarget(APatrolPath* Path);
+
+	void Reset() { this->Index = 0; }
+};
+
+
+UCLASS()
+class UPatrolPathLibrary : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category="PatrolPath")
+	static AActor* GetNextTarget(UPARAM(Ref) FPatrolPathState& State, APatrolPath* Path);
+};
+
 UCLASS()
 class APatrolPath : public AActor
 {
@@ -15,9 +42,7 @@ class APatrolPath : public AActor
 
 public:	
 	// Sets default values for this actor's properties
-	APatrolPath();
-
-	
+	APatrolPath();	
 
 protected:
 	// Called when the game starts or when spawned
@@ -29,6 +54,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI)
 	TArray<AActor*> PatrolPoints;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI)
 	float LostDistance = 1000;
 

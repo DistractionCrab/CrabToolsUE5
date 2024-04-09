@@ -192,6 +192,8 @@ public:
 
 	void GetEvents(TSet<FName>& List);
 	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node);
+
+	virtual UStateNode* ExtractAs(TSubclassOf<UStateNode> Class);
 };
 
 
@@ -270,11 +272,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", 
+		meta = (ExpandEnumAsExecs = "Branches"))	
 	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
 	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", 
+		meta=(ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
@@ -286,6 +290,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
 	FName GetStateName(UStateNode* Node);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine",
+		meta = (ExpandEnumAsExecs = "Branches"))
+	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine",
+		meta = (ExpandEnumAsExecs = "Branches"))
+	UStateNode* FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
+
 
 
 	/* 
@@ -353,4 +366,6 @@ public:
 	TSet<FName> GetEvents() const;
 
 	void Substitute(FName SlotName, UStateNode* Node);
+
+
 };
