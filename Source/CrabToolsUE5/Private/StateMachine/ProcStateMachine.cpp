@@ -514,7 +514,7 @@ FName UProcStateMachine::GetEventVarName(FName EName) {
 }
 
 void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {
-	return;
+	/*
 
 	FEdGraphPinType PinType;
 	PinType.ContainerType = EPinContainerType::None;
@@ -541,6 +541,7 @@ void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VNam
 			FBlueprintEditorUtils::SetVariableSaveGameFlag(BlueprintAsset, VName, false);
 		}
 	}
+	*/
 }
 
 void UProcStateMachine::Substitute(FName SlotName, UStateNode* Node) {

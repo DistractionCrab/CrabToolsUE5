@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class CrabEditorToolsUE5 : ModuleRules
+public class StateMachineEditor : ModuleRules
 {
-	public CrabEditorToolsUE5(ReadOnlyTargetRules Target) : base(Target)
+	public StateMachineEditor(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -25,7 +25,6 @@ public class CrabEditorToolsUE5 : ModuleRules
 			{
 				"CrabToolsUE5",
 				"Core",
-				"EnhancedInput",
 				"UnrealEd",
 				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
@@ -35,11 +34,11 @@ public class CrabEditorToolsUE5 : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"AssetDefinition",
 				"Core",
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"CrabToolsUE5",
 				"KismetCompiler",
 				"EditorFramework",
 				"UnrealEd",

@@ -7,6 +7,6 @@ void UAISimplePatrolNode::Initialize_Implementation(UProcStateMachine* POwner) {
 	auto CtrlQ = this->GetAIController();
 
 	if (CtrlQ) {
-		this->FollowComponent = CtrlQ->GetPathFollowingComponent();
+		//this->FollowComponent = CtrlQ->GetPathFollowingComponent();
 	}	
 }
