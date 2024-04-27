@@ -1,4 +1,4 @@
-#include "StateMachine/ProcStateMachineBlueprintEditorToolbar.h"
+#include "StateMachine/EditorToolbar.h"
 #include "Types/ISlateMetaData.h"
 #include "Misc/Attribute.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
@@ -8,6 +8,7 @@
 #if WITH_EDITOR
 	#include "Styling/AppStyle.h"
 #endif // WITH_EDITOR
+
 #include "Widgets/SToolTip.h"
 #include "IDocumentation.h"
 #include "BlueprintEditor.h"
@@ -15,11 +16,11 @@
 #include "ToolMenus.h"
 #include "BlueprintEditorContext.h"
 
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
+#include "StateMachine/Editor.h"
 #include "WorkflowOrientedApp/SModeWidget.h"
 #include "Kismet2/BlueprintEditorUtils.h"
-#include "StateMachine/BlueprintModes/ProcStateMachineBlueprintApplicationMode.h"
-#include "StateMachine/BlueprintModes/ProcStateMachineGraphApplicationMode.h"
+#include "StateMachine/BlueprintModes/BlueprintApplicationMode.h"
+#include "StateMachine/BlueprintModes/GraphApplicationMode.h"
 
 #define LOCTEXT_NAMESPACE "PSM"
 
@@ -48,27 +49,27 @@ public:
 	// End of SWidget interface
 };
 
-FProcStateMachineBlueprintEditorToolbar::FProcStateMachineBlueprintEditorToolbar(TSharedPtr<FProcStateMachineBlueprintEditor>& InEditor)
+FEditorToolbar::FEditorToolbar(TSharedPtr<FEditor>& InEditor)
 : MyEditor(InEditor)
 {
 }
 
-void FProcStateMachineBlueprintEditorToolbar::AddProcStateMachineBlueprintEditorModesToolbar(TSharedPtr<FExtender> Extender)
+void FEditorToolbar::AddEditorModesToolbar(TSharedPtr<FExtender> Extender)
 {
 	
-	TSharedPtr<FProcStateMachineBlueprintEditor> BlueprintEditorPtr = MyEditor.Pin();
+	TSharedPtr<FEditor> BlueprintEditorPtr = MyEditor.Pin();
 
 	Extender->AddToolBarExtension(
 		"Asset",
 		EExtensionHook::After,
 		BlueprintEditorPtr->GetToolkitCommands(),
 		FToolBarExtensionDelegate::CreateSP(this, 
-			&FProcStateMachineBlueprintEditorToolbar::FillProcStateMachineBlueprintEditorModesToolbar));
+			&FEditorToolbar::FillEditorModesToolbar));
 }
 
-void FProcStateMachineBlueprintEditorToolbar::FillProcStateMachineBlueprintEditorModesToolbar(FToolBarBuilder& ToolbarBuilder)
+void FEditorToolbar::FillEditorModesToolbar(FToolBarBuilder& ToolbarBuilder)
 {
-	TSharedPtr<FProcStateMachineBlueprintEditor> BlueprintEditorPtr = MyEditor.Pin();
+	TSharedPtr<FEditor> BlueprintEditorPtr = MyEditor.Pin();
 	UBlueprint* BlueprintObj = BlueprintEditorPtr->GetBlueprintObj();
 
 	if( !BlueprintObj ||
@@ -89,9 +90,9 @@ void FProcStateMachineBlueprintEditorToolbar::FillProcStateMachineBlueprintEdito
 
 		BlueprintEditorPtr->AddToolbarWidget(
 			SNew(SModeWidget, 
-				FProcStateMachineGraphApplicationMode::GetLocalizedMode(
-					FProcStateMachineGraphApplicationMode::ModeName), 
-				FProcStateMachineGraphApplicationMode::ModeName)
+				FGraphApplicationMode::GetLocalizedMode(
+					FGraphApplicationMode::ModeName), 
+				FGraphApplicationMode::ModeName)
 			.OnGetActiveMode(GetActiveMode)
 			.OnSetActiveMode(SetActiveMode)
 			.ToolTip(IDocumentation::Get()->CreateToolTip(
@@ -108,9 +109,9 @@ void FProcStateMachineBlueprintEditorToolbar::FillProcStateMachineBlueprintEdito
 		BlueprintEditorPtr->AddToolbarWidget(
 			SNew(
 				SModeWidget, 
-				FProcStateMachineBlueprintApplicationMode::GetLocalizedMode(
-					FProcStateMachineBlueprintApplicationMode::ModeName), 
-				FProcStateMachineBlueprintApplicationMode::ModeName)
+				FBlueprintApplicationMode::GetLocalizedMode(
+					FBlueprintApplicationMode::ModeName), 
+				FBlueprintApplicationMode::ModeName)
 			.OnGetActiveMode(GetActiveMode)
 			.OnSetActiveMode(SetActiveMode)
 			.CanBeSelected(BlueprintEditorPtr.Get(), &FBlueprintEditor::IsEditingSingleBlueprint)
@@ -150,7 +151,7 @@ void FProcStateMachineBlueprintEditorToolbar::FillProcStateMachineBlueprintEdito
 	}
 }
 
-void FProcStateMachineBlueprintEditorToolbar::AddWidgetReflector(UToolMenu* InMenu)
+void FEditorToolbar::AddWidgetReflector(UToolMenu* InMenu)
 {
 	FToolMenuSection& Section = InMenu->AddSection("StateMachineTools");
 	Section.InsertPosition = FToolMenuInsert("SourceControl", EToolMenuInsertType::After);
@@ -167,7 +168,7 @@ void FProcStateMachineBlueprintEditorToolbar::AddWidgetReflector(UToolMenu* InMe
 	));
 }
 
-void FProcStateMachineBlueprintEditorToolbar::AddToolPalettes(UToolMenu* InMenu)
+void FEditorToolbar::AddToolPalettes(UToolMenu* InMenu)
 {
 	// @TODO: For now we only support one tool palette, switch this to a dropdown when we support multiple tool palettes.
 	for (TSharedPtr<FUICommandInfo>& Command : MyEditor.Pin()->ToolPaletteCommands)

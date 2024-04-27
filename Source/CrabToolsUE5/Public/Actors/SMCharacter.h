@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/ProcStateMachineComponent.h"
+#include "Components/StateMachineComponent.h"
 #include "SMCharacter.generated.h"
 
 
@@ -13,9 +13,9 @@ class ASMCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UProcStateMachineComponent* StateMachineComponent;
+	class UStateMachineComponent* StateMachineComponent;
 
 public:
 	ASMCharacter();

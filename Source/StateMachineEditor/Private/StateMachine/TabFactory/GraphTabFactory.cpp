@@ -8,7 +8,7 @@
 const FName FGraphTabFactory::ToolPaletteTabID = UAssetEditorUISubsystem::TopLeftTabID;
 const FName FGraphTabFactory::TabID(TEXT("GraphView"));
 
-FGraphTabFactory::FGraphTabFactory(TSharedPtr<class FProcStateMachineBlueprintEditor> InBlueprintEditor)
+FGraphTabFactory::FGraphTabFactory(TSharedPtr<class FEditor> InBlueprintEditor)
 : FWorkflowTabFactory(TabID, InBlueprintEditor),
 	BlueprintEditor(InBlueprintEditor)
 {

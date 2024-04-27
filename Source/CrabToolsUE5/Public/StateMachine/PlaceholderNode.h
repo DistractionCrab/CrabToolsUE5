@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProcStateMachine.h"
+#include "StateMachine.h"
 #include "PlaceholderNode.generated.h"
 
 /**

@@ -25,14 +25,14 @@ public:
 
 	UMovementInputNode();
 
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	virtual void TriggerCallback_Implementation(const FInputActionValue& Value);
 	
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void ApplyMovement(FVector2D InputAxis);
 	virtual void ApplyMovement_Implementation(FVector2D InputAxis);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	UPerspectiveManager* GetPerspective() { return this->Perspective.Get(); }
 };

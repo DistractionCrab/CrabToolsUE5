@@ -3,7 +3,7 @@
 
 #include "StateMachine/CompositeNode.h"
 
-void UCompositeNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UCompositeNode::Initialize_Implementation(UStateMachine* POwner) {
 	Super::Initialize_Implementation(POwner);
 	for (auto& NodePairs : this->Nodes) {
 		NodePairs.Value->Initialize_Internal(POwner);

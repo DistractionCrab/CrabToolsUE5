@@ -2,11 +2,11 @@
  
 #include "CoreMinimal.h"
 #include "Factories/Factory.h"
-#include "StateMachine/ProcStateMachine.h"
-#include "ProcStateMachineBlueprintFactory.generated.h"
+#include "StateMachine/StateMachine.h"
+#include "StateMachineBlueprintFactory.generated.h"
  
 UCLASS(HideCategories=Object, MinimalAPI)
-class UProcStateMachineBlueprintFactory : public UFactory
+class UStateMachineBlueprintFactory : public UFactory
 {
 	GENERATED_BODY()
 
@@ -18,13 +18,13 @@ private:
 
 	// The parent class of the created blueprint
 	UPROPERTY(EditAnywhere, Category="PSMBlueprintFactory", meta=(AllowAbstract = ""))
-	TSubclassOf<class UProcStateMachine> ParentClass;
+	TSubclassOf<class UStateMachine> ParentClass;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UClass> RootMachineClass;
 
 public:
-	UProcStateMachineBlueprintFactory();
+	UStateMachineBlueprintFactory();
 
 	virtual bool ConfigureProperties() override;
 

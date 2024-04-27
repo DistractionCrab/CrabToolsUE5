@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "UObject/WeakObjectPtrTemplates.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "Components/PerspectiveManager.h"
 #include "GameFramework/Pawn.h"
 #include "MovementStateNode.generated.h"
@@ -25,7 +25,7 @@ class CRABTOOLSUE5_API UMovementStateNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")

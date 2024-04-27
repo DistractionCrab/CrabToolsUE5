@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "DialogueNode.generated.h"
 
 USTRUCT(BlueprintType)
@@ -32,7 +32,7 @@ class CRABTOOLSUE5_API UDialogueNode : public UStateNode
 public:
 
 	
-	//virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	//virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	//virtual void Tick_Implementation(float DeltaTime) override;
 	//virtual void Event_Implementation(FName Event) override;
 	//virtual void EventWithData_Implementation(FName EName, UObject* Data) override;

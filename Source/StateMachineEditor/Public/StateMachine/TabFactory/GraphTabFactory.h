@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Widgets/SWidget.h"
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
+#include "StateMachine/Editor.h"
 
 struct FGraphTabFactory : public FWorkflowTabFactory
 {
@@ -12,10 +12,10 @@ public:
 	static const FName TabID;
 	
 public:
-	FGraphTabFactory(TSharedPtr<class FProcStateMachineBlueprintEditor> InBlueprintEditor);
+	FGraphTabFactory(TSharedPtr<class FEditor> InBlueprintEditor);
 	
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 	
 protected:
-	TWeakPtr<class FProcStateMachineBlueprintEditor> BlueprintEditor;
+	TWeakPtr<class FEditor> BlueprintEditor;
 };

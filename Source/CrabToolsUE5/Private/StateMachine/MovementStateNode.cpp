@@ -4,7 +4,7 @@ void UMovementStateNode::Tick_Implementation(float DeltaTime) {
 	this->ApplyMovement();
 }
 
-void UMovementStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UMovementStateNode::Initialize_Implementation(UStateMachine* POwner) {
 	Super::Initialize_Implementation(POwner);
 
 	// If the owning actor has a perspective manager, store it for simple use.

@@ -1,17 +1,17 @@
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
-#include "StateMachine/ProcStateMachineBlueprint.h"
-#include "StateMachine/Schema/ProcStateMachineGraphSchema.h"
+#include "StateMachine/Editor.h"
+#include "StateMachine/StateMachineBlueprint.h"
+#include "StateMachine/Schema/GraphSchema.h"
 #include "WidgetModeManager.h"
-#include "StateMachine/ProcStateMachineBlueprintEditorToolbar.h"
+#include "StateMachine/EditorToolbar.h"
 
 #define LOCTEXT_NAMESPACE "PSM"
 
-FProcStateMachineBlueprintEditor::FProcStateMachineBlueprintEditor(): FBlueprintEditor() {
+FEditor::FEditor(): FBlueprintEditor() {
 
 }
 
-FProcStateMachineBlueprintEditor::~FProcStateMachineBlueprintEditor() {
-	UProcStateMachineBlueprint* Blueprint = Cast<UProcStateMachineBlueprint>(this->GetBlueprintObj());
+FEditor::~FEditor() {
+	UStateMachineBlueprint* Blueprint = Cast<UStateMachineBlueprint>(this->GetBlueprintObj());
 
 	if (Blueprint)
 	{
@@ -22,88 +22,88 @@ FProcStateMachineBlueprintEditor::~FProcStateMachineBlueprintEditor() {
 	FCoreUObjectDelegates::OnObjectsReplaced.RemoveAll(this);
 }
 
-void FProcStateMachineBlueprintEditor::InitProcStateMachineBlueprintEditor(
+void FEditor::InitEditor(
 	const EToolkitMode::Type Mode, 
 	const TSharedPtr< IToolkitHost >& InitToolkitHost, 
 	const TArray<UBlueprint*>& InBlueprints, 
 	bool bShouldOpenInDefaultsMode) 
 {
-	TSharedPtr<FProcStateMachineBlueprintEditor> ThisPtr(SharedThis(this));
+	TSharedPtr<FEditor> ThisPtr(SharedThis(this));
 
-	EditorToolbar = MakeShared<FProcStateMachineBlueprintEditorToolbar>(ThisPtr);
+	EditorToolbar = MakeShared<FEditorToolbar>(ThisPtr);
 
 	InitBlueprintEditor(Mode, InitToolkitHost, InBlueprints, bShouldOpenInDefaultsMode);
 }
 
 //~ Begin FBlueprintEditor interface
-void FProcStateMachineBlueprintEditor::Tick(float DeltaTime) {}
-void FProcStateMachineBlueprintEditor::PostUndo(bool bSuccessful) {}
-void FProcStateMachineBlueprintEditor::PostRedo(bool bSuccessful) {}
-void FProcStateMachineBlueprintEditor::Compile() {}
+void FEditor::Tick(float DeltaTime) {}
+void FEditor::PostUndo(bool bSuccessful) {}
+void FEditor::PostRedo(bool bSuccessful) {}
+void FEditor::Compile() {}
 //~ End FBlueprintEditor interface
 
 
 //~ Begin FAssetEditorToolkit Interface
-bool FProcStateMachineBlueprintEditor::OnRequestClose(EAssetEditorCloseReason InCloseReason) {
+bool FEditor::OnRequestClose(EAssetEditorCloseReason InCloseReason) {
 	return true;
 }
 // End of FAssetEditorToolkit 
 
 //~ Begin FGCObjectInterface interface
-void FProcStateMachineBlueprintEditor::AddReferencedObjects( FReferenceCollector& Collector ) {}
+void FEditor::AddReferencedObjects( FReferenceCollector& Collector ) {}
 //~ End FGCObjectInterface interface
 
 //~ Begin IToolkit interface
-FName FProcStateMachineBlueprintEditor::GetToolkitContextFName() const { 
+FName FEditor::GetToolkitContextFName() const { 
 	return this->GetToolkitFName(); 
 }
 
-FName FProcStateMachineBlueprintEditor::GetToolkitFName() const { 
-	return FName("ProcStateMachineBlueprintEditor");
+FName FEditor::GetToolkitFName() const { 
+	return FName("Editor");
 }
 
-FText FProcStateMachineBlueprintEditor::GetBaseToolkitName() const {
+FText FEditor::GetBaseToolkitName() const {
 	return LOCTEXT("AppLabel", "ProcStateMachine Editor");
 }
 
-FString FProcStateMachineBlueprintEditor::GetWorldCentricTabPrefix() const {
+FString FEditor::GetWorldCentricTabPrefix() const {
 	return LOCTEXT("WorldCentricTabPrefix", "StateMachine Editor").ToString();
 }
 
-FLinearColor FProcStateMachineBlueprintEditor::GetWorldCentricTabColorScale() const {
+FLinearColor FEditor::GetWorldCentricTabColorScale() const {
 	return FLinearColor(0.3f, 0.25f, 0.35f, 0.5f);
 }
 
-void FProcStateMachineBlueprintEditor::InitToolMenuContext(FToolMenuContext& MenuContext) {
+void FEditor::InitToolMenuContext(FToolMenuContext& MenuContext) {
 
 }
-void FProcStateMachineBlueprintEditor::OnToolkitHostingStarted(const TSharedRef<IToolkit>& Toolkit) {
+void FEditor::OnToolkitHostingStarted(const TSharedRef<IToolkit>& Toolkit) {
 
 }
 
-void FProcStateMachineBlueprintEditor::OnToolkitHostingFinished(const TSharedRef<IToolkit>& Toolkit) {
+void FEditor::OnToolkitHostingFinished(const TSharedRef<IToolkit>& Toolkit) {
 
 }
 //~ End IToolkit interface
 
 
-void FProcStateMachineBlueprintEditor::RegisterApplicationModes(const TArray<UBlueprint*>& InBlueprints, bool bShouldOpenInDefaultsMode, bool bNewlyCreated/* = false*/)
+void FEditor::RegisterApplicationModes(const TArray<UBlueprint*>& InBlueprints, bool bShouldOpenInDefaultsMode, bool bNewlyCreated/* = false*/)
 {
 	if (InBlueprints.Num() == 1)
 	{
-		TSharedPtr<FProcStateMachineBlueprintEditor> ThisPtr(SharedThis(this));
+		TSharedPtr<FEditor> ThisPtr(SharedThis(this));
 
 		// Create the modes and activate one (which will populate with a real layout)
 		TArray<TSharedRef<FApplicationMode>> TempModeList;
-		TempModeList.Add(MakeShared<FProcStateMachineGraphApplicationMode>(ThisPtr));
-		TempModeList.Add(MakeShared<FProcStateMachineBlueprintApplicationMode>(ThisPtr));
+		TempModeList.Add(MakeShared<FGraphApplicationMode>(ThisPtr));
+		TempModeList.Add(MakeShared<FBlueprintApplicationMode>(ThisPtr));
 
 		for (TSharedRef<FApplicationMode>& AppMode : TempModeList)
 		{
 			AddApplicationMode(AppMode->GetModeName(), AppMode);
 		}
 
-		SetCurrentMode(FProcStateMachineGraphApplicationMode::ModeName);
+		SetCurrentMode(FGraphApplicationMode::ModeName);
 	}
 	else
 	{
@@ -115,7 +115,7 @@ void FProcStateMachineBlueprintEditor::RegisterApplicationModes(const TArray<UBl
 	}
 }
 
-FGraphAppearanceInfo FProcStateMachineBlueprintEditor::GetGraphAppearance(class UEdGraph* InGraph) const {
+FGraphAppearanceInfo FEditor::GetGraphAppearance(class UEdGraph* InGraph) const {
 	FGraphAppearanceInfo AppearanceInfo = FBlueprintEditor::GetGraphAppearance(InGraph);
 
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText", "STATE MACHINE BLUEPRINT");
@@ -134,11 +134,11 @@ FGraphAppearanceInfo FProcStateMachineBlueprintEditor::GetGraphAppearance(class 
 	return AppearanceInfo;
 }
 
-TSubclassOf<UEdGraphSchema> FProcStateMachineBlueprintEditor::GetDefaultSchemaClass() const {
-	return UProcStateMachineGraphSchema::StaticClass();
+TSubclassOf<UEdGraphSchema> FEditor::GetDefaultSchemaClass() const {
+	return UGraphSchema::StaticClass();
 }
 
-void FProcStateMachineBlueprintEditor::CreateEditorModeManager()
+void FEditor::CreateEditorModeManager()
 {
 	TSharedPtr<FWidgetModeManager> WidgetModeManager = MakeShared<FWidgetModeManager>();
 	WidgetModeManager->OwningToolkit = SharedThis(this);
@@ -146,7 +146,7 @@ void FProcStateMachineBlueprintEditor::CreateEditorModeManager()
 
 }
 
-void FProcStateMachineBlueprintEditor::InitalizeExtenders() {
+void FEditor::InitalizeExtenders() {
 	FBlueprintEditor::InitalizeExtenders();
 
 	/*

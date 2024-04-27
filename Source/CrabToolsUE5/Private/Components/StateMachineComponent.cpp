@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Components/ProcStateMachineComponent.h"
+#include "Components/StateMachineComponent.h"
 #include "Engine.h"
 
 // Sets default values for this component's properties
-UProcStateMachineComponent::UProcStateMachineComponent()
+UStateMachineComponent::UStateMachineComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -15,12 +15,12 @@ UProcStateMachineComponent::UProcStateMachineComponent()
 
 
 // Called when the game starts
-void UProcStateMachineComponent::BeginPlay()
+void UStateMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	if (this->MachineClass.Get() != nullptr) {
 		if (this->Machine != nullptr) {
-			this->Machine = NewObject<UProcStateMachine>(
+			this->Machine = NewObject<UStateMachine>(
 				this,
 				this->MachineClass,
 				NAME_None,
@@ -40,7 +40,7 @@ void UProcStateMachineComponent::BeginPlay()
 
 
 // Called every frame
-void UProcStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -50,19 +50,19 @@ void UProcStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickT
 }
 
 
-void UProcStateMachineComponent::Event(FName EName) {
+void UStateMachineComponent::Event(FName EName) {
 	if (this->HasMachine()) {
 		this->Machine->Event(EName);
 	}
 }
 
-void UProcStateMachineComponent::EventWithData(FName EName, UObject* Data) {
+void UStateMachineComponent::EventWithData(FName EName, UObject* Data) {
 	if (this->HasMachine()) {
 		this->Machine->EventWithData(EName, Data);
 	}
 }
 
-UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ESearchResult& Branches) {
+UStateNode* UStateMachineComponent::FindNode(FName NodeName, ESearchResult& Branches) {
 	if (this->HasMachine()) {
 		return this->Machine->FindNode(NodeName, Branches);
 	}
@@ -72,7 +72,7 @@ UStateNode* UProcStateMachineComponent::FindNode(FName NodeName, ESearchResult& 
 	}
 }
 
-UStateNode* UProcStateMachineComponent::FindNodeByPath(const FString& Path, ESearchResult& Branches) {
+UStateNode* UStateMachineComponent::FindNodeByPath(const FString& Path, ESearchResult& Branches) {
 	if (this->HasMachine()) {
 		return this->Machine->FindNodeByPath(Path, Branches);
 	}
@@ -83,7 +83,7 @@ UStateNode* UProcStateMachineComponent::FindNodeByPath(const FString& Path, ESea
 }
 
 
-void UProcStateMachineComponent::StateChangeListen(const FStateChangeDispatcher& Callback) {
+void UStateMachineComponent::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	if (this->HasMachine()) {
 		this->Machine->StateChangeListen(Callback);
 	}
@@ -92,10 +92,10 @@ void UProcStateMachineComponent::StateChangeListen(const FStateChangeDispatcher&
 	}
 }
 
-FName UProcStateMachineComponent::CurrentStateName() {
+FName UStateMachineComponent::CurrentStateName() {
 	return this->Machine->GetCurrentStateName();
 }
 
-bool UProcStateMachineComponent::HasMachine() {
+bool UStateMachineComponent::HasMachine() {
 	return this->Machine != nullptr;
 }

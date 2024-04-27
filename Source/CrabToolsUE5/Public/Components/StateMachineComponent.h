@@ -4,28 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "Delegates/DelegateSignatureImpl.inl"
 #include "Utils/Enums.h"
-#include "ProcStateMachineComponent.generated.h"
+#include "StateMachineComponent.generated.h"
 
 
 UCLASS( ClassGroup=(General), meta=(BlueprintSpawnableComponent) )
-class CRABTOOLSUE5_API UProcStateMachineComponent : public UActorComponent
+class CRABTOOLSUE5_API UStateMachineComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
-	TSubclassOf<UProcStateMachine> MachineClass;
+	UPROPERTY(EditAnywhere, Category = "StateMachine")
+	TSubclassOf<UStateMachine> MachineClass;
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
-	TObjectPtr<UProcStateMachine> Machine;
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine")
+	TObjectPtr<UStateMachine> Machine;
 	// Cache of State Change Listeners to add to the machine when it is initiated.
 	TArray<FStateChangeDispatcher> StateChangeListenerCache;
 
 public:	
 	// Sets default values for this component's properties
-	UProcStateMachineComponent();
+	UStateMachineComponent();
 
 protected:
 	// Called when the game starts
@@ -35,22 +35,22 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Event(FName EName);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void EventWithData(FName EName, UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta=(ExpandEnumAsExecs="Branches"))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(ExpandEnumAsExecs="Branches"))
 	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName CurrentStateName();
 
 private:

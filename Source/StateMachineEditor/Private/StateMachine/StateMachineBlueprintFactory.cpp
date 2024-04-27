@@ -1,12 +1,12 @@
-#include "StateMachine/ProcStateMachineBlueprintFactory.h"
-#include "StateMachine/ProcStateMachineBlueprint.h"
+#include "StateMachine/StateMachineBlueprintFactory.h"
+#include "StateMachine/StateMachineBlueprint.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
 
 
-#define LOCTEXT_NAMESPACE "UProcStateMachineBlueprintFactory"
+#define LOCTEXT_NAMESPACE "UStateMachineBlueprintFactory"
 
 
 class FStateMachineClassFilter : public IClassViewerFilter
@@ -32,12 +32,12 @@ public:
 
 };
 
-UProcStateMachineBlueprintFactory::UProcStateMachineBlueprintFactory() {
-	SupportedClass = UProcStateMachineBlueprint::StaticClass();
+UStateMachineBlueprintFactory::UStateMachineBlueprintFactory() {
+	SupportedClass = UStateMachineBlueprint::StaticClass();
 	bCreateNew = true;
 }
 
-UObject* UProcStateMachineBlueprintFactory::FactoryCreateNew(
+UObject* UStateMachineBlueprintFactory::FactoryCreateNew(
 		UClass* Class, 
 		UObject* InParent, 
 		FName Name, 
@@ -46,16 +46,16 @@ UObject* UProcStateMachineBlueprintFactory::FactoryCreateNew(
 		FFeedbackContext* Warn, 
 		FName CallingContext) 
 {
-	check(Class->IsChildOf(UProcStateMachineBlueprint::StaticClass()));
+	check(Class->IsChildOf(UStateMachineBlueprint::StaticClass()));
 
 	UClass* CurrentParentClass = this->ParentClass;
 	if (CurrentParentClass == nullptr) {
-		CurrentParentClass = UProcStateMachine::StaticClass();
+		CurrentParentClass = UStateMachine::StaticClass();
 	}
 
 	bool c1 = CurrentParentClass == nullptr;
 	bool c2 = !FKismetEditorUtilities::CanCreateBlueprintOfClass(CurrentParentClass);
-	bool c3 = !CurrentParentClass->IsChildOf(UProcStateMachine::StaticClass());
+	bool c3 = !CurrentParentClass->IsChildOf(UStateMachine::StaticClass());
 
 	if (c1 || c2 || c3)	{
 		FFormatNamedArguments Args;
@@ -71,14 +71,14 @@ UObject* UProcStateMachineBlueprintFactory::FactoryCreateNew(
 		return nullptr;
 	} 
 	else {
-		auto NewBP = CastChecked<UProcStateMachineBlueprint>(
+		auto NewBP = CastChecked<UStateMachineBlueprint>(
 			FKismetEditorUtilities::CreateBlueprint(
 				CurrentParentClass, 
 				InParent, 
 				Name, 
 				BlueprintType, 
-				UProcStateMachineBlueprint::StaticClass(), 
-				UProcStateMachineBlueprintGeneratedClass::StaticClass(), 
+				UStateMachineBlueprint::StaticClass(), 
+				UStateMachineBlueprintGeneratedClass::StaticClass(), 
 				CallingContext));
 
 		return NewBP;
@@ -86,7 +86,7 @@ UObject* UProcStateMachineBlueprintFactory::FactoryCreateNew(
 }
 
 
-UObject* UProcStateMachineBlueprintFactory::FactoryCreateNew(
+UObject* UStateMachineBlueprintFactory::FactoryCreateNew(
 		UClass* Class, 
 		UObject* InParent, 
 		FName Name, 
@@ -98,7 +98,7 @@ UObject* UProcStateMachineBlueprintFactory::FactoryCreateNew(
 }
 
 
-bool UProcStateMachineBlueprintFactory::ConfigureProperties() {
+bool UStateMachineBlueprintFactory::ConfigureProperties() {
 	FClassViewerModule& ClassViewerModule = 
 		FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer");
 
@@ -114,23 +114,23 @@ bool UProcStateMachineBlueprintFactory::ConfigureProperties() {
 	Options.ClassFilters.Add(Filter.ToSharedRef());
 
 	if (Options.ExtraPickerCommonClasses.Num() == 0) {
-		Options.ExtraPickerCommonClasses.Add(UProcStateMachine::StaticClass());
+		Options.ExtraPickerCommonClasses.Add(UStateMachine::StaticClass());
 	}
 
 	Filter->DisallowedClassFlags = CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_Hidden | CLASS_HideDropDown;
-	Filter->AllowedChildrenOfClasses.Add(UProcStateMachine::StaticClass());
+	Filter->AllowedChildrenOfClasses.Add(UStateMachine::StaticClass());
 
 	const FText TitleText = LOCTEXT("CreateWidgetBlueprint", "Pick Parent Class for New Widget Blueprint");
 
 	UClass* ChosenParentClass = nullptr;
-	bool isSuccessful = SClassPickerDialog::PickClass(TitleText, Options, ChosenParentClass, UProcStateMachine::StaticClass());
-	ParentClass = ChosenParentClass ? ChosenParentClass : UProcStateMachine::StaticClass();
+	bool isSuccessful = SClassPickerDialog::PickClass(TitleText, Options, ChosenParentClass, UStateMachine::StaticClass());
+	ParentClass = ChosenParentClass ? ChosenParentClass : UStateMachine::StaticClass();
 
 	return isSuccessful;
 
 }
 
-bool UProcStateMachineBlueprintFactory::ShouldShowInNewMenu() const {
+bool UStateMachineBlueprintFactory::ShouldShowInNewMenu() const {
 	return true;
 }
 

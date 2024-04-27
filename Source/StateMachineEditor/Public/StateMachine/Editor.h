@@ -11,11 +11,11 @@
 #include "BlueprintEditor.h"
 #include "Blueprint/UserWidget.h"
 
-class STATEMACHINEEDITOR_API FProcStateMachineBlueprintEditor : public FBlueprintEditor
+class STATEMACHINEEDITOR_API FEditor : public FBlueprintEditor
 {
 private:
 	/** The toolbar builder associated with this editor */
-	TSharedPtr<class FProcStateMachineBlueprintEditorToolbar> EditorToolbar;
+	TSharedPtr<class FEditorToolbar> EditorToolbar;
 
 
 public:
@@ -23,11 +23,11 @@ public:
 	TArray< TSharedPtr<FUICommandInfo>> ToolPaletteCommands;
 
 public:
-	FProcStateMachineBlueprintEditor();
+	FEditor();
 
-	virtual ~FProcStateMachineBlueprintEditor();
+	virtual ~FEditor();
 
-	void InitProcStateMachineBlueprintEditor(
+	void InitEditor(
 		const EToolkitMode::Type Mode, 
 		const TSharedPtr< IToolkitHost >& InitToolkitHost, 
 		const TArray<UBlueprint*>& InBlueprints, 
@@ -68,7 +68,7 @@ public:
 
 	void CreateEditorModeManager() override;
 
-	TSharedPtr<class FProcStateMachineBlueprintEditorToolbar> GetWidgetToolbarBuilder() { return EditorToolbar; }
+	TSharedPtr<class FEditorToolbar> GetWidgetToolbarBuilder() { return EditorToolbar; }
 
 protected:
 	virtual void InitalizeExtenders() override;

@@ -5,7 +5,7 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Misc/NotifyHook.h"
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
+#include "StateMachine/Editor.h"
 
 class IDetailsView;
 class SBox;
@@ -23,7 +23,7 @@ public:
 
 	void Construct(
 		const FArguments& InArgs, 
-		TSharedPtr<class FProcStateMachineBlueprintEditor> InBlueprintEditor);
+		TSharedPtr<class FEditor> InBlueprintEditor);
 
 	virtual FString GetReferencerName() const override
 	{

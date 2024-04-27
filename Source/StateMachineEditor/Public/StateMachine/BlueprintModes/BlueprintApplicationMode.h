@@ -7,14 +7,14 @@
 /////////////////////////////////////////////////////
 // FWidgetGraphApplicationMode
 
-class STATEMACHINEEDITOR_API FProcStateMachineBlueprintApplicationMode : public FBlueprintEditorApplicationMode
+class STATEMACHINEEDITOR_API FBlueprintApplicationMode : public FBlueprintEditorApplicationMode
 {
 public:
 	static const FName ModeName;
 
 public:
 
-	FProcStateMachineBlueprintApplicationMode(TSharedPtr<FProcStateMachineBlueprintEditor> InEditor);
+	FBlueprintApplicationMode(TSharedPtr<FEditor> InEditor);
 
 	// FApplicationMode interface
 	virtual void RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) override;
@@ -25,7 +25,7 @@ public:
 	static FText GetLocalizedMode(const FName InMode);
 
 protected:
-	TWeakPtr<class FProcStateMachineBlueprintEditor> MyEditor;
+	TWeakPtr<class FEditor> MyEditor;
 
 	// Set of spawnable tabs in the mode
 	FWorkflowAllowedTabSet TabFactories;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "AIController.h"
 #include "AIBaseNode.generated.h"
 
@@ -18,7 +18,7 @@ class CRABTOOLSUE5_API UAIBaseNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 
 	/* Return the AIController that was retrieved by the Pawn onwer of the state machine. */
 	FORCEINLINE AAIController* GetAIController() { return this->AICtrl.Get(); }

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "EventMapNode.generated.h"
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FEventHandler, FName, EventName);
@@ -24,7 +24,7 @@ public:
 
 public:
 	virtual void Event_Implementation(FName Event) override;
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 
 	UFUNCTION()
 	TArray<FString> HandlerNameOptions();

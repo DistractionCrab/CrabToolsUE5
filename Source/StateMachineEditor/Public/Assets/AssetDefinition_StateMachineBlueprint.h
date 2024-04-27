@@ -1,18 +1,18 @@
 #pragma once
 
-#include "StateMachine/ProcStateMachineBlueprint.h"
+#include "StateMachine/StateMachineBlueprint.h"
 #include "AssetDefinitionDefault.h"
 
-#include "AssetDefinition_ProcStateMachineBlueprint.generated.h"
+#include "AssetDefinition_StateMachineBlueprint.generated.h"
 
 UCLASS()
-class UAssetDefinition_ProcStateMachineBlueprint : public UAssetDefinitionDefault
+class UAssetDefinition_StateMachineBlueprint : public UAssetDefinitionDefault
 {
 	GENERATED_BODY()
 
 public:
-	UAssetDefinition_ProcStateMachineBlueprint();
-	virtual ~UAssetDefinition_ProcStateMachineBlueprint() override;
+	UAssetDefinition_StateMachineBlueprint();
+	virtual ~UAssetDefinition_StateMachineBlueprint() override;
 	
 	// UAssetDefinition Begin
 	virtual FText GetAssetDisplayName() const override;

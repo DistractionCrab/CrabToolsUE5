@@ -15,7 +15,7 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Styling/SlateBrush.h"
 #include "Components/Widget.h"
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
+#include "StateMachine/Editor.h"
 #include "Settings/LevelEditorPlaySettings.h"
 #include "Layout/WidgetPath.h"
 
@@ -43,7 +43,7 @@ public:
 
 	void Construct(
 		const FArguments& InArgs, 
-		TSharedPtr<class FProcStateMachineBlueprintEditor> InBlueprintEditor);
+		TSharedPtr<class FEditor> InBlueprintEditor);
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 

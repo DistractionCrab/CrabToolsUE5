@@ -3,11 +3,11 @@
 
 #include "StateMachine/HierarchyNode.h"
 
-void UHierarchyNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UHierarchyNode::Initialize_Implementation(UStateMachine* POwner) {
 	UStateNode::Initialize(POwner);
 
 	if (this->MachineClass.Get() != nullptr) {
-		this->SubMachine = NewObject<UProcStateMachine>(
+		this->SubMachine = NewObject<UStateMachine>(
 			this,
 			this->MachineClass, 
 			NAME_None, 

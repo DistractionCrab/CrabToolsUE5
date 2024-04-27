@@ -2,12 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
-#include "StateMachine/ProcStateMachineBlueprintGeneratedClass.h"
 
-#include "ProcStateMachineBlueprint.generated.h"
+#include "StateMachineBlueprint.generated.h"
 
 UCLASS(BlueprintType)
-class STATEMACHINEEDITOR_API UProcStateMachineBlueprint : public UBlueprint
+class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint
 {
 	GENERATED_UCLASS_BODY()
 

@@ -9,10 +9,10 @@
 #include "StateChangeListener.h"
 #include "Utils/Enums.h"
 #include "UObject/ObjectPtr.h"
-#include "ProcStateMachine.generated.h"
+#include "StateMachine.generated.h"
 
 class UStateNode;
-class UProcStateMachine;
+class UStateMachine;
 class UNodeTransition;
 
 
@@ -26,11 +26,11 @@ struct  FTransitionData
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "StateOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "StateOptions"))
 	FName Destination;
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "ConditionOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionOptions"))
 	FName Condition = "TrueCondition";
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "ConditionDataOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionDataOptions"))
 	FName DataCondition = "TrueDataCondition";
 	
 	FTransitionDelegate ConditionCallback;
@@ -42,9 +42,9 @@ struct  FStateMachineEventRef
 {
 	GENERATED_USTRUCT_BODY()
 
-	TWeakObjectPtr<UProcStateMachine> Owner;
+	TWeakObjectPtr<UStateMachine> Owner;
 
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine|Events")
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine|Events")
 	FName EventName;
 
 public:
@@ -65,10 +65,10 @@ struct  FStateData
 
 public:
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine")
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine")
 	TObjectPtr<UStateNode> Node;
 	// Map from Event Name to StateName
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine")
+	UPROPERTY(EditAnywhere, Category = "StateMachine")
 	TMap<FName, FTransitionData> Transitions;
 };
 
@@ -77,11 +77,11 @@ struct FAliasData
 {
 	GENERATED_USTRUCT_BODY()
 public:
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetOptions = "StateOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "StateOptions"))
 	TSet<FName> States;
 
 	// Mapping of EventName -> TransitionData.
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (GetValueOptions = "StateOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetValueOptions = "StateOptions"))
 	TMap<FName, FTransitionData> Transitions;
 
 };
@@ -94,10 +94,10 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
 
-	friend class UProcStateMachine;
+	friend class UStateMachine;
 
 	UPROPERTY()
-	TObjectPtr<UProcStateMachine> Owner;
+	TObjectPtr<UStateMachine> Owner;
 	bool bActive = false;
 
 	
@@ -105,75 +105,75 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 public:
 
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
-	void Initialize(UProcStateMachine* POwner);
-	virtual void Initialize_Implementation(UProcStateMachine* POwner);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
+	void Initialize(UStateMachine* POwner);
+	virtual void Initialize_Implementation(UStateMachine* POwner);
 
 	/**
 	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a
 	 * state machine.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
-	void Initialize_Internal(UProcStateMachine* POwner);
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void Initialize_Internal(UStateMachine* POwner);
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Event(FName EName);
 	void Event_Internal(FName EName);
 	virtual void Event_Implementation(FName EName);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void EventWithData(FName EName, UObject* Data);
 	void EventWithData_Internal(FName EName, UObject* Data);
 	virtual void EventWithData_Implementation(FName EName, UObject* Data);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner();
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
-	UProcStateMachine* GetMachine();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
+	UStateMachine* GetMachine();
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
-	UProcStateMachine* GetMachineAs(TSubclassOf<UProcStateMachine> SClass, ESearchResult& Result);
+	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Enter();
 	void Enter_Internal();
 	virtual void Enter_Implementation() {}
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void EnterWithData(UObject* Data);
 	void EnterWithData_Internal(UObject* Data);
 	virtual void EnterWithData_Implementation(UObject* Data);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Tick(float DeltaTime);
 	void Tick_Internal(float DeltaTime);
 	virtual void Tick_Implementation(float DeltaTime) {}
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Exit();
 	void Exit_Internal();
 	virtual void Exit_Implementation() {}
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void ExitWithData(UObject* Data);
 	void ExitWithData_Internal(UObject* Data);
 	virtual void ExitWithData_Implementation(UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (HideSelfPin, DefaultToSelf))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (HideSelfPin, DefaultToSelf))
 	void GoTo(FName State);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
-	virtual void SetOwner(UProcStateMachine* Parent);
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	virtual void SetOwner(UStateMachine* Parent);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetStateName();
 
 	/* 
 	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
 	 * can be combersome for long paths, so avoid using frequently.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
 	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
 
@@ -184,7 +184,7 @@ public:
 	 * The Path is also in reverse order to speed things up a bit. i.e. if your top level node is A with child C, to Get C, 
 	 * the array ['C', 'A'] should be passed.
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
@@ -201,7 +201,7 @@ public:
  *
  */
 UCLASS(Blueprintable, EditInlineNew)
-class CRABTOOLSUE5_API UProcStateMachine : public UObject
+class CRABTOOLSUE5_API UStateMachine : public UObject
 {
 	GENERATED_BODY()
 
@@ -225,22 +225,22 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 		}
 	} TRANSITION;
 
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true", GetOptions = "StateOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true", GetOptions = "StateOptions"))
 	FName StartState;
 
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, UStateNode*> SharedNodes;
 
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FAliasData> Aliases;
 
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	TArray<FName> StateList;
 
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
@@ -253,49 +253,49 @@ class CRABTOOLSUE5_API UProcStateMachine : public UObject
 
 public:
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Initialize(AActor* POwner);
 
 	virtual void Initialize_Implementation(AActor* POwner);
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Reset();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Event(FName EName);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void EventWithData(FName EName, UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine", meta = (ExpandEnumAsExecs = "Branches"))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", 
 		meta = (ExpandEnumAsExecs = "Branches"))	
 	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
 	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine", 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", 
 		meta=(ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
 	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeObject(UObject* Obj);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetStateName(UStateNode* Node);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine",
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine",
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
@@ -320,7 +320,7 @@ public:
 	
 	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetCurrentStateName();
 
 	UFUNCTION()
@@ -336,13 +336,13 @@ public:
 	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a 	 
 	 * state machine.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Initialize_Internal(AActor* POwner);
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	int GetStateID() { return this->TRANSITION.CurrentID(); }
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	bool IsInState(int ID) { return this->TRANSITION.Valid(ID); }
 
 	/* Condition function that always returns true. */

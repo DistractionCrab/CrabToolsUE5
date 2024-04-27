@@ -2,7 +2,7 @@
 
 ASMPawn::ASMPawn(): APawn() {
 
-	StateMachineComponent = CreateDefaultSubobject<UProcStateMachineComponent>(TEXT("StateMachineComponent"));
+	StateMachineComponent = CreateDefaultSubobject<UStateMachineComponent>(TEXT("StateMachineComponent"));
 }
 
 

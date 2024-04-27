@@ -2,12 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
+#include "StateMachine/Editor.h"
 #include "BlueprintEditorModes.h"
 //#include "BlueprintModes/WidgetBlueprintApplicationMode.h"
 
 
-class STATEMACHINEEDITOR_API FProcStateMachineGraphApplicationMode : public FBlueprintEditorApplicationMode
+class STATEMACHINEEDITOR_API FGraphApplicationMode : public FBlueprintEditorApplicationMode
 {
 
 public:
@@ -17,11 +17,10 @@ protected:
 	// Set of spawnable tabs in the mode
 	FWorkflowAllowedTabSet TabFactories;
 
-	TWeakPtr<class FProcStateMachineBlueprintEditor> MyEditor;
+	TWeakPtr<class FEditor> MyEditor;
 
 public:
-	FProcStateMachineGraphApplicationMode(
-		TSharedPtr<FProcStateMachineBlueprintEditor> InPSMEditor);
+	FGraphApplicationMode(TSharedPtr<FEditor> InPSMEditor);
 
 	// FApplicationMode interface
 	virtual void RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) override;
@@ -33,5 +32,5 @@ public:
 
 private:
 	// Init Functions.
-	void AddTabFactories(TSharedPtr<FProcStateMachineBlueprintEditor> InProcStateMachineEditor);
+	void AddTabFactories(TSharedPtr<FEditor> InProcStateMachineEditor);
 };

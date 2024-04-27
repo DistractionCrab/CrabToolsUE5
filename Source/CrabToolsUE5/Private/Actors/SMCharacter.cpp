@@ -2,7 +2,7 @@
 
 ASMCharacter::ASMCharacter(): ACharacter() {
 
-	StateMachineComponent = CreateDefaultSubobject<UProcStateMachineComponent>(TEXT("StateMachineComponent"));
+	StateMachineComponent = CreateDefaultSubobject<UStateMachineComponent>(TEXT("StateMachineComponent"));
 }
 
 

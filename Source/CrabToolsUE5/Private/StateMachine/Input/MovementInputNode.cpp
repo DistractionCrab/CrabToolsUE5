@@ -5,7 +5,7 @@ UMovementInputNode::UMovementInputNode() {
 }
 
 
-void UMovementInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UMovementInputNode::Initialize_Implementation(UStateMachine* POwner) {
 	Super::Initialize_Implementation(POwner);
 
 	// If the owning actor has a perspective manager, store it for simple use.

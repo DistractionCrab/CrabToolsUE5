@@ -1,4 +1,4 @@
-#include "StateMachine/BlueprintModes/ProcStateMachineGraphApplicationMode.h"
+#include "StateMachine/BlueprintModes/GraphApplicationMode.h"
 
 #include "BlueprintEditorTabs.h"
 #include "SBlueprintEditorToolbar.h"
@@ -6,21 +6,21 @@
 #include "HAL/IConsoleManager.h"
 #include "Internationalization/Internationalization.h"
 
-#include "StateMachine/ProcStateMachineBlueprintEditorToolbar.h"
+#include "StateMachine/EditorToolbar.h"
 #include "StateMachine/TabFactory/GraphTabFactory.h"
 #include "StateMachine/TabFactory/MachineDetailsTabFactory.h"
-#include "StateMachine/ProcStateMachineBlueprintEditor.h"
+#include "StateMachine/Editor.h"
 #include "StateMachineEditorModule.h"
 
-const FName FProcStateMachineGraphApplicationMode::ModeName("PSMGraphEditorMode");
+const FName FGraphApplicationMode::ModeName("PSMGraphEditorMode");
 
 
-FProcStateMachineGraphApplicationMode::FProcStateMachineGraphApplicationMode(
-	TSharedPtr<FProcStateMachineBlueprintEditor> InEditor)
+FGraphApplicationMode::FGraphApplicationMode(
+	TSharedPtr<FEditor> InEditor)
 : FBlueprintEditorApplicationMode(
 	InEditor, 
-	FProcStateMachineGraphApplicationMode::ModeName,
-	FProcStateMachineGraphApplicationMode::GetLocalizedMode,
+	FGraphApplicationMode::ModeName,
+	FGraphApplicationMode::GetLocalizedMode,
 	false,
 	false),
 MyEditor(InEditor)
@@ -50,7 +50,7 @@ MyEditor(InEditor)
 
 	this->AddTabFactories(InEditor);
 
-	TabLayout = FTabManager::NewLayout("ProcStateMachineBlueprintEditor_Graph_Layout_v1.0")
+	TabLayout = FTabManager::NewLayout("Editor_Graph_Layout_v1.0")
 		->AddArea
 		(
 			MainArea
@@ -59,14 +59,14 @@ MyEditor(InEditor)
 	auto& Module = IStateMachineEditorModule::GetModule();
 	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 
-	InEditor->GetWidgetToolbarBuilder()->AddProcStateMachineBlueprintEditorModesToolbar(ToolbarExtender);
+	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
 	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
 }
 
 #pragma region Initializers
 
-void FProcStateMachineGraphApplicationMode::AddTabFactories(
-	TSharedPtr<FProcStateMachineBlueprintEditor> InProcStateMachineEditor) 
+void FGraphApplicationMode::AddTabFactories(
+	TSharedPtr<FEditor> InProcStateMachineEditor) 
 {
 	TabFactories.RegisterFactory(
 		MakeShareable(new FGraphTabFactory(InProcStateMachineEditor)));
@@ -76,25 +76,25 @@ void FProcStateMachineGraphApplicationMode::AddTabFactories(
 
 #pragma endregion
 
-void FProcStateMachineGraphApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) {
-	TSharedPtr<FProcStateMachineBlueprintEditor> BP = this->MyEditor.Pin();
+void FGraphApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) {
+	TSharedPtr<FEditor> BP = this->MyEditor.Pin();
 
 	//BP->RegisterToolbarTab(InTabManager.ToSharedRef());
 	BP->PushTabFactories(TabFactories);
 }
 
-void FProcStateMachineGraphApplicationMode::PreDeactivateMode() {
+void FGraphApplicationMode::PreDeactivateMode() {
 
 }
 
-void FProcStateMachineGraphApplicationMode::PostActivateMode() {
+void FGraphApplicationMode::PostActivateMode() {
 
 }
 
 
-FText FProcStateMachineGraphApplicationMode::GetLocalizedMode(const FName InMode) {
+FText FGraphApplicationMode::GetLocalizedMode(const FName InMode) {
 
-	if (InMode == FProcStateMachineGraphApplicationMode::ModeName)
+	if (InMode == FGraphApplicationMode::ModeName)
 	{
 		return NSLOCTEXT("ProcStateMachineBlueprintModes", "GraphMode", "Graph");	
 	}

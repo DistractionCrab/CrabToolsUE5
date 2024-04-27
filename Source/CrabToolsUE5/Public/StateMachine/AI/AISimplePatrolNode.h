@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateMachine/ProcStateMachine.h"
 #include "StateMachine/AI/AIBaseNode.h"
 #include "Actors/PatrolPath.h"
 #include "AISimplePatrolNode.generated.h"
@@ -20,6 +19,6 @@ class CRABTOOLSUE5_API UAISimplePatrolNode : public UAIBaseNode
 
 public:
 
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	
 };

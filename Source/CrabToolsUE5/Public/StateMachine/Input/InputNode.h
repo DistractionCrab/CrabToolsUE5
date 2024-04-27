@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "UObject/WeakObjectPtrTemplates.h"
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "Components/PerspectiveManager.h"
 #include "GameFramework/Pawn.h"
 #include "EnhancedInputComponent.h"
@@ -49,30 +49,30 @@ protected:
 
 public:
 
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")
 	void TriggerCallback(const FInputActionValue& Value);
 	virtual void TriggerCallback_Implementation(const FInputActionValue& Value);
 	void TriggerCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")
 	void StartCallback(const FInputActionValue& Value);
 	virtual void StartCallback_Implementation(const FInputActionValue& Value);
 	void StartCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")
 	void OngoingCallback(const FInputActionValue& Value);
 	virtual void OngoingCallback_Implementation(const FInputActionValue& Value);
 	void OngoingCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")
 	void CompletedCallback(const FInputActionValue& Value);
 	virtual void CompletedCallback_Implementation(const FInputActionValue& Value);
 	void CompletedCallback_Internal(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")
 	void CanceledCallback(const FInputActionValue& Value);
 	virtual void CanceledCallback_Implementation(const FInputActionValue& Value);
 	void CanceledCallback_Internal(const FInputActionValue& Value);
@@ -80,9 +80,9 @@ public:
 	/* Used only when canceled/completed are not used, but start is. */
 	void FinishedCallback(const FInputActionValue& Value);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine|Input")
 	FVector2D GetVec2D();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine|Input")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine|Input")
 	APawn* GetPawn() { return this->PawnOwner.Get();  }
 };

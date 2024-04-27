@@ -3,13 +3,13 @@
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "EdGraphSchema_K2.h"
-#include "ProcStateMachineGraphSchema.generated.h"
+#include "GraphSchema.generated.h"
 
 class UK2Node;
 class UK2Node_CallFunction;
 
 UCLASS(MinimalAPI)
-class UProcStateMachineGraphSchema : public UEdGraphSchema_K2
+class UGraphSchema : public UEdGraphSchema_K2
 {
 	GENERATED_UCLASS_BODY()
 

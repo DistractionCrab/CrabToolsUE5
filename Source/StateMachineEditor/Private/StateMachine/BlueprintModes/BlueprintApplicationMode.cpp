@@ -1,4 +1,4 @@
-#include "StateMachine/BlueprintModes/ProcStateMachineBlueprintApplicationMode.h"
+#include "StateMachine/BlueprintModes/BlueprintApplicationMode.h"
 
 #include "BlueprintEditorTabs.h"
 #include "SBlueprintEditorToolbar.h"
@@ -6,20 +6,20 @@
 #include "HAL/IConsoleManager.h"
 #include "Internationalization/Internationalization.h"
 
-#include "StateMachine/ProcStateMachineBlueprintEditorToolbar.h"
+#include "StateMachine/EditorToolbar.h"
 #include "StateMachine/TabFactory/GraphTabFactory.h"
 #include "StateMachine/TabFactory/MachineDetailsTabFactory.h"
 #include "StateMachineEditorModule.h"
 
-const FName FProcStateMachineBlueprintApplicationMode::ModeName("PSMBlueprintEditorMode");
+const FName FBlueprintApplicationMode::ModeName("PSMBlueprintEditorMode");
 
 
-FProcStateMachineBlueprintApplicationMode::FProcStateMachineBlueprintApplicationMode(
-	TSharedPtr<FProcStateMachineBlueprintEditor> InEditor)
+FBlueprintApplicationMode::FBlueprintApplicationMode(
+	TSharedPtr<FEditor> InEditor)
 : FBlueprintEditorApplicationMode(
 	InEditor, 
-	FProcStateMachineBlueprintApplicationMode::ModeName,
-	FProcStateMachineBlueprintApplicationMode::GetLocalizedMode,
+	FBlueprintApplicationMode::ModeName,
+	FBlueprintApplicationMode::GetLocalizedMode,
 	false,
 	false),
 MyEditor(InEditor)
@@ -81,7 +81,7 @@ MyEditor(InEditor)
 	auto& Module = IStateMachineEditorModule::GetModule();
 	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 
-	InEditor->GetWidgetToolbarBuilder()->AddProcStateMachineBlueprintEditorModesToolbar(ToolbarExtender);
+	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
 	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
 
 	FName OutParentToolbarName;
@@ -95,8 +95,8 @@ MyEditor(InEditor)
 	}
 }
 
-void FProcStateMachineBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) {
-	TSharedPtr<FProcStateMachineBlueprintEditor> BP = this->MyEditor.Pin();
+void FBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) {
+	TSharedPtr<FEditor> BP = this->MyEditor.Pin();
 
 
 	BP->RegisterToolbarTab(InTabManager.ToSharedRef());
@@ -105,20 +105,20 @@ void FProcStateMachineBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<
 	BP->PushTabFactories(TabFactories);
 }
 
-void FProcStateMachineBlueprintApplicationMode::PreDeactivateMode() {
+void FBlueprintApplicationMode::PreDeactivateMode() {
 
 }
 
-void FProcStateMachineBlueprintApplicationMode::PostActivateMode() {
+void FBlueprintApplicationMode::PostActivateMode() {
 	FBlueprintEditorApplicationMode::PostActivateMode();
 }
 
 
-FText FProcStateMachineBlueprintApplicationMode::GetLocalizedMode(const FName InMode) {
+FText FBlueprintApplicationMode::GetLocalizedMode(const FName InMode) {
 
-	if (InMode == FProcStateMachineBlueprintApplicationMode::ModeName)
+	if (InMode == FBlueprintApplicationMode::ModeName)
 	{
-		return NSLOCTEXT("ProcStateMachineBlueprintModes", "BlueprintMode", "Blueprint");	
+		return NSLOCTEXT("BlueprintModes", "BlueprintMode", "Blueprint");	
 	}
 	
 	return FText::GetEmpty();

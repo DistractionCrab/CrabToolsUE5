@@ -5,10 +5,10 @@
 #include "Binding/DynamicPropertyPath.h"
 #include "Engine/BlueprintGeneratedClass.h"
 
-#include "ProcStateMachineBlueprintGeneratedClass.generated.h"
+#include "StateMachineBlueprintGeneratedClass.generated.h"
 
 UCLASS(MinimalAPI)
-class UProcStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
+class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
 	GENERATED_BODY()
 

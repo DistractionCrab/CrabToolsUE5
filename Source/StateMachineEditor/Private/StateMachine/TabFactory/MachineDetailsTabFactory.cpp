@@ -13,7 +13,7 @@
 const FName FMachineDetailsTabFactory::TabID(TEXT("MachineDetails"));
 
 FMachineDetailsTabFactory::FMachineDetailsTabFactory(
-	TSharedPtr<class FProcStateMachineBlueprintEditor> InBlueprintEditor)
+	TSharedPtr<class FEditor> InBlueprintEditor)
 : FWorkflowTabFactory(TabID, InBlueprintEditor), 
 	BlueprintEditor(InBlueprintEditor)
 {
@@ -28,7 +28,7 @@ FMachineDetailsTabFactory::FMachineDetailsTabFactory(
 
 TSharedRef<SWidget> FMachineDetailsTabFactory::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
-	TSharedPtr<FProcStateMachineBlueprintEditor> BlueprintEditorPtr = StaticCastSharedPtr<FProcStateMachineBlueprintEditor>(BlueprintEditor.Pin());
+	TSharedPtr<FEditor> BlueprintEditorPtr = StaticCastSharedPtr<FEditor>(BlueprintEditor.Pin());
 
 	return SNew(SMachineDetailsView, BlueprintEditorPtr)
 		.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("Details")));

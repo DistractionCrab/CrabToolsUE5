@@ -1,7 +1,7 @@
 #include "StateMachine/Input/InputNode.h"
 
 
-void UInputNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UInputNode::Initialize_Implementation(UStateMachine* POwner) {
 	Super::Initialize_Implementation(POwner);
 
 	this->PawnOwner = Cast<APawn>(POwner->GetOwner());

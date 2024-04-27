@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProcStateMachine.h"
+#include "StateMachine.h"
 #include "CompositeNode.generated.h"
 
 /**
@@ -19,7 +19,7 @@ class CRABTOOLSUE5_API UCompositeNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	virtual void Event_Implementation(FName Event) override;
 	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;

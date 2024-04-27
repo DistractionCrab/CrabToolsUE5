@@ -4,7 +4,7 @@
 
 void SMachineDetailsView::Construct(
 	const FArguments& InArgs,
-	TSharedPtr<class FProcStateMachineBlueprintEditor> InBlueprintEditor) 
+	TSharedPtr<class FEditor> InBlueprintEditor) 
 {
 	auto WidgetName = FName("SMachineDetailsView");
 

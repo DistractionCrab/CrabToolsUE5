@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 #include "HierarchyNode.generated.h"
 
 /**
@@ -15,10 +15,10 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<UProcStateMachine> MachineClass;
+	TSubclassOf<UStateMachine> MachineClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
-	UProcStateMachine* SubMachine;
+	UStateMachine* SubMachine;
 
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FName> ExitStates;
@@ -39,7 +39,7 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	FName EnterEventName = "HIERARCHY_REENTER";
 
 public:
-	virtual void Initialize_Implementation(UProcStateMachine* POwner) override;
+	virtual void Initialize_Implementation(UStateMachine* POwner) override;
 	virtual void Event_Implementation(FName EName) override;
 	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
 	virtual void Enter_Implementation() override;

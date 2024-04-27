@@ -1,4 +1,4 @@
-#include "StateMachine/ProcStateMachine.h"
+#include "StateMachine/StateMachine.h"
 
 #include "Logging/StructuredLog.h"
 #include "Algo/Reverse.h"
@@ -11,7 +11,7 @@ namespace Constants {
 
 #pragma region StateMachine Code
 
-void UProcStateMachine::Initialize_Internal(AActor* POwner) {
+void UStateMachine::Initialize_Internal(AActor* POwner) {
 	this->Owner = POwner;
 	//this->CurrentStateName = this->StartState;
 	this->Initialize(POwner);
@@ -60,11 +60,11 @@ void UProcStateMachine::Initialize_Internal(AActor* POwner) {
 	this->UpdateState(this->StartState);
 }
 
-void UProcStateMachine::Initialize_Implementation(AActor* POwner) {
+void UStateMachine::Initialize_Implementation(AActor* POwner) {
 	
 }
 
-UProcStateMachine* UStateNode::GetMachineAs(TSubclassOf<UProcStateMachine> SClass, ESearchResult& Result) {
+UStateMachine* UStateNode::GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) {
 	auto Class = SClass.Get();
 	auto Machine = this->GetMachine();
 	if (Class && Machine) {
@@ -78,11 +78,11 @@ UProcStateMachine* UStateNode::GetMachineAs(TSubclassOf<UProcStateMachine> SClas
 	return nullptr;
 }
 
-AActor* UProcStateMachine::GetOwner() {
+AActor* UStateMachine::GetOwner() {
 	return this->Owner;
 }
 
-void UProcStateMachine::UpdateState(FName Name) {
+void UStateMachine::UpdateState(FName Name) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
@@ -112,7 +112,7 @@ void UProcStateMachine::UpdateState(FName Name) {
 	}
 }
 
-void UProcStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
+void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
@@ -142,7 +142,7 @@ void UProcStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 	}
 }
 
-void UProcStateMachine::Tick(float DeltaTime) {
+void UStateMachine::Tick(float DeltaTime) {
 	if (this->CurrentStateName != NAME_None) {
 		auto State = this->GetCurrentState();
 		if (State && State->Node) {
@@ -152,11 +152,11 @@ void UProcStateMachine::Tick(float DeltaTime) {
 }
 
 
-void UProcStateMachine::Reset() {
+void UStateMachine::Reset() {
 	this->UpdateState(this->StartState);
 }
 
-void UProcStateMachine::Event(FName EName) {
+void UStateMachine::Event(FName EName) {
 	// Need to validate possible transitions.
 	auto TID = this->TRANSITION.CurrentID();
 	auto CurrentState = this->GetCurrentState();
@@ -185,7 +185,7 @@ void UProcStateMachine::Event(FName EName) {
 }
 
 
-void UProcStateMachine::EventWithData(FName EName, UObject* Data) {
+void UStateMachine::EventWithData(FName EName, UObject* Data) {
 	// Need to validate possible transitions.
 	auto TID = this->TRANSITION.CurrentID();
 	auto CurrentState = this->GetCurrentState();
@@ -213,7 +213,7 @@ void UProcStateMachine::EventWithData(FName EName, UObject* Data) {
 	}
 }
 
-UStateNode* UProcStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
+UStateNode* UStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
 	if (this->Graph.Contains(NodeName)) {		
 		auto Node = this->Graph[NodeName].Node;
 		if (Node) {
@@ -230,7 +230,7 @@ UStateNode* UProcStateMachine::FindNode(FName NodeName, ESearchResult& Branches)
 	
 }
 
-void UProcStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
+void UStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	this->StateChangeEvents.Add(Callback);
 
 	if (this->CurrentStateName != NAME_None) {
@@ -238,7 +238,7 @@ void UProcStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback
 	}
 }
 
-void UProcStateMachine::StateChangeObject(UObject* Obj) {
+void UStateMachine::StateChangeObject(UObject* Obj) {
 	if (Obj->GetClass()->ImplementsInterface(UStateChangeListenerInterface::StaticClass())) {
 		auto UFn = Obj->FindFunction("Listen");
 
@@ -255,11 +255,11 @@ void UProcStateMachine::StateChangeObject(UObject* Obj) {
 	}
 }
 
-void UProcStateMachine::PreEditChange(FProperty* PropertyAboutToChange) {
+void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange) {
 	Super::PreEditChange(PropertyAboutToChange);
 }
 
-void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& e) {
+void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& e) {
 	
 	FName PropertyName = (e.Property != NULL) ? e.Property->GetFName() : NAME_None;
 
@@ -302,18 +302,18 @@ void UProcStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChain
 	Super::PostEditChangeChainProperty(e);
 }
 
-void UProcStateMachine::PostCDOCompiled(const FPostCDOCompiledContext& Context) {
+void UStateMachine::PostCDOCompiled(const FPostCDOCompiledContext& Context) {
 	Super::PostCDOCompiled(Context);
 
 	//this->ValidateEventProps();
 }
 
-void UProcStateMachine::PostCDOContruct() {
+void UStateMachine::PostCDOContruct() {
 	Super::PostCDOContruct();	
 }
 
 /* Simply iterates through the graph and rebinds condition callbacks. */
-void UProcStateMachine::RebindConditions() {
+void UStateMachine::RebindConditions() {
 	TArray<FString> ValidFunctions = this->ConditionOptions();
 	
 	for (auto& pairs : this->Graph) {
@@ -327,12 +327,12 @@ void UProcStateMachine::RebindConditions() {
 	}
 }
 
-void UProcStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
+void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
 	FName PropertyName = (e.Property != NULL) ? e.Property->GetFName() : NAME_None;
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UProcStateMachine, Aliases)) {
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UStateMachine, Aliases)) {
 		
-	} else if (PropertyName == GET_MEMBER_NAME_CHECKED(UProcStateMachine, Graph)) {
+	} else if (PropertyName == GET_MEMBER_NAME_CHECKED(UStateMachine, Graph)) {
 		this->StateList.Reset();
 		for (const auto& States : this->Graph) {
 			if (!this->StateList.Contains(States.Key)) {
@@ -345,7 +345,7 @@ void UProcStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) 
     Super::PostEditChangeProperty(e);
 }
 
-FName UProcStateMachine::GetStateName(UStateNode* Node) {
+FName UStateMachine::GetStateName(UStateNode* Node) {
 	FName Found = NAME_None;
 
 	for (const auto& Nodes : this->Graph) {
@@ -358,7 +358,7 @@ FName UProcStateMachine::GetStateName(UStateNode* Node) {
 	return Found;
 }
 
-UStateNode* UProcStateMachine::FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches) {
+UStateNode* UStateMachine::FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches) {
 	TArray<FString> PathList;
 
 	Path.ParseIntoArray(PathList, TEXT("/"), true);
@@ -367,7 +367,7 @@ UStateNode* UProcStateMachine::FindNodeByPath_Implementation(const FString& Path
 	return this->FindNodeByArray(PathList, Branches);
 }
 
-UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
+UStateNode* UStateMachine::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
 	if (Path.Num() == 0) {
 		Branches = ESearchResult::NotFound;
 		return nullptr;
@@ -392,11 +392,11 @@ UStateNode* UProcStateMachine::FindNodeByArray_Implementation(const TArray<FStri
 	}
 }
 
-FName UProcStateMachine::GetCurrentStateName() {
+FName UStateMachine::GetCurrentStateName() {
 	return this->CurrentStateName;
 }
 
-TArray<FString> UProcStateMachine::StateOptions() {
+TArray<FString> UStateMachine::StateOptions() {
 	TArray<FString> Names;
 
 	for (const auto& Nodes : this->Graph) {
@@ -407,7 +407,7 @@ TArray<FString> UProcStateMachine::StateOptions() {
 	return Names;
 }
 
-TArray<FString> UProcStateMachine::ConditionOptions() {
+TArray<FString> UStateMachine::ConditionOptions() {
 	TArray<FString> Names;
 	auto base = this->FindFunction("TrueCondition");
 
@@ -424,7 +424,7 @@ TArray<FString> UProcStateMachine::ConditionOptions() {
 	return Names;
 }
 
-TArray<FString> UProcStateMachine::ConditionDataOptions() {
+TArray<FString> UStateMachine::ConditionDataOptions() {
 	TArray<FString> Names;
 	auto base = this->FindFunction("TrueDataCondition");
 
@@ -441,27 +441,27 @@ TArray<FString> UProcStateMachine::ConditionDataOptions() {
 	return Names;
 }
 
-bool UProcStateMachine::TrueCondition() { 
+bool UStateMachine::TrueCondition() { 
 	return true; 
 }
 
-bool UProcStateMachine::FalseCondition() {
+bool UStateMachine::FalseCondition() {
 	return false;
 }
 
-bool UProcStateMachine::TrueDataCondition(UObject* Data) {
+bool UStateMachine::TrueDataCondition(UObject* Data) {
 	return true;
 }
 
-bool UProcStateMachine::FalseDataCondition(UObject* Data) {
+bool UStateMachine::FalseDataCondition(UObject* Data) {
 	return false;
 }
 
-bool UProcStateMachine::ValidDataCondition(UObject* Data) {
+bool UStateMachine::ValidDataCondition(UObject* Data) {
 	return Data != nullptr;
 }
 
-TSet<FName> UProcStateMachine::GetEvents() const {
+TSet<FName> UStateMachine::GetEvents() const {
 	TSet<FName> List;
 
 	for (const auto& States : this->Graph) {
@@ -477,7 +477,7 @@ TSet<FName> UProcStateMachine::GetEvents() const {
 	return List;
 }
 
-void UProcStateMachine::ValidateEventProps() {
+void UStateMachine::ValidateEventProps() {
 	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass())) {
 		auto Events = this->GetEvents();
 
@@ -491,7 +491,7 @@ void UProcStateMachine::ValidateEventProps() {
 	}
 }
 
-bool UProcStateMachine::HasEventVariable(FName VName) {
+bool UStateMachine::HasEventVariable(FName VName) {
 	auto Prop = this->GetClass()->FindPropertyByName(VName);
 
 	if (Prop) {
@@ -509,11 +509,11 @@ bool UProcStateMachine::HasEventVariable(FName VName) {
 	return false;
 }
 
-FName UProcStateMachine::GetEventVarName(FName EName) {
+FName UStateMachine::GetEventVarName(FName EName) {
 	return FName(EName.ToString() + FString("_SM_EVENT"));
 }
 
-void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {
+void UStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {
 	/*
 
 	FEdGraphPinType PinType;
@@ -544,7 +544,7 @@ void UProcStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VNam
 	*/
 }
 
-void UProcStateMachine::Substitute(FName SlotName, UStateNode* Node) {
+void UStateMachine::Substitute(FName SlotName, UStateNode* Node) {
 	for (auto& pair : this->Graph) {
 		if (pair.Value.Node) {
 			pair.Value.Node = pair.Value.Node->Substitute(SlotName, Node);
@@ -552,7 +552,7 @@ void UProcStateMachine::Substitute(FName SlotName, UStateNode* Node) {
 	}
 }
 
-UStateNode* UProcStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
+UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
 	auto Node = this->GetCurrentState();
 	if (Class.Get() && Node) {		
 		if (Node->Node && Node->Node->IsA(Class.Get()->StaticClass())) {
@@ -565,7 +565,7 @@ UStateNode* UProcStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, 
 	return nullptr;
 }
 
-UStateNode* UProcStateMachine::FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
+UStateNode* UStateMachine::FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
 	auto Node = this->GetCurrentState();
 
 	if (Node) {
@@ -587,12 +587,12 @@ UStateNode* UProcStateMachine::FindCurrentStateAs(TSubclassOf<UStateNode> Class,
 
 #pragma region NodeCode
 
-void UStateNode::Initialize_Internal(UProcStateMachine* POwner) {
+void UStateNode::Initialize_Internal(UStateMachine* POwner) {
 	this->Owner = POwner;
 	this->Initialize(POwner);
 }
 
-void UStateNode::Initialize_Implementation(UProcStateMachine* POwner) {
+void UStateNode::Initialize_Implementation(UStateMachine* POwner) {
 	
 }
 
@@ -600,7 +600,7 @@ UStateNode* UStateNode::Substitute(FName SlotName, UStateNode* Node) {
 	return this;
 }
 
-UProcStateMachine* UStateNode::GetMachine() {
+UStateMachine* UStateNode::GetMachine() {
 	return this->Owner;
 }
 
@@ -632,7 +632,7 @@ void UStateNode::EventWithData_Implementation(FName EName, UObject* Data) {
 	this->Event(EName);
 }
 
-void UStateNode::SetOwner(UProcStateMachine* Parent) {
+void UStateNode::SetOwner(UStateMachine* Parent) {
 	this->Owner = Parent;
 }
 

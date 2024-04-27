@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Components/ProcStateMachineComponent.h"
+#include "Components/StateMachineComponent.h"
 #include "SMPawn.generated.h"
 
 
@@ -14,7 +14,7 @@ class ASMPawn : public APawn
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UProcStateMachineComponent* StateMachineComponent;
+	class UStateMachineComponent* StateMachineComponent;
 
 public:
 	ASMPawn();
