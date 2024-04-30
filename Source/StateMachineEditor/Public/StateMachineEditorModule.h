@@ -1,22 +1,26 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+#include "IStateMachineEditorModule.h"
 
-#pragma once
 
-#include "Modules/ModuleInterface.h"
-#include "Toolkits/AssetEditorToolkit.h"
-#include "UObject/TopLevelAssetPath.h"
-
-extern const FName StateMachineEditorAppIdentifier;
-
-/** The public interface of the UMG editor module. */
-class IStateMachineEditorModule :
-	public IModuleInterface,
-	public IHasMenuExtensibility,
-	public IHasToolBarExtensibility
+class FStateMachineEditorModule: public IStateMachineEditorModule, public FGCObject
 {
 
+private:
+	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
+	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
+
 public:
-	static IStateMachineEditorModule& GetModule() {
-		return FModuleManager::LoadModuleChecked<IStateMachineEditorModule>("StateMachineEditor");
-	}
+
+	FStateMachineEditorModule();
+
+	virtual void StartupModule() override;
+
+	virtual void ShutdownModule() override;
+
+
+	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override;
+	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override;
+
+	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+
+	virtual FString GetReferencerName() const override;
 };

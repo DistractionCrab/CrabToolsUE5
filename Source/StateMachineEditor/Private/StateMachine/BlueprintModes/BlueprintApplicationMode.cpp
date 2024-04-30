@@ -9,7 +9,7 @@
 #include "StateMachine/EditorToolbar.h"
 #include "StateMachine/TabFactory/GraphTabFactory.h"
 #include "StateMachine/TabFactory/MachineDetailsTabFactory.h"
-#include "StateMachineEditorModule.h"
+#include "IStateMachineEditorModule.h"
 
 const FName FBlueprintApplicationMode::ModeName("PSMBlueprintEditorMode");
 
@@ -78,7 +78,7 @@ MyEditor(InEditor)
 		);
 
 	// Initialize toolbar for this application mode.
-	auto& Module = IStateMachineEditorModule::GetModule();
+	auto& Module = IStateMachineEditorModule::Get();
 	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 
 	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);

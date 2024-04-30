@@ -10,7 +10,7 @@
 #include "StateMachine/TabFactory/GraphTabFactory.h"
 #include "StateMachine/TabFactory/MachineDetailsTabFactory.h"
 #include "StateMachine/Editor.h"
-#include "StateMachineEditorModule.h"
+#include "IStateMachineEditorModule.h"
 
 const FName FGraphApplicationMode::ModeName("PSMGraphEditorMode");
 
@@ -37,13 +37,12 @@ MyEditor(InEditor)
 			FTabManager::NewStack()
 				->SetHideTabWell(true)
 				->SetSizeCoefficient(0.2f)
-				//->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
 				->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 		->Split(
 			FTabManager::NewStack()
 				->SetHideTabWell(true)
-				->SetSizeCoefficient(0.2f)
+				->SetSizeCoefficient(0.6f)
 				->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)
 		)
 	);
@@ -56,7 +55,7 @@ MyEditor(InEditor)
 			MainArea
 		);
 
-	auto& Module = IStateMachineEditorModule::GetModule();
+	auto& Module = IStateMachineEditorModule::Get();
 	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 
 	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);

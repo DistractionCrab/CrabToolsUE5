@@ -36,6 +36,10 @@ class UWidgetEditingProjectSettings;
 
 class STATEMACHINEEDITOR_API SGraphView : public SCompoundWidget, public FGCObject
 {
+
+private:
+	TSharedPtr<SGraphEditor> MainGraph;
+
 public:
 	SLATE_BEGIN_ARGS( SGraphView ) {}
 	SLATE_END_ARGS()

@@ -9,10 +9,17 @@ void SGraphView::Construct(
 
 	auto WidgetName = FName("SGraphView");
 
+	FGraphAppearanceInfo AppInfo;
+	AppInfo.CornerText = LOCTEXT("AppearanceCornerText_StateMachine", "State Machine Graph");
+
 	ChildSlot
 	[
+		//SAssignNew(MainGraph, SGraphEditor)
+		//	.IsEditable(true)
+		//	.Appearance(AppInfo)
+		//  .GraphToEdit(nullptr)
 		SNew(STextBlock)
-		.Text(FText::Format(LOCTEXT("GraphView", "MyWidgetName: {0}"), FText::FromName(WidgetName)))
+			.Text(FText::Format(LOCTEXT("GraphView", "MyWidgetName: {0}"), FText::FromName(WidgetName)))
 	];
 }
 
