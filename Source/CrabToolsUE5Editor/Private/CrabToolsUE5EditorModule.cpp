@@ -15,12 +15,14 @@ FCrabToolsUE5EditorModule::FCrabToolsUE5EditorModule() {
 
 void FCrabToolsUE5EditorModule::StartupModule() 
 {
+	/*
 	IPlacementModeModule& Module = IPlacementModeModule::Get();
 
 	Module.RegisterPlaceableItem(
 		FBuiltInPlacementCategories::Basic(),
 		MakeShareable(new FPlaceableItem(*UInteractNavLinkProxyFactory::StaticClass(), 60))
 	);
+	*/
 }
 
 void FCrabToolsUE5EditorModule::ShutdownModule() 

@@ -35,15 +35,15 @@ MyEditor(InEditor)
 		->SetOrientation(Orient_Horizontal)
 		->Split(
 			FTabManager::NewStack()
-				->SetHideTabWell(true)
-				->SetSizeCoefficient(0.2f)
-				->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
+			->SetHideTabWell(true)
+			->SetSizeCoefficient(0.6f)
+			->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)			
 		)
 		->Split(
 			FTabManager::NewStack()
-				->SetHideTabWell(true)
-				->SetSizeCoefficient(0.6f)
-				->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)
+			->SetHideTabWell(true)
+			->SetSizeCoefficient(0.2f)
+			->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 	);
 

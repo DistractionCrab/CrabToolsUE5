@@ -1,4 +1,5 @@
 #include "StateMachine/Widgets/GraphView.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 #define LOCTEXT_NAMESPACE "PSM"
 
@@ -12,15 +13,21 @@ void SGraphView::Construct(
 	FGraphAppearanceInfo AppInfo;
 	AppInfo.CornerText = LOCTEXT("AppearanceCornerText_StateMachine", "State Machine Graph");
 
-	ChildSlot
-	[
-		//SAssignNew(MainGraph, SGraphEditor)
-		//	.IsEditable(true)
-		//	.Appearance(AppInfo)
-		//  .GraphToEdit(nullptr)
-		SNew(STextBlock)
-			.Text(FText::Format(LOCTEXT("GraphView", "MyWidgetName: {0}"), FText::FromName(WidgetName)))
-	];
+	
+	if (UStateMachineBlueprint* BP = Cast<UStateMachineBlueprint>(InBlueprintEditor->GetBlueprintObj())) {		
+		ChildSlot
+			[
+				SAssignNew(MainGraph, SGraphEditor)
+					.IsEditable(true)
+					.Appearance(AppInfo)
+				  .GraphToEdit(BP->SMGraph())
+				//SNew(STextBlock)
+				//	.Text(FText::Format(LOCTEXT("GraphView", "MyWidgetName: {0}"), FText::FromName(WidgetName)))
+			];
+	}
+
+
+	
 }
 
 void SGraphView::AddReferencedObjects(FReferenceCollector& Collector) {

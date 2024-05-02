@@ -10,7 +10,13 @@ class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint
 {
 	GENERATED_UCLASS_BODY()
 
+private:
+	UPROPERTY()
+	class UEdGraph* EdGraph;
+
 public:
 	UClass* GetBlueprintClass() const override;
 	virtual bool SupportsInputEvents() const override;
+
+	UEdGraph* SMGraph() ;
 };
