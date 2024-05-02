@@ -21,13 +21,21 @@
 			"LoadingPhase": "Default"
 		},
 		{
+			"Name": "CrabToolsUE5Editor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit",
+			"AdditionalDependencies": [
+				"PlacementMode",
+			]
+		},
+		{
 			"Name": "StateMachineEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
 			"AdditionalDependencies": [
-				"BlueprintGraph"
+				"BlueprintGraph",
 			]
-		}
+		},
 	],
 	"Plugins": [
 		{
