@@ -1,5 +1,6 @@
 #include "StateMachine/StateMachineBlueprintFactory.h"
 #include "StateMachine/StateMachineBlueprint.h"
+#include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "ClassViewerModule.h"

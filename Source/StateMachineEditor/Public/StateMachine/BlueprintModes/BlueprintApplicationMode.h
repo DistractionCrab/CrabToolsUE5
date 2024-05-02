@@ -14,7 +14,7 @@ public:
 
 public:
 
-	FBlueprintApplicationMode(TSharedPtr<FEditor> InEditor);
+	FBlueprintApplicationMode(TSharedPtr<class FEditor> InEditor);
 
 	// FApplicationMode interface
 	virtual void RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) override;

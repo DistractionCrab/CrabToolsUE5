@@ -1,4 +1,5 @@
 #include "StateMachine/Schema/GraphSchema.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 UGraphSchema::UGraphSchema(
 	const FObjectInitializer& ObjectInitializer)

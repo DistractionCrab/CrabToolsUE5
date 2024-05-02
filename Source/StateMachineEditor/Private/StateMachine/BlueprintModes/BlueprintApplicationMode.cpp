@@ -6,6 +6,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Internationalization/Internationalization.h"
 
+#include "StateMachine/Editor.h"
 #include "StateMachine/EditorToolbar.h"
 #include "StateMachine/TabFactory/GraphTabFactory.h"
 #include "StateMachine/TabFactory/MachineDetailsTabFactory.h"

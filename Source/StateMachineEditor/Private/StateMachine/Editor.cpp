@@ -3,6 +3,8 @@
 #include "StateMachine/Schema/GraphSchema.h"
 #include "WidgetModeManager.h"
 #include "StateMachine/EditorToolbar.h"
+#include "StateMachine/BlueprintModes/GraphApplicationMode.h"
+#include "StateMachine/BlueprintModes/BlueprintApplicationMode.h"
 
 #define LOCTEXT_NAMESPACE "PSM"
 
