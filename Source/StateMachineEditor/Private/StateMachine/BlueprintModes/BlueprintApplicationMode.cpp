@@ -17,13 +17,10 @@ const FName FBlueprintApplicationMode::ModeName("PSMBlueprintEditorMode");
 
 FBlueprintApplicationMode::FBlueprintApplicationMode(
 	TSharedPtr<FEditor> InEditor)
-: FBlueprintEditorApplicationMode(
+: FBaseApplicationMode(
 	InEditor, 
 	FBlueprintApplicationMode::ModeName,
-	FBlueprintApplicationMode::GetLocalizedMode,
-	false,
-	false),
-MyEditor(InEditor)
+	FBlueprintApplicationMode::GetLocalizedMode)
 {
 	TabLayout = FTabManager::NewLayout("StateMachineBlueprintEditor_Graph_Layout_v2")
 		->AddArea
@@ -77,8 +74,41 @@ MyEditor(InEditor)
 				)
 			)
 		);
+}
 
-	// Initialize toolbar for this application mode.
+void FBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
+{
+	TSharedPtr<FEditor> BP = this->MyEditor.Pin();
+
+	BP->RegisterToolbarTab(InTabManager.ToSharedRef());
+	BP->PushTabFactories(CoreTabFactories);
+	BP->PushTabFactories(BlueprintEditorTabFactories);
+	BP->PushTabFactories(TabFactories);
+}
+
+void FBlueprintApplicationMode::PreDeactivateMode() 
+{
+
+}
+
+void FBlueprintApplicationMode::PostActivateMode() 
+{
+	FBlueprintEditorApplicationMode::PostActivateMode();
+}
+
+
+FText FBlueprintApplicationMode::GetLocalizedMode(const FName InMode)
+{
+
+	if (InMode == FBlueprintApplicationMode::ModeName)
+	{
+		return NSLOCTEXT("BlueprintModes", "BlueprintMode", "Blueprint");	
+	}
+	
+	return FText::GetEmpty();
+}
+
+void FBlueprintApplicationMode::SetupToolbar(TSharedPtr<FEditor> InEditor) {
 	auto& Module = IStateMachineEditorModule::Get();
 	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 
@@ -94,33 +124,4 @@ MyEditor(InEditor)
 		InEditor->GetToolbarBuilder()->AddBlueprintGlobalOptionsToolbar(Toolbar);
 		InEditor->GetToolbarBuilder()->AddDebuggingToolbar(Toolbar);
 	}
-}
-
-void FBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) {
-	TSharedPtr<FEditor> BP = this->MyEditor.Pin();
-
-
-	BP->RegisterToolbarTab(InTabManager.ToSharedRef());
-	BP->PushTabFactories(CoreTabFactories);
-	BP->PushTabFactories(BlueprintEditorTabFactories);
-	BP->PushTabFactories(TabFactories);
-}
-
-void FBlueprintApplicationMode::PreDeactivateMode() {
-
-}
-
-void FBlueprintApplicationMode::PostActivateMode() {
-	FBlueprintEditorApplicationMode::PostActivateMode();
-}
-
-
-FText FBlueprintApplicationMode::GetLocalizedMode(const FName InMode) {
-
-	if (InMode == FBlueprintApplicationMode::ModeName)
-	{
-		return NSLOCTEXT("BlueprintModes", "BlueprintMode", "Blueprint");	
-	}
-	
-	return FText::GetEmpty();
 }

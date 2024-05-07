@@ -13,7 +13,7 @@ UAssetDefinition_StateMachineBlueprint::~UAssetDefinition_StateMachineBlueprint(
 
 FText UAssetDefinition_StateMachineBlueprint::GetAssetDisplayName() const
 {
-	return LOCTEXT("AssetTypeActions_StateMachineBlueprint", "StateMachine Blueprint");
+	return LOCTEXT("AssetTypeActions_StateMachineBlueprint", "State Machine Blueprint");
 }
 
 FLinearColor UAssetDefinition_StateMachineBlueprint::GetAssetColor() const

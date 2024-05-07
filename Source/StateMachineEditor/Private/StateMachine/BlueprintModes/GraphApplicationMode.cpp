@@ -6,24 +6,27 @@
 #include "HAL/IConsoleManager.h"
 #include "Internationalization/Internationalization.h"
 
-#include "StateMachine/EditorToolbar.h"
-#include "StateMachine/TabFactory/GraphTabFactory.h"
-#include "StateMachine/TabFactory/MachineDetailsTabFactory.h"
+
 #include "StateMachine/Editor.h"
 #include "IStateMachineEditorModule.h"
+#include "StateMachine/EditorToolbar.h"
 
-const FName FGraphApplicationMode::ModeName("PSMGraphEditorMode");
+
+// Tab Factory Imports
+#include "StateMachine/TabFactory/GraphTabFactory.h"
+#include "StateMachine/TabFactory/MachineDetailsTabFactory.h"
+#include "StateMachine/TabFactory/GraphDetailsTabFactory.h"
+
+const FName FGraphApplicationMode::ModeName("SMGraphEditorMode");
 
 
 FGraphApplicationMode::FGraphApplicationMode(
 	TSharedPtr<FEditor> InEditor)
-: FBlueprintEditorApplicationMode(
-	InEditor, 
-	FGraphApplicationMode::ModeName,
-	FGraphApplicationMode::GetLocalizedMode,
-	false,
-	false),
-MyEditor(InEditor)
+:
+	FBaseApplicationMode(		
+		InEditor,
+		FGraphApplicationMode::ModeName,
+		FGraphApplicationMode::GetLocalizedMode)
 {
 	TSharedRef<FTabManager::FArea> MainArea = FTabManager::NewPrimaryArea()
 		->SetOrientation(Orient_Vertical);
@@ -36,13 +39,19 @@ MyEditor(InEditor)
 		->Split(
 			FTabManager::NewStack()
 			->SetHideTabWell(true)
-			->SetSizeCoefficient(0.6f)
+			->SetSizeCoefficient(0.1f)
+			->AddTab(FGraphDetailsTabFactory::TabID, ETabState::OpenedTab)
+		)
+		->Split(
+			FTabManager::NewStack()
+			->SetHideTabWell(true)
+			->SetSizeCoefficient(0.9f)
 			->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)			
 		)
 		->Split(
 			FTabManager::NewStack()
 			->SetHideTabWell(true)
-			->SetSizeCoefficient(0.2f)
+			->SetSizeCoefficient(0.1f)
 			->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 	);
@@ -55,11 +64,11 @@ MyEditor(InEditor)
 			MainArea
 		);
 
-	auto& Module = IStateMachineEditorModule::Get();
-	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
+	//auto& Module = IStateMachineEditorModule::Get();
+	//ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 
-	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
-	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
+	//InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
+	//InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
 }
 
 #pragma region Initializers
@@ -67,6 +76,8 @@ MyEditor(InEditor)
 void FGraphApplicationMode::AddTabFactories(
 	TSharedPtr<FEditor> InProcStateMachineEditor) 
 {
+	TabFactories.RegisterFactory(
+		MakeShareable(new FGraphDetailsTabFactory(InProcStateMachineEditor)));
 	TabFactories.RegisterFactory(
 		MakeShareable(new FGraphTabFactory(InProcStateMachineEditor)));
 	TabFactories.RegisterFactory(

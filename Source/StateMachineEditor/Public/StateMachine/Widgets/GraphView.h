@@ -18,6 +18,7 @@
 #include "StateMachine/Editor.h"
 #include "Settings/LevelEditorPlaySettings.h"
 #include "Layout/WidgetPath.h"
+#include "GraphEditor.h"
 
 class FMenuBuilder;
 class FScopedTransaction;
@@ -38,7 +39,8 @@ class STATEMACHINEEDITOR_API SGraphView : public SCompoundWidget, public FGCObje
 {
 
 private:
-	TSharedPtr<SGraphEditor> MainGraph;
+	TSharedPtr<SGraphEditor> GraphEditor;
+	//TSharedPtr<SVerticalBox> StateList;
 
 public:
 	SLATE_BEGIN_ARGS( SGraphView ) {}
@@ -57,5 +59,5 @@ public:
 	}
 
 
-	virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	//virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 };

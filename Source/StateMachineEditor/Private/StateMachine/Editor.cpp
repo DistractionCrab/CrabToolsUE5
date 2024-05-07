@@ -6,10 +6,12 @@
 #include "StateMachine/BlueprintModes/GraphApplicationMode.h"
 #include "StateMachine/BlueprintModes/BlueprintApplicationMode.h"
 
+
 #define LOCTEXT_NAMESPACE "PSM"
 
-FEditor::FEditor(): FBlueprintEditor() {
-
+FEditor::FEditor(): FBlueprintEditor()
+{
+	
 }
 
 FEditor::~FEditor() {

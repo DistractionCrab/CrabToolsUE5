@@ -2,15 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
-#include "BlueprintEditorModes.h"
+#include "StateMachine/BlueprintModes/BaseApplicationMode.h"
 
-/////////////////////////////////////////////////////
-// FWidgetGraphApplicationMode
 
-class STATEMACHINEEDITOR_API FBlueprintApplicationMode : public FBlueprintEditorApplicationMode
+class STATEMACHINEEDITOR_API FBlueprintApplicationMode : public FBaseApplicationMode
 {
 public:
 	static const FName ModeName;
+
+protected:
+	// Set of spawnable tabs in the mode
+	FWorkflowAllowedTabSet TabFactories;
 
 public:
 
@@ -25,8 +27,5 @@ public:
 	static FText GetLocalizedMode(const FName InMode);
 
 protected:
-	TWeakPtr<class FEditor> MyEditor;
-
-	// Set of spawnable tabs in the mode
-	FWorkflowAllowedTabSet TabFactories;
+	virtual void SetupToolbar(TSharedPtr<FEditor> InEditor) override;
 };

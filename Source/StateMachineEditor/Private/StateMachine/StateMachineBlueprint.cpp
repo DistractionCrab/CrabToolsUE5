@@ -1,5 +1,9 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
+#include "StateMachine/Widgets/Nodes/EdStateNode.h"
+
+
+#include "EdGraph/EdGraph.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
 
@@ -24,6 +28,8 @@ UEdGraph* UStateMachineBlueprint::SMGraph() {
 			NAME_None,
 			UEdGraph::StaticClass(),
 			UEdGraphSchema::StaticClass()));
+
+		//this->EdGraph->CreateNode(UEdStateNode::StaticClass(), false);
 	}
 
 	return this->EdGraph;

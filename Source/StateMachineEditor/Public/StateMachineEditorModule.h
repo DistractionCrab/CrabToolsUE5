@@ -1,4 +1,5 @@
 #include "IStateMachineEditorModule.h"
+#include "StateMachine/Widgets/Nodes/EdStateNodeFactory.h"
 
 
 class FStateMachineEditorModule: public IStateMachineEditorModule, public FGCObject
@@ -7,6 +8,7 @@ class FStateMachineEditorModule: public IStateMachineEditorModule, public FGCObj
 private:
 	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
 	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
+	TSharedPtr<FGraphPanelNodeFactory> GraphNodeFactory;
 
 public:
 
