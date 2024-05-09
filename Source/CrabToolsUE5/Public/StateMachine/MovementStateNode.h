@@ -11,7 +11,7 @@
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced, Category = "StateMachine")
 class CRABTOOLSUE5_API UMovementStateNode : public UStateNode
 {
 	GENERATED_BODY()

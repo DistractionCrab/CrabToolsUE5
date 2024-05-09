@@ -13,7 +13,7 @@
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS(Blueprintable, EditInlineNew, Category = "StateMachine|Input")
 class CRABTOOLSUE5_API UMovementInputNode : public UInputNode
 {
 	GENERATED_BODY()

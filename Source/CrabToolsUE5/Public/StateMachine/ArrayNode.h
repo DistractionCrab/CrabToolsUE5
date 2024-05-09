@@ -9,13 +9,13 @@
 /**
  * State Machine Node that is a composite of other nodes.
  */
-UCLASS(Blueprintable, CollapseCategories)
+UCLASS(Blueprintable, CollapseCategories, Category = "StateMachine")
 class CRABTOOLSUE5_API UArrayNode : public UStateNode
 {
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, Instanced, Category = "ArrayNode", meta = (AllowPrivateAccess = "true"))
-	TArray<TObjectPtr<UStateNode*>> Nodes;
+	TArray<TObjectPtr<UStateNode>> Nodes;
 
 public:
 

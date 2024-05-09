@@ -3,12 +3,12 @@
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "EdGraphSchema_K2.h"
-#include "StateMachine/Widgets/Nodes/EdStateNode.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachineSchema.generated.h"
 
 
 USTRUCT()
-struct GENERICGRAPHEDITOR_API FSMSchemaAction_NewNode : public FEdGraphSchemaAction
+struct STATEMACHINEEDITOR_API FSMSchemaAction_NewNode : public FEdGraphSchemaAction
 {
 	GENERATED_USTRUCT_BODY();
 
@@ -22,7 +22,7 @@ public:
 		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping), NodeTemplate(nullptr) {}
 
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
-	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	//virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
 	UEdStateNode* NodeTemplate;
 };

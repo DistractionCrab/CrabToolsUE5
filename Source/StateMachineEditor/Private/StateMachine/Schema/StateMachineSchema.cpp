@@ -1,6 +1,7 @@
-#include "StateMachine/Schema/GraphSchema.h"
+#include "StateMachine/Schema/StateMachineSchema.h"
 #include "StateMachine/StateMachineBlueprint.h"
 
+#define LOCTEXT_NAMESPACE "StateMachineSchema"
 
 UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 	class UEdGraph* ParentGraph, 
@@ -30,7 +31,7 @@ UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 		NodeTemplate->NodePosX = Location.X;
 		NodeTemplate->NodePosY = Location.Y;
 
-		NodeTemplate->GenericGraphNode->SetFlags(RF_Transactional);
+		//NodeTemplate->GenericGraphNode->SetFlags(RF_Transactional);
 		NodeTemplate->SetFlags(RF_Transactional);
 
 		ResultNode = NodeTemplate;
@@ -63,58 +64,43 @@ void UStateMachineSchema::BackwardCompatibilityNodeConversion(UEdGraph* Graph, b
 	Super::BackwardCompatibilityNodeConversion(Graph, bOnlySafeChanges);
 }
 
-EGraphType YStateMachineSchema::GetGraphType(const UEdGraph* TestEdGraph) const
+EGraphType UStateMachineSchema::GetGraphType(const UEdGraph* TestEdGraph) const
 {
 	return GT_StateMachine;
 }
 
-
-
-void UAssetGraphSchema_GenericGraph::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
+// Helper function to format the right-click context menu of the graph editor.
+FText GetFormattedMenuText(TSubclassOf<UStateNode> NodeType) 
 {
-	//UGenericGraph* Graph = CastChecked<UGenericGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
+	FString ClassString = NodeType->GetMetaData("Category");
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *NodeType->GetMetaData("Category"));
 
-	/*
-	if (Graph->NodeType == nullptr)
-	{
-		return;
+	if (ClassString.StartsWith("StateMachine|")) {
+		ClassString.RightChopInline(13);
 	}
-	*/
+	else if (ClassString.StartsWith("StateMachine")) {
+		ClassString.RightChopInline(12);
+	}
 
+	return FText::Format(LOCTEXT("StateMAchineGraphNodeAction", "{0}"), FText::FromString(ClassString));
+}
+
+void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
+{
 	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 
 	const FText AddToolTip = LOCTEXT("NewStateGraphNodeTooltip", "Add node here");
 
-	TSet<TSubclassOf<UGenericGraphNode> > Visited;
-
-	/*
-	FText Desc = Graph->NodeType.GetDefaultObject()->ContextMenuName;
-
-	if (Desc.IsEmpty())
-	{
-		FString Title = Graph->NodeType->GetName();
-		Title.RemoveFromEnd("_C");
-		Desc = FText::FromString(Title);
-	}
-
-	if (!Graph->NodeType->HasAnyClassFlags(CLASS_Abstract))
-	{
-		TSharedPtr<FAssetSchemaAction_GenericGraph_NewNode> NewNodeAction(new FAssetSchemaAction_GenericGraph_NewNode(LOCTEXT("GenericGraphNodeAction", "Generic Graph Node"), Desc, AddToolTip, 0));
-		NewNodeAction->NodeTemplate = NewObject<UEdNode_GenericGraphNode>(ContextMenuBuilder.OwnerOfTemporaries);
-		NewNodeAction->NodeTemplate->GenericGraphNode = NewObject<UGenericGraphNode>(NewNodeAction->NodeTemplate, Graph->NodeType);
-		NewNodeAction->NodeTemplate->GenericGraphNode->Graph = Graph;
-		ContextMenuBuilder.AddAction(NewNodeAction);
-
-		Visited.Add(Graph->NodeType);
-	}*/
+	TSet<TSubclassOf<UStateNode> > Visited;
 
 	for (TObjectIterator<UClass> It; It; ++It)
 	{
 		bool c1 = (*It)->IsChildOf(UStateNode::StaticClass());
 		bool c2 = !It->HasAnyClassFlags(CLASS_Abstract);
 		bool c3 = !Visited.Contains(*It);
+		bool c4 = !(*It)->HasAnyClassFlags(CLASS_Abstract);
 
-		if ( c1 && c2 && c3 )
+		if ( c1 && c2 && c3 && c4)
 		{
 			TSubclassOf<UStateNode> NodeType = *It;
 
@@ -124,20 +110,18 @@ void UAssetGraphSchema_GenericGraph::GetGraphContextActions(FGraphContextMenuBui
 			//if (!Graph->GetClass()->IsChildOf(NodeType.GetDefaultObject()->CompatibleGraphType))
 			//	continue;
 
-			Desc = NodeType.GetDefaultObject()->ContextMenuName;
+			//FText Desc = FText::FromString(NodeType->GetDefaultObjectName().ToString());
+			FString Title = NodeType->GetName();
+			Title.RemoveFromEnd("_C");
+			FText Desc = FText::FromString(Title);
+			
+			FText MenuText = GetFormattedMenuText(NodeType);
+			
+			TSharedPtr<FSMSchemaAction_NewNode> Action(
+				new FSMSchemaAction_NewNode(MenuText, Desc, AddToolTip, 0));
 
-			if (Desc.IsEmpty())
-			{
-				FString Title = NodeType->GetName();
-				Title.RemoveFromEnd("_C");
-				Desc = FText::FromString(Title);
-			}
-
-			TSharedPtr<FAssetSchemaAction_GenericGraph_NewNode> Action(
-				new FAssetSchemaAction_GenericGraph_NewNode(
-					LOCTEXT("StateMAchineGraphNodeAction", "State Machine Graph Node"), Desc, AddToolTip, 0));
 			Action->NodeTemplate = NewObject<UEdStateNode>(ContextMenuBuilder.OwnerOfTemporaries);
-			Action->NodeTemplate->SetNodeTemplate(NewObject<UGenericGraphNode>(Action->NodeTemplate, NodeType));
+
 			//Action->NodeTemplate->GenericGraphNode->Graph = Graph;
 			ContextMenuBuilder.AddAction(Action);
 
@@ -146,4 +130,8 @@ void UAssetGraphSchema_GenericGraph::GetGraphContextActions(FGraphContextMenuBui
 	}
 }
 
+
+
 #pragma endregion
+
+#undef LOCTEXT_NAMESPACE

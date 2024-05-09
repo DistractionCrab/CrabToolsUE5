@@ -9,7 +9,7 @@
 /**
  * State Machine Node that is a composite of other nodes.
  */
-UCLASS(Blueprintable, CollapseCategories)
+UCLASS(Blueprintable, CollapseCategories, Category = "StateMachine")
 class CRABTOOLSUE5_API UCompositeNode : public UStateNode
 {
 	GENERATED_BODY()

@@ -9,7 +9,7 @@
 /**
  * State Machine node used that is controlled by a StateMachine.
  */
-UCLASS()
+UCLASS(Category = "StateMachine")
 class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 {
 	GENERATED_BODY()

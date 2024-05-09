@@ -13,7 +13,7 @@
 DECLARE_DELEGATE_OneParam(FSprintInputCallback, bool);
 DECLARE_DELEGATE_OneParam(FWalkInputCallback, bool);
 
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS(Blueprintable, EditInlineNew, Category = "StateMachine|Input")
 class CRABTOOLSUE5_API USprintMovementNode : public UMovementInputNode
 {
 	GENERATED_BODY()

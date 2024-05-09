@@ -6,7 +6,7 @@
 #include "StateMachine/StateMachine.h"
 #include "DialogueNode.generated.h"
 
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, Category = "StateMachine|Dialogue")
 struct FDialogueData
 {
 	GENERATED_USTRUCT_BODY()
@@ -21,7 +21,7 @@ struct FDialogueData
 /**
  * State Machine Node that is a composite of other nodes.
  */
-UCLASS(Blueprintable, CollapseCategories)
+UCLASS(Blueprintable, CollapseCategories, Category = "StateMachine|Dialogue")
 class CRABTOOLSUE5_API UDialogueNode : public UStateNode
 {
 	GENERATED_BODY()

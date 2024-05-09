@@ -11,6 +11,8 @@
 #include "BlueprintEditor.h"
 #include "Blueprint/UserWidget.h"
 
+#include "StateMachine/EditorCommandEvents.h"
+
 class STATEMACHINEEDITOR_API FEditor : public FBlueprintEditor
 {
 private:
@@ -21,6 +23,7 @@ private:
 public:
 	/** Commands for switching between tool palettes */
 	TArray< TSharedPtr<FUICommandInfo>> ToolPaletteCommands;
+	FEditorCommandEvents CommandEvents;
 
 public:
 	FEditor();

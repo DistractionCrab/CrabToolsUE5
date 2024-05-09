@@ -2,8 +2,8 @@
 
 void UArrayNode::Initialize_Implementation(UStateMachine* POwner) {
 	Super::Initialize_Implementation(POwner);
-	for (auto& Nodes : this->Nodes) {
-		Nodes->Initialize_Internal(POwner);
+	for (auto& Node : this->Nodes) {
+		Node->Initialize_Internal(POwner);
 	}
 }
 
@@ -92,35 +92,10 @@ void UArrayNode::ExitWithData_Implementation(UObject* Data) {
 }
 
 UStateNode* UArrayNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
-	if (Path.Num() == 0) {
-		Branches = ESearchResult::NotFound;
-		return nullptr;
-	}
-	else {
-		FName Name(Path.Last());
-		if (this->Nodes.Contains(Name)) {
-			if (Path.Num() == 1) {
-				Branches = ESearchResult::Found;
-				return this->Nodes[Name];
-			}
-			else {
-				TArray<FString> Tail(Path);
-				Tail.Pop();
-				return this->Nodes[Name]->FindNodeByArray(Tail, Branches);
-			}
-		}
-		else {
-			Branches = ESearchResult::NotFound;
-			return nullptr;
-		}
-	}
+	return this;
 }
 
 UStateNode* UArrayNode::Substitute(FName SlotName, UStateNode* Node) {
-	for (auto& Pair : this->Nodes) {
-		this->Nodes[Pair.Key] = Pair.Value->Substitute(SlotName, Node);
-	}
-
 	return this;
 }
 

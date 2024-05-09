@@ -11,7 +11,7 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FEventHandler, FName, EventName);
 /**
  * State Machine Node that is a composite of other nodes.
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, Category = "StateMachine")
 class CRABTOOLSUE5_API UEventMapNode : public UStateNode
 {
 	GENERATED_BODY()

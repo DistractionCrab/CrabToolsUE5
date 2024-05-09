@@ -18,6 +18,9 @@ class SEditableTextBox;
 class STATEMACHINEEDITOR_API SGraphDetailsView 
 : public SCompoundWidget, public FNotifyHook, public FGCObject
 {
+private:
+	TSharedPtr<class SVerticalBox> StateListWidget;
+
 public:
 	SLATE_BEGIN_ARGS(SGraphDetailsView){}
 	SLATE_END_ARGS()
@@ -32,4 +35,9 @@ public:
 	}
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	
+	void AddState(class UEdStateNode* Node);
+
+private:
+	void BindEvents(TSharedPtr<class FEditor> InEditor);
 };

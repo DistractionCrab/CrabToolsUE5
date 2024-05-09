@@ -1,15 +1,8 @@
-#include "StateMachine/Widgets/Nodes/EdStateNode.h"
+#include "StateMachine/Widgets/Nodes/SEdStateNode.h"
 #include "StateMachine/Colors/GenericColors.h"
 
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
-UEdStateNode::UEdStateNode() {
-	this->bCanRenameNode = true;
-}
-
-UEdStateNode::~UEdStateNode() {
-
-}
 
 void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 	GraphNode = InNode;

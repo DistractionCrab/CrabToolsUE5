@@ -1,6 +1,6 @@
 #include "StateMachine/Editor.h"
 #include "StateMachine/StateMachineBlueprint.h"
-#include "StateMachine/Schema/GraphSchema.h"
+#include "StateMachine/Schema/StateMachineSchema.h"
 #include "WidgetModeManager.h"
 #include "StateMachine/EditorToolbar.h"
 #include "StateMachine/BlueprintModes/GraphApplicationMode.h"
@@ -139,7 +139,7 @@ FGraphAppearanceInfo FEditor::GetGraphAppearance(class UEdGraph* InGraph) const 
 }
 
 TSubclassOf<UEdGraphSchema> FEditor::GetDefaultSchemaClass() const {
-	return UGraphSchema::StaticClass();
+	return UStateMachineSchema::StaticClass();
 }
 
 void FEditor::CreateEditorModeManager()

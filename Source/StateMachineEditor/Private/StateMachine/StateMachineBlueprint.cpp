@@ -1,6 +1,8 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
-#include "StateMachine/Widgets/Nodes/EdStateNode.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
+#include "StateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/Schema/StateMachineSchema.h"
 
 
 #include "EdGraph/EdGraph.h"
@@ -27,8 +29,10 @@ UEdGraph* UStateMachineBlueprint::SMGraph() {
 			this,
 			NAME_None,
 			UEdGraph::StaticClass(),
-			UEdGraphSchema::StaticClass()));
+			UStateMachineSchema::StaticClass()));
 
+
+		this->EdGraph->AddNode(NewObject<UEdStartStateNode>(this->EdGraph), false, false);
 		//this->EdGraph->CreateNode(UEdStateNode::StaticClass(), false);
 	}
 

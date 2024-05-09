@@ -8,7 +8,7 @@
 /**
  * Simple node for making an entity follow a PatrolPath actor's path.
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, Category = "StateMachine|AI")
 class CRABTOOLSUE5_API UAIBaseNode : public UStateNode
 {
 	GENERATED_BODY()

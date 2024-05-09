@@ -9,7 +9,7 @@
 /**
  * State Machine Node used as a mapped placeholder to be replaced. Has no other functionality.
  */
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, Category = "StateMachine")
 class CRABTOOLSUE5_API UPlaceholderNode : public UStateNode
 {
 	GENERATED_BODY()

@@ -28,7 +28,7 @@ TSoftClassPtr<> UAssetDefinition_StateMachineBlueprint::GetAssetClass() const
 
 TConstArrayView<FAssetCategoryPath> UAssetDefinition_StateMachineBlueprint::GetAssetCategories() const
 {
-	static const TArray<FAssetCategoryPath, TFixedAllocator<1>> Categories = { EAssetCategoryPaths::Misc };
+	static const TArray<FAssetCategoryPath, TFixedAllocator<1>> Categories = { EAssetCategoryPaths::AI };
 	return Categories;
 }
 

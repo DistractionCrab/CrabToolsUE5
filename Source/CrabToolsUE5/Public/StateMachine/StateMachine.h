@@ -89,7 +89,7 @@ public:
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, CollapseCategories)
+UCLASS(Blueprintable, Abstract, EditInlineNew, CollapseCategories, Category="StateMachine")
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
@@ -200,7 +200,7 @@ public:
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS(Blueprintable, EditInlineNew, Category = "StateMachine")
 class CRABTOOLSUE5_API UStateMachine : public UObject
 {
 	GENERATED_BODY()
