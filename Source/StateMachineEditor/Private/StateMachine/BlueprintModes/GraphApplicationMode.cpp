@@ -38,8 +38,8 @@ FGraphApplicationMode::FGraphApplicationMode(
 		->SetOrientation(Orient_Horizontal)
 		->Split(
 			FTabManager::NewStack()
-			->SetHideTabWell(true)
-			->SetSizeCoefficient(0.1f)
+			->SetHideTabWell(false)
+			->SetSizeCoefficient(0.2f)
 			->AddTab(FGraphDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 		->Split(
@@ -50,8 +50,8 @@ FGraphApplicationMode::FGraphApplicationMode(
 		)
 		->Split(
 			FTabManager::NewStack()
-			->SetHideTabWell(true)
-			->SetSizeCoefficient(0.1f)
+			->SetHideTabWell(false)
+			->SetSizeCoefficient(0.2f)
 			->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 	);
@@ -63,12 +63,6 @@ FGraphApplicationMode::FGraphApplicationMode(
 		(
 			MainArea
 		);
-
-	//auto& Module = IStateMachineEditorModule::Get();
-	//ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
-
-	//InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
-	//InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
 }
 
 #pragma region Initializers
@@ -94,11 +88,11 @@ void FGraphApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabMa
 }
 
 void FGraphApplicationMode::PreDeactivateMode() {
-
+	//FBlueprintEditorApplicationMode::PreDeactivateMode();
 }
 
 void FGraphApplicationMode::PostActivateMode() {
-
+	//FBlueprintEditorApplicationMode::PostActivateMode();
 }
 
 

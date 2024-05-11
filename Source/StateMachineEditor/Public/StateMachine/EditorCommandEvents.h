@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Delegates/Delegate.h"
 #include "EdGraph/EdGraph.h"
+#include "BlueprintUtilities.h"
 
 #include "StateMachine/EdGraph/EdStateNode.h"
 

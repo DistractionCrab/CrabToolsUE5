@@ -93,7 +93,7 @@ void FBlueprintApplicationMode::PreDeactivateMode()
 
 void FBlueprintApplicationMode::PostActivateMode() 
 {
-	FBlueprintEditorApplicationMode::PostActivateMode();
+
 }
 
 
@@ -108,7 +108,8 @@ FText FBlueprintApplicationMode::GetLocalizedMode(const FName InMode)
 	return FText::GetEmpty();
 }
 
-void FBlueprintApplicationMode::SetupToolbar(TSharedPtr<FEditor> InEditor) {
+void FBlueprintApplicationMode::SetupToolbar(TSharedPtr<FEditor> InEditor)
+{
 	auto& Module = IStateMachineEditorModule::Get();
 	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
 

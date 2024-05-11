@@ -38,6 +38,7 @@ void FBaseApplicationMode::SetupToolbar(TSharedPtr<FEditor> InEditor) {
 
 	FName OutParentToolbarName;
 	FName ToolBarname = InEditor->GetToolMenuToolbarNameForMode(GetModeName(), OutParentToolbarName);
+
 	if (UToolMenu* Toolbar = UToolMenus::Get()->FindMenu(ToolBarname))
 	{
 		//InWidgetEditor->GetWidgetToolbarBuilder()->AddWidgetReflector(Toolbar);

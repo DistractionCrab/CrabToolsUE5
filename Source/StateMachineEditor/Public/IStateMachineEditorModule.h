@@ -16,7 +16,8 @@ class IStateMachineEditorModule :
 {
 
 public:
-	static IStateMachineEditorModule& Get() {
+	static IStateMachineEditorModule& Get()
+	{
 		return FModuleManager::LoadModuleChecked<IStateMachineEditorModule>("StateMachineEditor");
 	}
 };

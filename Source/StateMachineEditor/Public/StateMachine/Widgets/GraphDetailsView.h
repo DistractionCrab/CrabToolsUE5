@@ -2,42 +2,54 @@
 
 #include "CoreMinimal.h"
 #include "Layout/Visibility.h"
+#include "Misc/NotifyHook.h"
+
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/SCompoundWidget.h"
-#include "Misc/NotifyHook.h"
+#include "Widgets/Views/SExpanderArrow.h"
+#include "Widgets/Views/STableRow.h"
+#include "Widgets/Views/STreeView.h"
+#include "SGraphActionMenu.h"
+
 #include "StateMachine/Editor.h"
 
 class IDetailsView;
-class SBox;
-class SEditableTextBox;
+class SGraphActionMenu;
 
 /**
- * The tab which shows details about selected features of the State Machine's graph,
- * such as Nodes and Edges.
+ * The tab which shows an overview of the State Machine graph, such as
+ * Edges, Nodes, Events, or Aliases.
  */
 class STATEMACHINEEDITOR_API SGraphDetailsView 
 : public SCompoundWidget, public FNotifyHook, public FGCObject
 {
 private:
-	TSharedPtr<class SVerticalBox> StateListWidget;
+	//TSharedPtr<class SVerticalBox> StateListWidget;
+	//TSharedPtr<class SVerticalBox> EventListWidget;
+	//TSharedPtr<class SVerticalBox> AliasListWidget;
+
+	//TSharedPtr<STreeView<TSharedPtr<FGraphActionNode>>> TreeView;
+	TSharedPtr<SGraphActionMenu> GraphActionMenu;
 
 public:
 	SLATE_BEGIN_ARGS(SGraphDetailsView){}
 	SLATE_END_ARGS()
 
-	void Construct(
-		const FArguments& InArgs, 
-		TSharedPtr<class FEditor> InBlueprintEditor);
+	void Construct(const FArguments& InArgs, TSharedPtr<class FEditor> InEditor);
 
 	virtual FString GetReferencerName() const override
 	{
-		return TEXT("SNodeDetailsView");
+		return TEXT("SGraphDetailsView");
 	}
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	
-	void AddState(class UEdStateNode* Node);
-
 private:
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
+	void OnGraphChanged(const FEdGraphEditAction& Action);
+	void AddState(const class UEdStateNode* Node);
+
+	// Section Functions.
+	FText OnGetSectionTitle(int32 InSectionID);
+	TSharedRef<SWidget> OnGetSectionWidget(TSharedRef<SWidget> RowWidget, int32 InSectionID);
 };

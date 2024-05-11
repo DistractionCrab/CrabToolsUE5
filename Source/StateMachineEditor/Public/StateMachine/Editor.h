@@ -59,8 +59,8 @@ public:
 	virtual FString GetWorldCentricTabPrefix() const override;
 	virtual FLinearColor GetWorldCentricTabColorScale() const override;
 	virtual void InitToolMenuContext(FToolMenuContext& MenuContext) override;
-	void OnToolkitHostingStarted(const TSharedRef<IToolkit>& Toolkit) override;
-	void OnToolkitHostingFinished(const TSharedRef<IToolkit>& Toolkit) override;
+	virtual void OnToolkitHostingStarted(const TSharedRef<IToolkit>& Toolkit) override;
+	virtual void OnToolkitHostingFinished(const TSharedRef<IToolkit>& Toolkit) override;
 	//~ End IToolkit interface
 
 	//~ Begin FBlueprintEditor interface
@@ -71,9 +71,13 @@ public:
 
 	void CreateEditorModeManager() override;
 
+	class UStateMachineBlueprint* GetStateMachineBlueprintObj();
+
 	TSharedPtr<class FEditorToolbar> GetWidgetToolbarBuilder() { return EditorToolbar; }
 
 protected:
 	virtual void InitalizeExtenders() override;
 	
+private:
+	TSharedPtr<FExtender> CreateMenuExtender();
 };

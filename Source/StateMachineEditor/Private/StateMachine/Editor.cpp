@@ -7,7 +7,7 @@
 #include "StateMachine/BlueprintModes/BlueprintApplicationMode.h"
 
 
-#define LOCTEXT_NAMESPACE "PSM"
+#define LOCTEXT_NAMESPACE "StateMachineEditor"
 
 FEditor::FEditor(): FBlueprintEditor()
 {
@@ -63,15 +63,15 @@ FName FEditor::GetToolkitContextFName() const {
 }
 
 FName FEditor::GetToolkitFName() const { 
-	return FName("Editor");
+	return FName("StateMachineEditor");
 }
 
 FText FEditor::GetBaseToolkitName() const {
-	return LOCTEXT("AppLabel", "ProcStateMachine Editor");
+	return LOCTEXT("AppLabel", "StateMachineEditor");
 }
 
 FString FEditor::GetWorldCentricTabPrefix() const {
-	return LOCTEXT("WorldCentricTabPrefix", "StateMachine Editor").ToString();
+	return LOCTEXT("WorldCentricTabPrefix", "State Machine Editor").ToString();
 }
 
 FLinearColor FEditor::GetWorldCentricTabColorScale() const {
@@ -79,14 +79,14 @@ FLinearColor FEditor::GetWorldCentricTabColorScale() const {
 }
 
 void FEditor::InitToolMenuContext(FToolMenuContext& MenuContext) {
-
+	FBlueprintEditor::InitToolMenuContext(MenuContext);
 }
 void FEditor::OnToolkitHostingStarted(const TSharedRef<IToolkit>& Toolkit) {
-
+	//FBlueprintEditor::OnToolkitHostingStarted(Toolkit);
 }
 
 void FEditor::OnToolkitHostingFinished(const TSharedRef<IToolkit>& Toolkit) {
-
+	//FBlueprintEditor::OnToolkitHostingFinished(Toolkit);
 }
 //~ End IToolkit interface
 
@@ -109,31 +109,12 @@ void FEditor::RegisterApplicationModes(const TArray<UBlueprint*>& InBlueprints, 
 
 		SetCurrentMode(FGraphApplicationMode::ModeName);
 	}
-	else
-	{
-		//// We either have no blueprints or many, open in the defaults mode for multi-editing
-		//AddApplicationMode(
-		//	FBlueprintEditorApplicationModes::BlueprintDefaultsMode,
-		//	MakeShareable(new FBlueprintDefaultsApplicationMode(SharedThis(this))));
-		//SetCurrentMode(FBlueprintEditorApplicationModes::BlueprintDefaultsMode);
-	}
 }
 
 FGraphAppearanceInfo FEditor::GetGraphAppearance(class UEdGraph* InGraph) const {
 	FGraphAppearanceInfo AppearanceInfo = FBlueprintEditor::GetGraphAppearance(InGraph);
 
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText", "STATE MACHINE BLUEPRINT");
-
-	/*
-	if (FBlueprintEditorUtils::IsEditorUtilityBlueprint(GetBlueprintObj()))
-	{
-		AppearanceInfo.CornerText = LOCTEXT("EditorUtilityWidgetAppearanceCornerText", "EDITOR UTILITY WIDGET");
-	}
-	else if (GetBlueprintObj()->IsA(UWidgetBlueprint::StaticClass()))
-	{
-		AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText", "WIDGET BLUEPRINT");
-	}
-	*/
 
 	return AppearanceInfo;
 }
@@ -152,28 +133,17 @@ void FEditor::CreateEditorModeManager()
 
 void FEditor::InitalizeExtenders() {
 	FBlueprintEditor::InitalizeExtenders();
+}
 
-	/*
-	IUMGEditorModule& UMGEditorModule = FModuleManager::LoadModuleChecked<IUMGEditorModule>(
-		"UMGEditor");
-	AddMenuExtender(
-		UMGEditorModule.GetMenuExtensibilityManager()->GetAllExtenders(
-			GetToolkitCommands(), 
-			GetEditingObjects()));
+TSharedPtr<FExtender> FEditor::CreateMenuExtender()
+{
+	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender);
 
-	AddMenuExtender(CreateMenuExtender());
+	return MenuExtender;
+}
 
-	TArrayView<IUMGEditorModule::FWidgetEditorToolbarExtender> ToolbarExtenderDelegates 
-		= UMGEditorModule.GetAllWidgetEditorToolbarExtenders();
-
-	for (auto& ToolbarExtenderDelegate : ToolbarExtenderDelegates)
-	{
-		if (ToolbarExtenderDelegate.IsBound())
-		{
-			AddToolbarExtender(ToolbarExtenderDelegate.Execute(GetToolkitCommands(), SharedThis(this)));
-		}
-	}
-	*/
+UStateMachineBlueprint* FEditor::GetStateMachineBlueprintObj() {
+	return Cast<UStateMachineBlueprint>(FBlueprintEditor::GetBlueprintObj());
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -15,15 +15,18 @@ UStateMachineBlueprint::UStateMachineBlueprint(const FObjectInitializer& ObjectI
 {
 }
 
-UClass* UStateMachineBlueprint::GetBlueprintClass() const {
+UClass* UStateMachineBlueprint::GetBlueprintClass() const
+{
 	return UStateMachineBlueprintGeneratedClass::StaticClass();
 }
 
-bool UStateMachineBlueprint::SupportsInputEvents() const  {
+bool UStateMachineBlueprint::SupportsInputEvents() const 
+{
 	return true;
 }
 
-UEdGraph* UStateMachineBlueprint::SMGraph() {
+UEdGraph* UStateMachineBlueprint::SMGraph()
+{
 	if (this->EdGraph == nullptr) {
 		this->EdGraph = CastChecked<UEdGraph>(FBlueprintEditorUtils::CreateNewGraph(
 			this,
@@ -33,7 +36,6 @@ UEdGraph* UStateMachineBlueprint::SMGraph() {
 
 
 		this->EdGraph->AddNode(NewObject<UEdStartStateNode>(this->EdGraph), false, false);
-		//this->EdGraph->CreateNode(UEdStateNode::StaticClass(), false);
 	}
 
 	return this->EdGraph;
