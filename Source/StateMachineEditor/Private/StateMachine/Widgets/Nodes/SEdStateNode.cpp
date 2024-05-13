@@ -3,21 +3,20 @@
 
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
+#define LOCTEXT_NAMESPACE "SEdStateNode"
 
 void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
-	GraphNode = InNode;
-	//UpdateGraphNode();
-	//InNode->SEdNode = this;
+	this->GraphNode = InNode;
 
 	const FMargin NodePadding = FMargin(5);
 	const FMargin NamePadding = FMargin(2);
 
-	InputPins.Empty();
-	OutputPins.Empty();
+	this->InputPins.Empty();
+	this->OutputPins.Empty();
 
 	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
-	RightNodeBox.Reset();
-	LeftNodeBox.Reset();
+	this->RightNodeBox.Reset();
+	this->LeftNodeBox.Reset();
 
 	const FSlateBrush *NodeTypeIcon = GetNameIcon();
 
@@ -129,10 +128,35 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 	//InNode->SEdNode = this;
 }
 
-FSlateColor SEdStateNode::GetBorderBackgroundColor() const {
+FSlateColor SEdStateNode::GetBorderBackgroundColor() const
+{
 	return GenericGraphColors::NodeBorder::HighlightAbortRange0;
 }
 
-const FSlateBrush* SEdStateNode::GetNameIcon() const {
+const FSlateBrush* SEdStateNode::GetNameIcon() const
+{
 	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
 }
+
+bool SEdStateNode::IsNameReadOnly() const
+{
+	return false;
+}
+
+void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo)
+{
+	SGraphNode::OnNameTextCommited(InText, CommitInfo);
+
+	this->InlineEditableText->SetText(InText);
+
+	const FScopedTransaction Transaction(
+		LOCTEXT("StateMachineGraphEditorRenameNode", "State Machine Graph Editor: Rename Node"));
+	this->GraphNode->Modify();
+}
+
+//bool SEdStateNode::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)
+//{
+//	//FName NameCheck(InText.ToString());
+//}
+
+#undef LOCTEXT_NAMESPACE

@@ -1,53 +1,79 @@
 #include "StateMachine/Widgets/GraphDetailsView.h"
 
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/Input/SSearchBox.h"
 #include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Layout/SScrollBorder.h"
 
 #include "GraphEditAction.h"
 #include "StateMachine/StateMachineBlueprint.h"
 
 #define LOCTEXT_NAMESPACE "PSM"
 
-/* Helper function used to generate the different sections of the Graph View*/
-TSharedRef<class SVerticalBox> GenerateListWidgets(
-	TSharedPtr<class SVerticalBox>& RefWidget,
-	FString SectionHeader)
-{
+class FStateListEntry {};
+class FEventListEntry {};
+class FAliasListEntry {};
 
-	return SNew(SVerticalBox)
-		+ SVerticalBox::Slot()
-		[
-			SNew(STextBlock)
-				.Text(FText::Format(
-					LOCTEXT("GraphDetaulsView", "{0}"), 
-					FText::FromString(SectionHeader)))
-		]
-		+ SVerticalBox::Slot()
-		.VAlign(VAlign_Fill)
-		[
-			SNew(SScrollBox)
-				+ SScrollBox::Slot()
-				[
-					SAssignNew(RefWidget, SVerticalBox)
-				]
-		];
-}
+
 
 void SGraphDetailsView::Construct(
 	const FArguments& InArgs,
 	TSharedPtr<class FEditor> InEditor) 
 {
+	for (int i = 0; i < 50; ++i)
+	{
+		this->StateList.Add(MakeShareable(new FStateListEntry));
+	}
+
+	SAssignNew(StateListWidget, STreeView<TSharedPtr<FStateListEntry>>)
+		.ItemHeight(24)
+		.TreeItemsSource(&this->StateList)
+		.OnGenerateRow(this, &SGraphDetailsView::OnGenerateRow, false)
+		.SelectionMode(ESelectionMode::Single)
+		.OnSelectionChanged(this, &SGraphDetailsView::OnItemSelected)
+		.OnMouseButtonDoubleClick(this, &SGraphDetailsView::OnItemDoubleClicked)
+		//.OnContextMenuOpening(InArgs._OnContextMenuOpening)
+		.OnGetChildren(this, &SGraphDetailsView::OnGetChildrenForCategory)
+		.OnItemScrolledIntoView(this, &SGraphDetailsView::OnItemScrolledIntoView)
+		.OnSetExpansionRecursive(this, &SGraphDetailsView::OnSetExpansionRecursive)
+		.HighlightParentNodesForSelection(true);
+
+	
 
 	ChildSlot
 	[
-		SAssignNew(GraphActionMenu, SGraphActionMenu, false)
+		SNew(SVerticalBox)
+		
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SAssignNew(FilterBox, SSearchBox)
+		]
+		+ SVerticalBox::Slot()
+		.VAlign(VAlign_Fill)
+		[
+			SNew(SScrollBorder, this->StateListWidget.ToSharedRef())
+			[
+				this->StateListWidget.ToSharedRef()
+			]
+		]
 	];
 
 
 	this->BindEvents(InEditor);
 }
 
-
+TSharedRef<ITableRow> SGraphDetailsView::OnGenerateRow(
+	TSharedPtr<FStateListEntry> InItem,
+	const TSharedRef<STableViewBase>& OwnerTable,
+	bool bIsReadOnly)
+{
+	return SNew(STableRow<TSharedPtr<FStateListEntry>>, OwnerTable)
+		[
+			SNew(STextBlock)
+				.Text(FText::FromString("Waffles"))
+		];
+}
 
 void SGraphDetailsView::AddReferencedObjects(FReferenceCollector& Collector) {
 

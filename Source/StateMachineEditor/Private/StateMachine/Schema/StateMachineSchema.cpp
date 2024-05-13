@@ -73,7 +73,6 @@ EGraphType UStateMachineSchema::GetGraphType(const UEdGraph* TestEdGraph) const
 FText GetFormattedMenuText(TSubclassOf<UStateNode> NodeType) 
 {
 	FString ClassString = NodeType->GetMetaData("Category");
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *NodeType->GetMetaData("Category"));
 
 	if (ClassString.StartsWith("StateMachine|")) {
 		ClassString.RightChopInline(13);

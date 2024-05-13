@@ -43,7 +43,10 @@ void FEditor::InitEditor(
 void FEditor::Tick(float DeltaTime) {}
 void FEditor::PostUndo(bool bSuccessful) {}
 void FEditor::PostRedo(bool bSuccessful) {}
-void FEditor::Compile() {}
+void FEditor::Compile()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Compilation has started?"));
+}
 //~ End FBlueprintEditor interface
 
 

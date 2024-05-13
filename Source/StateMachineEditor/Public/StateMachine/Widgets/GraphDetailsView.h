@@ -9,27 +9,29 @@
 #include "Widgets/Views/SExpanderArrow.h"
 #include "Widgets/Views/STableRow.h"
 #include "Widgets/Views/STreeView.h"
-#include "SGraphActionMenu.h"
 
 #include "StateMachine/Editor.h"
 
 class IDetailsView;
-class SGraphActionMenu;
 
 /**
  * The tab which shows an overview of the State Machine graph, such as
  * Edges, Nodes, Events, or Aliases.
  */
 class STATEMACHINEEDITOR_API SGraphDetailsView 
-: public SCompoundWidget, public FNotifyHook, public FGCObject
+: public SCompoundWidget, public FGCObject
 {
 private:
-	//TSharedPtr<class SVerticalBox> StateListWidget;
+	TSharedPtr<class SSearchBox> FilterBox;
+	TSharedPtr<STreeView<TSharedPtr<class FStateListEntry>>> StateListWidget;
+	TArray<TSharedPtr<class FStateListEntry>> StateList;
+	//TSharedPtr<STreeView<TSharedPtr<class FEventListEntry>>> EventListWidget;
+	//TSharedPtr<STreeView<TSharedPtr<class FAliasListEntry>>> AliasListWidget;
 	//TSharedPtr<class SVerticalBox> EventListWidget;
 	//TSharedPtr<class SVerticalBox> AliasListWidget;
 
-	//TSharedPtr<STreeView<TSharedPtr<FGraphActionNode>>> TreeView;
-	TSharedPtr<SGraphActionMenu> GraphActionMenu;
+	//TSharedPtr<STreeView<TSharedPtr<FStateListEntry>>> TreeView;
+	//TSharedPtr<SGraphActionMenu> GraphActionMenu;
 
 public:
 	SLATE_BEGIN_ARGS(SGraphDetailsView){}
@@ -48,6 +50,16 @@ private:
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
 	void OnGraphChanged(const FEdGraphEditAction& Action);
 	void AddState(const class UEdStateNode* Node);
+	TSharedRef<ITableRow> OnGenerateRow(
+		TSharedPtr<FStateListEntry> InItem, 
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly);
+
+	void OnItemSelected(TSharedPtr< FStateListEntry > InSelectedItem, ESelectInfo::Type SelectInfo) {}
+	void OnItemDoubleClicked(TSharedPtr< FStateListEntry > InClickedItem) {}
+	void OnGetChildrenForCategory(TSharedPtr<FStateListEntry> InItem, TArray< TSharedPtr<FStateListEntry> >& OutChildren) {}
+	void OnItemScrolledIntoView(TSharedPtr<FStateListEntry> InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
+	void OnSetExpansionRecursive(TSharedPtr<FStateListEntry> InTreeNode, bool bInIsItemExpanded) {}
 
 	// Section Functions.
 	FText OnGetSectionTitle(int32 InSectionID);

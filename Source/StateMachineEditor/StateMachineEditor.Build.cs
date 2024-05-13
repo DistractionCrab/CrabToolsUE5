@@ -44,6 +44,7 @@ public class StateMachineEditor : ModuleRules
 				"UnrealEd",
                 "GraphEditor",
 				"SlateCore",
+				"InputCore",
                 "Kismet",
                 "KismetWidgets",
                 "PropertyEditor",
