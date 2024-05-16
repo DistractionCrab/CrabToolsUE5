@@ -32,6 +32,9 @@ public:
 
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
 
+	FName GetStateName() const { return this->StateName; }
+	void SetStateName(FName NewName) { this->StateName = NewName; }
+
 	//virtual void AllocateDefaultPins() override;
 	//virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	//virtual void PrepareForCopying() override;

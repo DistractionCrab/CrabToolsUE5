@@ -23,7 +23,9 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 	FLinearColor TitleShadowColor(0.6f, 0.6f, 0.6f);
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SVerticalBox> NodeBody;
-	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, this->GraphNode);
+	//FText DisplayText = FText::FromName(InNode->GetStateName());
+	
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -108,6 +110,7 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 									SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 									.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
 									.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+									//.Text(FText::FromName(InNode->GetStateName()))
 									.OnVerifyTextChanged(this, &SEdStateNode::OnVerifyNameTextChanged)
 									.OnTextCommitted(this, &SEdStateNode::OnNameTextCommited)
 									.IsReadOnly(this, &SEdStateNode::IsNameReadOnly)
@@ -124,8 +127,6 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 				]
 			]
 		];
-
-	//InNode->SEdNode = this;
 }
 
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
@@ -149,14 +150,35 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 
 	this->InlineEditableText->SetText(InText);
 
-	const FScopedTransaction Transaction(
-		LOCTEXT("StateMachineGraphEditorRenameNode", "State Machine Graph Editor: Rename Node"));
-	this->GraphNode->Modify();
+	if (this->GraphNode)
+	{
+		const FScopedTransaction Transaction(
+			LOCTEXT("StateMachineGraphEditorRenameNode", "State Machine Graph Editor: Rename Node"));
+		//this->GraphNode->Rename(InText.ToString());		
+		
+		if (UEdStateNode* CastNode = Cast<UEdStateNode>(this->GraphNode))
+		{
+			CastNode->SetStateName(FName(InText.ToString()));
+		}
+
+		this->GraphNode->Modify();
+	}
 }
 
-//bool SEdStateNode::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)
-//{
-//	//FName NameCheck(InText.ToString());
-//}
+/*
+FReply SEdStateNode::OnMouseButtonDown(
+	const FGeometry& InGeo,
+	const FPointerEvent& Event)
+{
+	TSet<const UEdGraphNode*> NSet;
+	NSet.Add(this->GraphNode);
+
+	this->GraphNode->GetGraph()->SelectNodeSet(NSet);
+
+	UE_LOG(LogTemp, Warning, TEXT("Mouse Down on Node."));
+
+	return SGraphNode::OnMouseButtonDown(InGeo, Event);
+}
+*/
 
 #undef LOCTEXT_NAMESPACE

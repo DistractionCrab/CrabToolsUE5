@@ -1,8 +1,8 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
-#include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
-#include "StateMachine/Schema/StateMachineSchema.h"
+#include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/EdGraph/StateMachineSchema.h"
 
 
 #include "EdGraph/EdGraph.h"
@@ -31,10 +31,10 @@ UEdGraph* UStateMachineBlueprint::SMGraph()
 		this->EdGraph = CastChecked<UEdGraph>(FBlueprintEditorUtils::CreateNewGraph(
 			this,
 			NAME_None,
-			UEdGraph::StaticClass(),
+			UEdStateGraph::StaticClass(),
 			UStateMachineSchema::StaticClass()));
 
-
+		// Initialize it with a singular start state.
 		this->EdGraph->AddNode(NewObject<UEdStartStateNode>(this->EdGraph), false, false);
 	}
 

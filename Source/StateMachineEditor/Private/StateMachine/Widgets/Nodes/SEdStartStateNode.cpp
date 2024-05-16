@@ -3,6 +3,11 @@
 
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
+UEdStartStateNode::UEdStartStateNode(const FObjectInitializer& ObjectInitializer)
+: UEdGraphNode(ObjectInitializer)
+{
+	this->bCanRenameNode = false;
+}
 
 void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* InNode) {
 	GraphNode = InNode;

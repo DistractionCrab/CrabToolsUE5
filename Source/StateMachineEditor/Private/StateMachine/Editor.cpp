@@ -1,6 +1,6 @@
 #include "StateMachine/Editor.h"
 #include "StateMachine/StateMachineBlueprint.h"
-#include "StateMachine/Schema/StateMachineSchema.h"
+#include "StateMachine/EdGraph/StateMachineSchema.h"
 #include "WidgetModeManager.h"
 #include "StateMachine/EditorToolbar.h"
 #include "StateMachine/BlueprintModes/GraphApplicationMode.h"

@@ -58,6 +58,10 @@ public:
 		return TEXT("SGraphView");
 	}
 
+	virtual FReply OnKeyDown(const FGeometry& Geo, const FKeyEvent& Event) override;
+
+private:
+	void OnSelectionChanged(const TSet<class UObject*>& NewSelection);
 
 	//virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 };

@@ -14,7 +14,10 @@ class UEdStartStateNode : public UEdGraphNode
 {
 	GENERATED_BODY()
 
+
+
 public:
+	UEdStartStateNode(const FObjectInitializer& ObjectInitializer);
 	UEdStartStateNode();
 	virtual ~UEdStartStateNode();
 
@@ -27,8 +30,7 @@ public:
 	//virtual UEdGraphPin* GetInputPin() const;
 	//virtual UEdGraphPin* GetOutputPin() const;
 
-	#if WITH_EDITOR
-		//virtual void PostEditUndo() override;
-	#endif
+	
+	virtual bool CanUserDeleteNode() const override { return false; }
 
 };

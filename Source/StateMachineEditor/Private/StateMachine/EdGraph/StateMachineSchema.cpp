@@ -1,5 +1,6 @@
-#include "StateMachine/Schema/StateMachineSchema.h"
+#include "StateMachine/EdGraph/StateMachineSchema.h"
 #include "StateMachine/StateMachineBlueprint.h"
+#include "StateMachine/EdGraph/EdStateGraph.h"
 
 #define LOCTEXT_NAMESPACE "StateMachineSchema"
 
@@ -9,7 +10,8 @@ UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 	const FVector2D Location, 
 	bool bSelectNewNode)
 {
-	UEdGraphNode* ResultNode = nullptr;
+	UEdStateNode* ResultNode = nullptr;
+	UEdStateGraph* StateGraph = Cast<UEdStateGraph>(ParentGraph);
 
 	if (NodeTemplate != nullptr)
 	{
@@ -20,7 +22,10 @@ UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 		if (FromPin != nullptr)
 			FromPin->Modify();
 
+
 		NodeTemplate->Rename(nullptr, ParentGraph);
+		NodeTemplate->SetStateName(StateGraph->GetNewStateName());
+		
 		ParentGraph->AddNode(NodeTemplate, true, bSelectNewNode);
 
 		NodeTemplate->CreateNewGuid();
@@ -31,10 +36,18 @@ UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 		NodeTemplate->NodePosX = Location.X;
 		NodeTemplate->NodePosY = Location.Y;
 
-		//NodeTemplate->GenericGraphNode->SetFlags(RF_Transactional);
 		NodeTemplate->SetFlags(RF_Transactional);
 
 		ResultNode = NodeTemplate;
+
+		ResultNode->SetNodeTemplate(NewObject<UStateNode>(
+			ResultNode,
+			this->NodeClass,
+			FName(FString("StateNode")),
+			RF_NoFlags,
+			this->NodeClass->GetDefaultObject(),
+			true
+		));
 	}
 
 	return ResultNode;
@@ -97,9 +110,8 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 		bool c1 = (*It)->IsChildOf(UStateNode::StaticClass());
 		bool c2 = !It->HasAnyClassFlags(CLASS_Abstract);
 		bool c3 = !Visited.Contains(*It);
-		bool c4 = !(*It)->HasAnyClassFlags(CLASS_Abstract);
 
-		if ( c1 && c2 && c3 && c4)
+		if ( c1 && c2 && c3)
 		{
 			TSubclassOf<UStateNode> NodeType = *It;
 
@@ -118,8 +130,9 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 			
 			TSharedPtr<FSMSchemaAction_NewNode> Action(
 				new FSMSchemaAction_NewNode(MenuText, Desc, AddToolTip, 0));
+			Action->SetNodeClass(NodeType);
 
-			Action->NodeTemplate = NewObject<UEdStateNode>(ContextMenuBuilder.OwnerOfTemporaries);
+			Action->SetNodeTemplate(NewObject<UEdStateNode>(ContextMenuBuilder.OwnerOfTemporaries));
 
 			//Action->NodeTemplate->GenericGraphNode->Graph = Graph;
 			ContextMenuBuilder.AddAction(Action);

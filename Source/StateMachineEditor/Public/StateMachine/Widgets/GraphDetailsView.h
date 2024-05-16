@@ -27,11 +27,6 @@ private:
 	TArray<TSharedPtr<class FStateListEntry>> StateList;
 	//TSharedPtr<STreeView<TSharedPtr<class FEventListEntry>>> EventListWidget;
 	//TSharedPtr<STreeView<TSharedPtr<class FAliasListEntry>>> AliasListWidget;
-	//TSharedPtr<class SVerticalBox> EventListWidget;
-	//TSharedPtr<class SVerticalBox> AliasListWidget;
-
-	//TSharedPtr<STreeView<TSharedPtr<FStateListEntry>>> TreeView;
-	//TSharedPtr<SGraphActionMenu> GraphActionMenu;
 
 public:
 	SLATE_BEGIN_ARGS(SGraphDetailsView){}

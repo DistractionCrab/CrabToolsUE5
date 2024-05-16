@@ -17,6 +17,9 @@ class SEditableTextBox;
 class STATEMACHINEEDITOR_API SMachineDetailsView 
 : public SCompoundWidget, public FNotifyHook, public FGCObject
 {
+private:
+	TSharedPtr<class SKismetInspector> Inspector;
+
 public:
 	SLATE_BEGIN_ARGS( SMachineDetailsView ){}
 	SLATE_END_ARGS()
@@ -31,4 +34,8 @@ public:
 	}
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+
+private:
+	void OnGraphChanged(const FEdGraphEditAction& Action);
+	void BindEvents(TSharedPtr<class FEditor> InEditor);
 };

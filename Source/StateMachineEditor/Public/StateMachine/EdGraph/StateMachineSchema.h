@@ -13,7 +13,8 @@ struct STATEMACHINEEDITOR_API FSMSchemaAction_NewNode : public FEdGraphSchemaAct
 	GENERATED_USTRUCT_BODY();
 
 private:
-
+	TSubclassOf<class UStateNode> NodeClass;
+	TObjectPtr<UEdStateNode> NodeTemplate;
 
 public:
 	FSMSchemaAction_NewNode(): NodeTemplate(nullptr) {}
@@ -24,7 +25,10 @@ public:
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	//virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
-	UEdStateNode* NodeTemplate;
+	void SetNodeClass(TSubclassOf<UStateNode> Class) { this->NodeClass = Class; }
+	void SetNodeTemplate(UEdStateNode* Template) { this->NodeTemplate = Template; }
+
+	
 };
 
 

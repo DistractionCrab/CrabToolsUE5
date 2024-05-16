@@ -22,7 +22,6 @@ public:
 	void Construct(const FArguments& InArgs, UEdStateNode* InNode);
 
 	/*
-	virtual void UpdateGraphNode() override;
 	virtual void CreatePinWidgets() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	
@@ -34,6 +33,10 @@ public:
 	//bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	virtual bool IsNameReadOnly() const override;
 	virtual FSlateColor GetBorderBackgroundColor() const;
+	/*virtual FReply OnMouseButtonDown(
+		const FGeometry& InGeo, 
+		const FPointerEvent& Event) override;
+	*/
 	//virtual FSlateColor GetBackgroundColor() const;
 	//virtual EVisibility GetDragOverMarkerVisibility() const;
 
