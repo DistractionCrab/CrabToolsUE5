@@ -2,7 +2,8 @@
 
 
 UEdStartStateNode::UEdStartStateNode() {
-	this->bCanRenameNode = true;
+	this->bCanRenameNode = false;
+	this->Description = FText::FromString("Starting point for the State Machine.");
 }
 
 UEdStartStateNode::~UEdStartStateNode() {

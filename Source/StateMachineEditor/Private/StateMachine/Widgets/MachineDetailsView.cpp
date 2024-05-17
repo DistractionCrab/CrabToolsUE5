@@ -30,7 +30,10 @@ void SMachineDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor)
 		FOnGraphChanged::FDelegate f;
 		f.BindRaw(this, &SMachineDetailsView::OnGraphChanged);
 
-		BPObj->SMGraph()->AddOnGraphChangedHandler(f);
+		BPObj->StateMachineGraph()->AddOnGraphChangedHandler(f);
+		BPObj->StateMachineGraph()->Events.OnNodeSelected.AddRaw(
+			this, 
+			&SMachineDetailsView::OnSelectionChanged);
 	}
 }
 
@@ -39,14 +42,26 @@ void SMachineDetailsView::AddReferencedObjects(FReferenceCollector& Collector)
 
 }
 
+void SMachineDetailsView::OnSelectionChanged(TArray<class UEdStateNode*>& SelectedNodes)
+{
+	if (SelectedNodes.Num() == 1)
+	{
+		Inspector->ShowDetailsForSingleObject(SelectedNodes[0]);
+	}
+}
+
 void SMachineDetailsView::OnGraphChanged(const FEdGraphEditAction& Action)
 {
 	if (Action.Action == EEdGraphActionType::GRAPHACTION_SelectNode)
 	{
-		for (auto Node : Action.Nodes)
+		if (Action.Nodes.Num() == 1)
 		{
-			UObject* CastNode = const_cast<UEdGraphNode*>(Node);
-			Inspector->ShowDetailsForSingleObject(CastNode);
+			for (auto Node : Action.Nodes)
+			{
+				// Need to static cast due to limitations of this interface.
+				UObject* CastNode = const_cast<UEdGraphNode*>(Node);
+				Inspector->ShowDetailsForSingleObject(CastNode);
+			}
 		}
 	}
 	else if (Action.Action == EEdGraphActionType::GRAPHACTION_AddNode)

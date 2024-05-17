@@ -109,8 +109,8 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 								[
 									SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 									.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-									.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-									//.Text(FText::FromName(InNode->GetStateName()))
+									//.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+									.Text(FText::FromName(InNode->GetStateName()))
 									.OnVerifyTextChanged(this, &SEdStateNode::OnVerifyNameTextChanged)
 									.OnTextCommitted(this, &SEdStateNode::OnNameTextCommited)
 									.IsReadOnly(this, &SEdStateNode::IsNameReadOnly)

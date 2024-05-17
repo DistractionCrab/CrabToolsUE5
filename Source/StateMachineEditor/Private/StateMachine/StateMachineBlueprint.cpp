@@ -25,10 +25,10 @@ bool UStateMachineBlueprint::SupportsInputEvents() const
 	return true;
 }
 
-UEdGraph* UStateMachineBlueprint::SMGraph()
+UEdStateGraph* UStateMachineBlueprint::StateMachineGraph()
 {
 	if (this->EdGraph == nullptr) {
-		this->EdGraph = CastChecked<UEdGraph>(FBlueprintEditorUtils::CreateNewGraph(
+		this->EdGraph = CastChecked<UEdStateGraph>(FBlueprintEditorUtils::CreateNewGraph(
 			this,
 			NAME_None,
 			UEdStateGraph::StaticClass(),

@@ -14,6 +14,7 @@ FName UEdStateGraph::GetNewStateName()
 		{
 			FString NodeName = CastNode->GetStateName().ToString();
 
+			UE_LOG(LogTemp, Warning, TEXT("Found Node with name: %s"), *NodeName);
 
 			if (NodeName.StartsWith(DEFAULT_NODE_NAME))
 			{
@@ -23,7 +24,7 @@ FName UEdStateGraph::GetNewStateName()
 				{
 					int check = FCString::Atoi(*EndName);
 
-					if (check > index)
+					if (check >= index)
 					{
 						index = check + 1;
 					}

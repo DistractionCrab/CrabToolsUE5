@@ -14,6 +14,8 @@ class UEdStartStateNode : public UEdGraphNode
 {
 	GENERATED_BODY()
 
+	UPROPERTY(VisibleAnywhere)
+	FText Description;
 
 
 public:

@@ -37,5 +37,6 @@ public:
 
 private:
 	void OnGraphChanged(const FEdGraphEditAction& Action);
+	void OnSelectionChanged(TArray<class UEdStateNode*>& SelectedNodes);
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
 };

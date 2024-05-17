@@ -10,9 +10,7 @@ UEdStartStateNode::UEdStartStateNode(const FObjectInitializer& ObjectInitializer
 }
 
 void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* InNode) {
-	GraphNode = InNode;
-	//UpdateGraphNode();
-	//InNode->SEdNode = this;
+	this->GraphNode = InNode;
 
 	const FMargin NodePadding = FMargin(5);
 	const FMargin NamePadding = FMargin(2);
@@ -112,7 +110,7 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 								.AutoHeight()
 								[
 									SNew(STextBlock)
-										.Text(FText::FromString("START"))
+									.Text(FText::FromString("START"))
 									/*
 									SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 									.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")

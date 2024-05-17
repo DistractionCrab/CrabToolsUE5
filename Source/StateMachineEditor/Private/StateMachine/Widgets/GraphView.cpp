@@ -32,7 +32,7 @@ void SGraphView::Construct(
 			SAssignNew(GraphEditor, SGraphEditor)
 				.IsEditable(true)
 				.Appearance(AppInfo)
-				.GraphToEdit(BP->SMGraph())
+				.GraphToEdit(BP->StateMachineGraph())
 				.GraphEvents(InEvents)			
 		];
 	}
@@ -44,19 +44,19 @@ void SGraphView::AddReferencedObjects(FReferenceCollector& Collector) {
 
 void SGraphView::OnSelectionChanged(const TSet<UObject*>& NewSelection)
 {
-	if (auto Graph = this->GraphEditor->GetCurrentGraph())
+	if (auto Graph = Cast<UEdStateGraph>(this->GraphEditor->GetCurrentGraph()))
 	{
-		TSet<const UEdGraphNode*> Nodes;
+		TArray<UEdStateNode*> Nodes;
+
 		for (const auto& Elem : NewSelection) 
 		{ 
-			if (const UEdGraphNode* CastElem = Cast<UEdGraphNode>(Elem))
+			if (UEdStateNode* CastElem = Cast<UEdStateNode>(Elem))
 			{
 				Nodes.Add(CastElem);
-			}
-			
+			}			
 		}
 		
-		//Graph->SelectNodeSet(Nodes);
+		Graph->Events.OnNodeSelected.Broadcast(Nodes);
 	}
 }
 

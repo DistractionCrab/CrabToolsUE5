@@ -9,6 +9,8 @@
 
 class STATEMACHINEEDITOR_API SEdStartStateNode : public SGraphNode
 {
+private:
+	
 public:
 	SLATE_BEGIN_ARGS(SEdStartStateNode) {}
 	SLATE_END_ARGS()

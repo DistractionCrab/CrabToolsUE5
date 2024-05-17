@@ -87,7 +87,7 @@ void SGraphDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor) {
 		f.BindRaw(this, &SGraphDetailsView::OnGraphChanged);
 
 		
-		BPObj->SMGraph()->AddOnGraphChangedHandler(f);
+		BPObj->StateMachineGraph()->AddOnGraphChangedHandler(f);
 	}
 }
 
