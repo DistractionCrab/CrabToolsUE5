@@ -1,33 +1,33 @@
 #include "StateMachine/Widgets/Nodes/SEdStartStateNode.h"
+#include "StateMachine/Widgets/Nodes/SEdEventGraphPin.h"
 #include "StateMachine/Colors/GenericColors.h"
 
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
-UEdStartStateNode::UEdStartStateNode(const FObjectInitializer& ObjectInitializer)
-: UEdGraphNode(ObjectInitializer)
-{
-	this->bCanRenameNode = false;
-}
+#define LOCTEXT_NAMESPACE "SEdStartStateNode"
 
-void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* InNode) {
+void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* InNode)
+{
 	this->GraphNode = InNode;
 
 	const FMargin NodePadding = FMargin(5);
 	const FMargin NamePadding = FMargin(2);
 
-	InputPins.Empty();
-	OutputPins.Empty();
+	this->InputPins.Empty();
+	this->OutputPins.Empty();
 
 	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
-	RightNodeBox.Reset();
-	LeftNodeBox.Reset();
+	this->RightNodeBox.Reset();
+	this->LeftNodeBox.Reset();
 
-	const FSlateBrush *NodeTypeIcon = GetNameIcon();
+	const FSlateBrush* NodeTypeIcon = GetNameIcon();
 
 	FLinearColor TitleShadowColor(0.6f, 0.6f, 0.6f);
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SVerticalBox> NodeBody;
-	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, this->GraphNode);
+	//FText DisplayText = FText::FromName(InNode->GetStateName());
+
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -40,20 +40,17 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 			.BorderBackgroundColor(this, &SEdStartStateNode::GetBorderBackgroundColor)
 			[
 				SNew(SOverlay)
-
 				+ SOverlay::Slot()
 				.HAlign(HAlign_Fill)
 				.VAlign(VAlign_Fill)
 				[
 					SNew(SVerticalBox)
-
 					// Input Pin Area
 					+ SVerticalBox::Slot()
 					.FillHeight(1)
 					[
 						SAssignNew(LeftNodeBox, SVerticalBox)
 					]
-
 					// Output Pin Area	
 					+ SVerticalBox::Slot()
 					.FillHeight(1)
@@ -61,7 +58,6 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 						SAssignNew(RightNodeBox, SVerticalBox)
 					]
 				]
-
 				+ SOverlay::Slot()
 				.HAlign(HAlign_Center)
 				.VAlign(VAlign_Center)
@@ -76,13 +72,11 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 					.Padding(6.0f)
 					[
 						SAssignNew(NodeBody, SVerticalBox)
-									
 						// Title
 						+ SVerticalBox::Slot()
 						.AutoHeight()
 						[
 							SNew(SHorizontalBox)
-
 							// Error message
 							+ SHorizontalBox::Slot()
 							.AutoWidth()
@@ -91,16 +85,14 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 								.BackgroundColor(this, &SEdStartStateNode::GetErrorColor)
 								.ToolTipText(this, &SEdStartStateNode::GetErrorMsgToolTip)
 							]
-
 							// Icon
-							+SHorizontalBox::Slot()
+							+ SHorizontalBox::Slot()
 							.AutoWidth()
 							.VAlign(VAlign_Center)
 							[
 								SNew(SImage)
 								.Image(NodeTypeIcon)
 							]
-										
 							// Node Title
 							+ SHorizontalBox::Slot()
 							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
@@ -110,16 +102,7 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 								.AutoHeight()
 								[
 									SNew(STextBlock)
-									.Text(FText::FromString("START"))
-									/*
-									SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-									.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-									.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-									.OnVerifyTextChanged(this, &SEdStartStateNode::OnVerifyNameTextChanged)
-									.OnTextCommitted(this, &SEdStartStateNode::OnNameTextCommited)
-									.IsReadOnly(this, &SEdStartStateNode::IsNameReadOnly)
-									.IsSelected(this, &SEdStartStateNode::IsSelectedExclusively)
-									*/
+										.Text(FText::FromString("START"))
 								]
 								+ SVerticalBox::Slot()
 								.AutoHeight()
@@ -127,19 +110,91 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 									NodeTitle.ToSharedRef()
 								]
 							]
-						]					
+						]
 					]
 				]
 			]
 		];
 
-	//InNode->SEdNode = this;
+	this->CreatePinWidgets();
 }
 
-FSlateColor SEdStartStateNode::GetBorderBackgroundColor() const {
-	return GenericGraphColors::NodeBorder::HighlightAbortRange0;
+FSlateColor SEdStartStateNode::GetBorderBackgroundColor() const
+{
+	return GenericGraphColors::NodeBorder::Start;
 }
 
-const FSlateBrush* SEdStartStateNode::GetNameIcon() const {
+const FSlateBrush* SEdStartStateNode::GetNameIcon() const
+{
 	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
 }
+
+bool SEdStartStateNode::IsNameReadOnly() const
+{
+	return true;
+}
+
+
+EVisibility SEdStartStateNode::GetDragOverMarkerVisibility() const
+{
+	return EVisibility::Visible;
+}
+
+FSlateColor SEdStartStateNode::GetBackgroundColor() const
+{
+	return GenericGraphColors::NodeBody::Root;
+}
+
+void SEdStartStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
+{
+	PinToAdd->SetOwner(SharedThis(this));
+
+	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
+	const bool bAdvancedParameter = PinObj && PinObj->bAdvancedView;
+	if (bAdvancedParameter)
+	{
+		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
+	}
+
+	TSharedPtr<SVerticalBox> PinBox;
+	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
+	{
+		PinBox = LeftNodeBox;
+		InputPins.Add(PinToAdd);
+	}
+	else // Direction == EEdGraphPinDirection::EGPD_Output
+	{
+		PinBox = RightNodeBox;
+		OutputPins.Add(PinToAdd);
+	}
+
+	if (PinBox)
+	{
+		PinBox->AddSlot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.FillHeight(1.0f)
+			//.Padding(6.0f, 0.0f)
+			[
+				PinToAdd
+			];
+	}
+}
+
+void SEdStartStateNode::CreatePinWidgets()
+{
+	UEdStartStateNode* StateNode = CastChecked<UEdStartStateNode>(GraphNode);
+
+	for (int32 PinIdx = 0; PinIdx < StateNode->Pins.Num(); PinIdx++)
+	{
+		UEdGraphPin* MyPin = StateNode->Pins[PinIdx];
+		if (!MyPin->bHidden)
+		{
+			TSharedPtr<SGraphPin> NewPin = SNew(SEdEventGraphPin, MyPin);
+
+			AddPin(NewPin.ToSharedRef());
+		}
+	}
+}
+
+#undef LOCTEXT_NAMESPACE

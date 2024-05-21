@@ -1,6 +1,8 @@
 #include "StateMachine/EdGraph/StateMachineSchema.h"
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/EdGraph/StateConnectionDrawingPolicy.h"
 
 #define LOCTEXT_NAMESPACE "StateMachineSchema"
 
@@ -53,7 +55,66 @@ UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 	return ResultNode;
 }
 
+void FSMSchemaAction_NewNode::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	FEdGraphSchemaAction::AddReferencedObjects(Collector);
+	Collector.AddReferencedObject(NodeTemplate);
+}
 
+FString FSMSchemaAction_NewNode::GetReferencerName() const
+{
+	return "FSMSchemaAction_NewNode";
+}
+
+UEdGraphNode* FSMSchemaAction_NewEdge::PerformAction(
+	class UEdGraph* ParentGraph,
+	UEdGraphPin* FromPin,
+	const FVector2D Location,
+	bool bSelectNewNode)
+{
+	UEdEventEdge* ResultNode = nullptr;
+	UEdStateGraph* StateGraph = Cast<UEdStateGraph>(ParentGraph);
+
+	if (NodeTemplate != nullptr)
+	{
+		const FScopedTransaction Transaction(
+			LOCTEXT("StateMachineEditorNewNode", "State Machine Editor: New Node"));
+
+		ParentGraph->Modify();
+		if (FromPin != nullptr)
+			FromPin->Modify();
+
+
+		NodeTemplate->Rename(nullptr, ParentGraph);
+
+		ParentGraph->AddNode(NodeTemplate, true, bSelectNewNode);
+
+		NodeTemplate->CreateNewGuid();
+		NodeTemplate->PostPlacedNewNode();
+		NodeTemplate->AllocateDefaultPins();
+		NodeTemplate->AutowireNewNode(FromPin);
+
+		NodeTemplate->NodePosX = Location.X;
+		NodeTemplate->NodePosY = Location.Y;
+
+		NodeTemplate->SetFlags(RF_Transactional);
+
+		ResultNode = NodeTemplate;
+	}
+
+	return ResultNode;
+}
+
+void FSMSchemaAction_NewEdge::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	FEdGraphSchemaAction::AddReferencedObjects(Collector);
+	Collector.AddReferencedObject(NodeTemplate);
+}
+
+FString FSMSchemaAction_NewEdge::GetReferencerName() const
+{
+	return "FSMSchemaAction_NewEdge";
+}
 
 #pragma region Schema
 
@@ -142,7 +203,163 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 	}
 }
 
+FConnectionDrawingPolicy* UStateMachineSchema::CreateConnectionDrawingPolicy(
+	int32 InBackLayerID, 
+	int32 InFrontLayerID, 
+	float InZoomFactor, 
+	const FSlateRect& InClippingRect, 
+	class FSlateWindowElementList& InDrawElements, 
+	class UEdGraph* InGraphObj) const
+{
+	return new FStateMachineConnectionDrawingPolicy(
+		InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
+}
 
+
+bool UStateMachineSchema::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
+{
+	auto NodeA = Cast<UEdBaseNode>(A->GetOwningNode());
+	auto NodeB = Cast<UEdBaseNode>(B->GetOwningNode());
+
+	// Are nodes and pins all valid?
+	if (!NodeA || !NodeA->GetOutputPin() || !NodeB || !NodeB->GetInputPin())
+		return false;
+
+	//UGenericGraph* Graph = NodeA->GenericGraphNode->GetGraph();
+
+	FVector2D InitPos((NodeA->NodePosX + NodeB->NodePosX) / 2, (NodeA->NodePosY + NodeB->NodePosY) / 2);
+
+	FSMSchemaAction_NewEdge Action;
+	Action.SetNodeTemplate(NewObject<UEdEventEdge>(NodeA->GetGraph()));
+	//Action.NodeTemplate->SetEdge(NewObject<UGenericGraphEdge>(Action.NodeTemplate, Graph->EdgeType));
+	UEdEventEdge* EdgeNode = Cast<UEdEventEdge>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
+
+	// Always create connections from node A to B, don't allow adding in reverse
+	EdgeNode->CreateConnections(NodeA, NodeB);
+
+	return true;
+}
+
+const FPinConnectionResponse UStateMachineSchema::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
+{
+	// Make sure the pins are not on the same node
+	if (A->GetOwningNode() == B->GetOwningNode())
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorSameNode", "Can't connect node to itself"));
+	}
+
+	const UEdGraphPin* Out = A;
+	const UEdGraphPin* In = B;
+
+	UEdBaseNode* EdNode_Out = Cast<UEdBaseNode>(Out->GetOwningNode());
+	UEdBaseNode* EdNode_In = Cast<UEdBaseNode>(In->GetOwningNode());
+
+	if (EdNode_Out == nullptr || EdNode_In == nullptr)
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UGenericGraphEdNode"));
+	}
+
+	auto EdGraph = Cast<UEdStateGraph>(Out->GetOwningNode()->GetGraph());
+
+	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, LOCTEXT("PinConnect", "Connect nodes"));
+}
+
+bool UStateMachineSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
+{
+	// We don't actually care about the pin, we want the node that is being dragged between
+	auto NodeA = Cast<UEdBaseNode>(A->GetOwningNode());
+	auto NodeB = Cast<UEdBaseNode>(B->GetOwningNode());
+
+	// Check that this edge doesn't already exist
+	for (UEdGraphPin* TestPin : NodeA->GetOutputPin()->LinkedTo)
+	{
+		UEdGraphNode* ChildNode = TestPin->GetOwningNode();
+		if (UEdEventEdge* EdNode_Edge = Cast<UEdEventEdge>(ChildNode))
+		{
+			ChildNode = EdNode_Edge->GetEndNode();
+		}
+
+		if (ChildNode == NodeB)
+			return false;
+	}
+
+	if (NodeA && NodeB)
+	{
+		// Always create connections from node A to B, don't allow adding in reverse
+		Super::TryCreateConnection(NodeA->GetOutputPin(), NodeB->GetInputPin());
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void UStateMachineSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
+{
+	UE_LOG(LogTemp, Warning, TEXT("Creating the default nodes for graph."));
+	FGraphNodeCreator<UEdStartStateNode> NodeCreator(Graph);
+	auto ResultStartNode = NodeCreator.CreateNode();
+	NodeCreator.Finalize();
+
+	this->SetNodeMetaData(ResultStartNode, FNodeMetadata::DefaultGraphNode);
+
+}
+
+bool UStateMachineSchema::SupportsDropPinOnNode(
+	UEdGraphNode* InTargetNode, 
+	const FEdGraphPinType& InSourcePinType, 
+	EEdGraphPinDirection InSourcePinDirection, 
+	FText& OutErrorMessage) 
+	const
+{
+	return Cast<UEdBaseNode>(InTargetNode) != nullptr;
+}
+
+UEdGraphPin* UStateMachineSchema::DropPinOnNode(
+	UEdGraphNode* InTargetNode, 
+	const FName& InSourcePinName, 
+	const FEdGraphPinType& InSourcePinType, 
+	EEdGraphPinDirection InSourcePinDirection) 
+	const
+{
+	auto EdNode = Cast<UEdBaseNode>(InTargetNode);
+	switch (InSourcePinDirection)
+	{
+	case EGPD_Input:
+		return EdNode->GetOutputPin();
+	case EGPD_Output:
+		return EdNode->GetInputPin();
+	default:
+		return nullptr;
+	}
+}
+
+FLinearColor UStateMachineSchema::GetPinTypeColor(const FEdGraphPinType& PinType) const
+{
+	return FColor::White;
+}
+
+void UStateMachineSchema::BreakNodeLinks(UEdGraphNode& TargetNode) const
+{
+	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakNodeLinks", "Break Node Links"));
+
+	Super::BreakNodeLinks(TargetNode);
+}
+
+void UStateMachineSchema::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
+{
+	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakPinLinks", "Break Pin Links"));
+
+	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
+}
+
+void UStateMachineSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
+{
+	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakSinglePinLink", "Break Pin Link"));
+
+	Super::BreakSinglePinLink(SourcePin, TargetPin);
+}
 
 #pragma endregion
 

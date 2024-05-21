@@ -5,33 +5,26 @@
 #include "EdGraph/EdGraphNode.h"
 #include "SGraphPin.h"
 #include "StateMachine/StateMachine.h"
-#include "STateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/Widgets/Nodes/SEdStateNode.h"
+#include "StateMachine/EdGraph/EdStartStateNode.h"
 
-class STATEMACHINEEDITOR_API SEdStartStateNode : public SGraphNode
+
+
+class STATEMACHINEEDITOR_API SEdStartStateNode : public SEdStateNode
 {
-private:
-	
 public:
 	SLATE_BEGIN_ARGS(SEdStartStateNode) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UEdStartStateNode* InNode);
 
-	/*
-	virtual void UpdateGraphNode() override;
-	virtual void CreatePinWidgets() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+	virtual void CreatePinWidgets() override;
 	virtual bool IsNameReadOnly() const override;
-
-	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
-	*/
-
 	virtual FSlateColor GetBorderBackgroundColor() const;
-	//virtual FSlateColor GetBackgroundColor() const;
-
-	//virtual EVisibility GetDragOverMarkerVisibility() const;
+	virtual FSlateColor GetBackgroundColor() const;
+	virtual EVisibility GetDragOverMarkerVisibility() const;
 
 	virtual const FSlateBrush* GetNameIcon() const;
-	
 };
 

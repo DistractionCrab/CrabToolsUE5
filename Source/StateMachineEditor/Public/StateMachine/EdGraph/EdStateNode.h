@@ -5,12 +5,19 @@
 #include "EdGraph/EdGraphNode.h"
 #include "SGraphPin.h"
 #include "StateMachine/StateMachine.h"
+#include "StateMachine/EdGraph/EdBaseNode.h"
 #include "EdStateNode.generated.h"
 
 
+class FEdStateNodeEvents
+{
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FNameChanged, FName)
+	FNameChanged OnNameChanged;
+};
 
 UCLASS(MinimalAPI)
-class UEdStateNode : public UEdGraphNode
+class UEdStateNode : public UEdBaseNode
 {
 	GENERATED_BODY()
 
@@ -21,8 +28,15 @@ class UEdStateNode : public UEdGraphNode
 	UPROPERTY(VisibleAnywhere, Category = "StateMachineGraph")
 	FName StateName;
 
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineGraph")
+	FName StateCategory;
+
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
 	TArray<TObjectPtr<UStateNode>> Nodes;
+
+public:
+
+	FEdStateNodeEvents Events;
 
 public:
 	UEdStateNode();
@@ -33,19 +47,7 @@ public:
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
 
 	FName GetStateName() const { return this->StateName; }
-	void SetStateName(FName NewName) { this->StateName = NewName; }
-
-	//virtual void AllocateDefaultPins() override;
-	//virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
-	//virtual void PrepareForCopying() override;
-	//virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
-
-	//virtual FLinearColor GetBackgroundColor() const;
-	//virtual UEdGraphPin* GetInputPin() const;
-	//virtual UEdGraphPin* GetOutputPin() const;
-
-	#if WITH_EDITOR
-		//virtual void PostEditUndo() override;
-	#endif
+	FName GetStateCategory() const { return this->StateCategory; }
+	FName SetStateName(FName NewName);
 
 };

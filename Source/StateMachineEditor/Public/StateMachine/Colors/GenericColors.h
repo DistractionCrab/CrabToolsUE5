@@ -13,8 +13,9 @@ namespace GenericGraphColors
 
 	namespace NodeBorder
 	{
+		const FLinearColor Start(0.8f, 0.08f, 0.08f);
 		const FLinearColor Inactive(0.08f, 0.08f, 0.08f);
-		const FLinearColor Root(0.2f, 0.2f, 0.2f, 0.2f);
+		const FLinearColor Root(0.2f, 0.2f, 0.2f, 0.8f);
 		const FLinearColor Selected(1.00f, 0.08f, 0.08f);
 		const FLinearColor ActiveDebugging(1.0f, 1.0f, 0.0f);
 		const FLinearColor InactiveDebugging(0.4f, 0.4f, 0.0f);

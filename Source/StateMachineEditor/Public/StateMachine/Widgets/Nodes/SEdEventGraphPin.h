@@ -1,0 +1,38 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "SGraphNode.h"
+#include "SGraphPin.h"
+
+#include "StateMachine/Colors/GenericColors.h"
+
+
+class SEdEventGraphPin : public SGraphPin
+{
+public:
+	SLATE_BEGIN_ARGS(SEdEventGraphPin) {}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs, UEdGraphPin* InPin);
+
+protected:
+	virtual FSlateColor GetPinColor() const override
+	{
+		return GenericGraphColors::Pin::Default;
+	}
+
+	virtual TSharedRef<SWidget>	GetDefaultValueWidget() override
+	{
+		return SNew(STextBlock);
+	}
+
+	const FSlateBrush* GetPinBorder() const
+	{
+		return FAppStyle::GetBrush(TEXT("Graph.StateNode.Body"));
+	}
+
+	virtual TSharedRef<FDragDropOperation> SpawnPinDragEvent(
+		const TSharedRef<class SGraphPanel>& InGraphPanel, 
+		const TArray< TSharedRef<SGraphPin> >& InStartingPins) override;
+
+};

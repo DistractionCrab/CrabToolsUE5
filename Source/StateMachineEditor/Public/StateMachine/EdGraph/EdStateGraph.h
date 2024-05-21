@@ -30,4 +30,5 @@ public:
 	virtual ~UEdStateGraph() {}
 
 	FName GetNewStateName();
+	bool IsNameAvilable(FName Name) const;
 };

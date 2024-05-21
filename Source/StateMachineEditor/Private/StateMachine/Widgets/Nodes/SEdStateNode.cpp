@@ -1,6 +1,6 @@
 #include "StateMachine/Widgets/Nodes/SEdStateNode.h"
+#include "StateMachine/Widgets/Nodes/SEdEventGraphPin.h"
 #include "StateMachine/Colors/GenericColors.h"
-
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SEdStateNode"
@@ -127,11 +127,14 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 				]
 			]
 		];
+
+	this->CreatePinWidgets();
+	InNode->Events.OnNameChanged.AddRaw(this, &SEdStateNode::OnNodeNameChanged);
 }
 
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 {
-	return GenericGraphColors::NodeBorder::HighlightAbortRange0;
+	return GenericGraphColors::NodeBorder::Root;
 }
 
 const FSlateBrush* SEdStateNode::GetNameIcon() const
@@ -148,7 +151,7 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 {
 	SGraphNode::OnNameTextCommited(InText, CommitInfo);
 
-	this->InlineEditableText->SetText(InText);
+	//this->InlineEditableText->SetText(InText);
 
 	if (this->GraphNode)
 	{
@@ -165,20 +168,72 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 	}
 }
 
-/*
-FReply SEdStateNode::OnMouseButtonDown(
-	const FGeometry& InGeo,
-	const FPointerEvent& Event)
+void SEdStateNode::OnNodeNameChanged(FName Name)
 {
-	TSet<const UEdGraphNode*> NSet;
-	NSet.Add(this->GraphNode);
-
-	this->GraphNode->GetGraph()->SelectNodeSet(NSet);
-
-	UE_LOG(LogTemp, Warning, TEXT("Mouse Down on Node."));
-
-	return SGraphNode::OnMouseButtonDown(InGeo, Event);
+	this->InlineEditableText->SetText(FText::FromName(Name));
 }
-*/
+
+EVisibility SEdStateNode::GetDragOverMarkerVisibility() const
+{
+	return EVisibility::Visible;
+}
+
+FSlateColor SEdStateNode::GetBackgroundColor() const
+{
+	return GenericGraphColors::NodeBody::Default;
+}
+
+void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
+{
+	PinToAdd->SetOwner(SharedThis(this));
+
+	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
+	const bool bAdvancedParameter = PinObj && PinObj->bAdvancedView;
+	if (bAdvancedParameter)
+	{
+		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
+	}
+
+	TSharedPtr<SVerticalBox> PinBox;
+	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
+	{
+		PinBox = LeftNodeBox;
+		InputPins.Add(PinToAdd);
+	}
+	else // Direction == EEdGraphPinDirection::EGPD_Output
+	{
+		PinBox = RightNodeBox;
+		OutputPins.Add(PinToAdd);
+	}
+
+	if (PinBox)
+	{
+		PinBox->AddSlot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.FillHeight(1.0f)
+			//.Padding(6.0f, 0.0f)
+			[
+				PinToAdd
+			];
+	}
+}
+
+void SEdStateNode::CreatePinWidgets()
+{
+	UEdStateNode* StateNode = CastChecked<UEdStateNode>(GraphNode);
+
+	for (int32 PinIdx = 0; PinIdx < StateNode->Pins.Num(); PinIdx++)
+	{
+		UEdGraphPin* MyPin = StateNode->Pins[PinIdx];
+		if (!MyPin->bHidden)
+		{
+			TSharedPtr<SGraphPin> NewPin = SNew(SEdEventGraphPin, MyPin);
+
+			AddPin(NewPin.ToSharedRef());
+		}
+	}
+}
+
 
 #undef LOCTEXT_NAMESPACE

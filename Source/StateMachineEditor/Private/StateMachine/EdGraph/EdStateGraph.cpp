@@ -37,3 +37,19 @@ FName UEdStateGraph::GetNewStateName()
 
 	return FName(DefaultName);
 }
+
+bool UEdStateGraph::IsNameAvilable(FName Name) const
+{
+	for (const auto& Node : this->Nodes)
+	{
+		if (UEdStateNode* CastNode = Cast<UEdStateNode>(Node))
+		{
+			if (CastNode->GetStateName() == Name)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}

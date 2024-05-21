@@ -52,7 +52,7 @@ void SMachineDetailsView::OnSelectionChanged(TArray<class UEdStateNode*>& Select
 
 void SMachineDetailsView::OnGraphChanged(const FEdGraphEditAction& Action)
 {
-	if (Action.Action == EEdGraphActionType::GRAPHACTION_SelectNode)
+	if (Action.Action & EEdGraphActionType::GRAPHACTION_SelectNode)
 	{
 		if (Action.Nodes.Num() == 1)
 		{
@@ -64,7 +64,7 @@ void SMachineDetailsView::OnGraphChanged(const FEdGraphEditAction& Action)
 			}
 		}
 	}
-	else if (Action.Action == EEdGraphActionType::GRAPHACTION_AddNode)
+	else if (Action.Action & EEdGraphActionType::GRAPHACTION_AddNode)
 	{
 		for (auto Node : Action.Nodes)
 		{

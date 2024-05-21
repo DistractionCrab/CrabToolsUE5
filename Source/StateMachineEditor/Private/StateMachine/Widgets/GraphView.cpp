@@ -62,8 +62,7 @@ void SGraphView::OnSelectionChanged(const TSet<UObject*>& NewSelection)
 
 FReply SGraphView::OnKeyDown(const FGeometry& Geo, const FKeyEvent& Event)
 {
-	// If delete or backspace has been pressed has been pressed
-	if (Event.GetKeyCode() == 46 || Event.GetKeyCode() == 8)
+	if (Event.GetKey() == EKeys::Delete || Event.GetKey() == EKeys::BackSpace)
 	{
 		if (auto Graph = this->GraphEditor->GetCurrentGraph())
 		{

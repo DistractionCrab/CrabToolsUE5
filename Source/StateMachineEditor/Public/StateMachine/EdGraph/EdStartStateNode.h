@@ -5,12 +5,13 @@
 #include "EdGraph/EdGraphNode.h"
 #include "SGraphPin.h"
 #include "StateMachine/StateMachine.h"
+#include "StateMachine/EdGraph/EdBaseNode.h"
 #include "EdStartStateNode.generated.h"
 
 
 
 UCLASS(MinimalAPI)
-class UEdStartStateNode : public UEdGraphNode
+class UEdStartStateNode : public UEdBaseNode
 {
 	GENERATED_BODY()
 
@@ -19,20 +20,8 @@ class UEdStartStateNode : public UEdGraphNode
 
 
 public:
-	UEdStartStateNode(const FObjectInitializer& ObjectInitializer);
 	UEdStartStateNode();
 	virtual ~UEdStartStateNode();
 
-	//virtual void AllocateDefaultPins() override;
-	//virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
-	//virtual void PrepareForCopying() override;
-	//virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
-
-	//virtual FLinearColor GetBackgroundColor() const;
-	//virtual UEdGraphPin* GetInputPin() const;
-	//virtual UEdGraphPin* GetOutputPin() const;
-
-	
 	virtual bool CanUserDeleteNode() const override { return false; }
-
 };

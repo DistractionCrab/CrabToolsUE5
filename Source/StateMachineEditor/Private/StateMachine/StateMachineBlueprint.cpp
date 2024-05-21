@@ -34,8 +34,8 @@ UEdStateGraph* UStateMachineBlueprint::StateMachineGraph()
 			UEdStateGraph::StaticClass(),
 			UStateMachineSchema::StaticClass()));
 
-		// Initialize it with a singular start state.
-		this->EdGraph->AddNode(NewObject<UEdStartStateNode>(this->EdGraph), false, false);
+		const UEdGraphSchema* Schema = this->EdGraph->GetSchema();
+		Schema->CreateDefaultNodesForGraph(*this->EdGraph);
 	}
 
 	return this->EdGraph;
