@@ -52,6 +52,7 @@ void FEditor::Compile()
 
 //~ Begin FAssetEditorToolkit Interface
 bool FEditor::OnRequestClose(EAssetEditorCloseReason InCloseReason) {
+	this->GetStateMachineBlueprintObj()->StateMachineGraph()->ClearEvents();
 	return true;
 }
 // End of FAssetEditorToolkit 

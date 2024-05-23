@@ -7,7 +7,13 @@
 
 void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 	this->GraphNode = InNode;
+	this->UpdateGraphNode();
+	
+	InNode->Events.OnNameChanged.AddRaw(this, &SEdStateNode::OnNodeNameChanged);
+}
 
+void SEdStateNode::UpdateGraphNode()
+{
 	const FMargin NodePadding = FMargin(5);
 	const FMargin NamePadding = FMargin(2);
 
@@ -18,14 +24,14 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 	this->RightNodeBox.Reset();
 	this->LeftNodeBox.Reset();
 
-	const FSlateBrush *NodeTypeIcon = GetNameIcon();
+	const FSlateBrush* NodeTypeIcon = GetNameIcon();
 
 	FLinearColor TitleShadowColor(0.6f, 0.6f, 0.6f);
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SVerticalBox> NodeBody;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, this->GraphNode);
 	//FText DisplayText = FText::FromName(InNode->GetStateName());
-	
+
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -33,103 +39,102 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
 		.VAlign(VAlign_Center)
 		[
 			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-			.Padding(0.0f)
-			.BorderBackgroundColor(this, &SEdStateNode::GetBorderBackgroundColor)
-			[
-				SNew(SOverlay)
-
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Fill)
-				.VAlign(VAlign_Fill)
+				.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+				.Padding(0.0f)
+				.BorderBackgroundColor(this, &SEdStateNode::GetBorderBackgroundColor)
 				[
-					SNew(SVerticalBox)
+					SNew(SOverlay)
 
-					// Input Pin Area
-					+ SVerticalBox::Slot()
-					.FillHeight(1)
-					[
-						SAssignNew(LeftNodeBox, SVerticalBox)
-					]
-
-					// Output Pin Area	
-					+ SVerticalBox::Slot()
-					.FillHeight(1)
-					[
-						SAssignNew(RightNodeBox, SVerticalBox)
-					]
-				]
-
-				+ SOverlay::Slot()
-				.HAlign(HAlign_Center)
-				.VAlign(VAlign_Center)
-				.Padding(8.0f)
-				[
-					SNew(SBorder)
-					.BorderImage(FAppStyle::GetBrush("Graph.StateNode.ColorSpill"))
-					.BorderBackgroundColor(TitleShadowColor)
-					.HAlign(HAlign_Center)
-					.VAlign(VAlign_Center)
-					.Visibility(EVisibility::SelfHitTestInvisible)
-					.Padding(6.0f)
-					[
-						SAssignNew(NodeBody, SVerticalBox)
-									
-						// Title
-						+ SVerticalBox::Slot()
-						.AutoHeight()
+						+ SOverlay::Slot()
+						.HAlign(HAlign_Fill)
+						.VAlign(VAlign_Fill)
 						[
-							SNew(SHorizontalBox)
+							SNew(SVerticalBox)
 
-							// Error message
-							+ SHorizontalBox::Slot()
-							.AutoWidth()
-							[
-								SAssignNew(ErrorText, SErrorText)
-								.BackgroundColor(this, &SEdStateNode::GetErrorColor)
-								.ToolTipText(this, &SEdStateNode::GetErrorMsgToolTip)
-							]
+								// Input Pin Area
+								+ SVerticalBox::Slot()
+								.FillHeight(1)
+								[
+									SAssignNew(LeftNodeBox, SVerticalBox)
+								]
 
-							// Icon
-							+SHorizontalBox::Slot()
-							.AutoWidth()
-							.VAlign(VAlign_Center)
-							[
-								SNew(SImage)
-								.Image(NodeTypeIcon)
-							]
-										
-							// Node Title
-							+ SHorizontalBox::Slot()
-							.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-							[
-								SNew(SVerticalBox)
+								// Output Pin Area	
 								+ SVerticalBox::Slot()
-								.AutoHeight()
+								.FillHeight(1)
 								[
-									SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-									.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-									//.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-									.Text(FText::FromName(InNode->GetStateName()))
-									.OnVerifyTextChanged(this, &SEdStateNode::OnVerifyNameTextChanged)
-									.OnTextCommitted(this, &SEdStateNode::OnNameTextCommited)
-									.IsReadOnly(this, &SEdStateNode::IsNameReadOnly)
-									.IsSelected(this, &SEdStateNode::IsSelectedExclusively)
+									SAssignNew(RightNodeBox, SVerticalBox)
 								]
-								+ SVerticalBox::Slot()
-								.AutoHeight()
+						]
+
+						+ SOverlay::Slot()
+						.HAlign(HAlign_Center)
+						.VAlign(VAlign_Center)
+						.Padding(8.0f)
+						[
+							SNew(SBorder)
+								.BorderImage(FAppStyle::GetBrush("Graph.StateNode.ColorSpill"))
+								.BorderBackgroundColor(TitleShadowColor)
+								.HAlign(HAlign_Center)
+								.VAlign(VAlign_Center)
+								.Visibility(EVisibility::SelfHitTestInvisible)
+								.Padding(6.0f)
 								[
-									NodeTitle.ToSharedRef()
+									SAssignNew(NodeBody, SVerticalBox)
+
+										// Title
+										+ SVerticalBox::Slot()
+										.AutoHeight()
+										[
+											SNew(SHorizontalBox)
+
+												// Error message
+												+ SHorizontalBox::Slot()
+												.AutoWidth()
+												[
+													SAssignNew(ErrorText, SErrorText)
+														.BackgroundColor(this, &SEdStateNode::GetErrorColor)
+														.ToolTipText(this, &SEdStateNode::GetErrorMsgToolTip)
+												]
+
+												// Icon
+												+ SHorizontalBox::Slot()
+												.AutoWidth()
+												.VAlign(VAlign_Center)
+												[
+													SNew(SImage)
+														.Image(NodeTypeIcon)
+												]
+
+												// Node Title
+												+ SHorizontalBox::Slot()
+												.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+												[
+													SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														.AutoHeight()
+														[
+															SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+																.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																//.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																.Text(FText::FromName(this->GetStateName()))
+																.OnVerifyTextChanged(this, &SEdStateNode::OnVerifyNameTextChanged)
+																.OnTextCommitted(this, &SEdStateNode::OnNameTextCommited)
+																.IsReadOnly(this, &SEdStateNode::IsNameReadOnly)
+																.IsSelected(this, &SEdStateNode::IsSelectedExclusively)
+														]
+														+ SVerticalBox::Slot()
+														.AutoHeight()
+														[
+															NodeTitle.ToSharedRef()
+														]
+												]
+										]
 								]
-							]
-						]					
-					]
+						]
 				]
-			]
 		];
 
 	this->CreatePinWidgets();
-	InNode->Events.OnNameChanged.AddRaw(this, &SEdStateNode::OnNodeNameChanged);
 }
 
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
@@ -151,13 +156,12 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 {
 	SGraphNode::OnNameTextCommited(InText, CommitInfo);
 
-	//this->InlineEditableText->SetText(InText);
-
 	if (this->GraphNode)
 	{
 		const FScopedTransaction Transaction(
-			LOCTEXT("StateMachineGraphEditorRenameNode", "State Machine Graph Editor: Rename Node"));
-		//this->GraphNode->Rename(InText.ToString());		
+			LOCTEXT(
+				"StateMachineGraphEditorRenameNode", 
+				"State Machine Graph Editor: Rename Node"));
 		
 		if (UEdStateNode* CastNode = Cast<UEdStateNode>(this->GraphNode))
 		{
@@ -166,6 +170,16 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 
 		this->GraphNode->Modify();
 	}
+}
+
+FName SEdStateNode::GetStateName() const
+{
+	if (UEdStateNode* Node = Cast<UEdStateNode>(this->GraphNode))
+	{
+		return Node->GetStateName();
+	}
+
+	return NAME_None;
 }
 
 void SEdStateNode::OnNodeNameChanged(FName Name)

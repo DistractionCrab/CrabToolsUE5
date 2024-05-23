@@ -172,7 +172,6 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
-	
 	// Make the text widget.
 	TSharedPtr<SBorder> TextWidget;
 	{
@@ -260,7 +259,7 @@ void SGraphDetailsView::Construct(
 		]
 	];
 
-
+	this->StateListWidget->SetItemExpansion(this->StateRoot, true);
 	this->BindEvents(InEditor);
 }
 
@@ -300,7 +299,6 @@ void SGraphDetailsView::OnGraphChanged(const FEdGraphEditAction& Action) {
 
 void SGraphDetailsView::AddState(UEdStateNode* Node)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attemping to add node to view."));
 	this->StateRoot->AddChild(MakeShareable(new FStateItem(Node)));
 	this->StateListWidget->RequestListRefresh();
 }

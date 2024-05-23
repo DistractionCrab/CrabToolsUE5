@@ -13,6 +13,7 @@ UStateMachineBlueprint::UStateMachineBlueprint(const FObjectInitializer& ObjectI
 : Super(ObjectInitializer),
 	EdGraph(nullptr)
 {
+	//this->StateMachineGraph();
 }
 
 UClass* UStateMachineBlueprint::GetBlueprintClass() const

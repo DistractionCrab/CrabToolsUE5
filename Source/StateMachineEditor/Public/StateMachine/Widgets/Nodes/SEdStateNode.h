@@ -23,8 +23,10 @@ public:
 	virtual FSlateColor GetBorderBackgroundColor() const;
 	virtual FSlateColor GetBackgroundColor() const;
 	virtual EVisibility GetDragOverMarkerVisibility() const;
-
+	virtual void UpdateGraphNode() override;
 	virtual const FSlateBrush* GetNameIcon() const;	
+
+	FName GetStateName() const;
 
 private:
 	//bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);

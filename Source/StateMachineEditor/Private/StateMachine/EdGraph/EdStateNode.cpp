@@ -27,3 +27,8 @@ FName UEdStateNode::SetStateName(FName NewName)
 
 	return this->StateName;
 }
+
+void UEdStateNode::ClearEvents()
+{
+	this->Events.OnNameChanged.Clear();
+}

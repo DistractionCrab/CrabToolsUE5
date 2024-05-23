@@ -46,11 +46,11 @@ void SGraphView::OnSelectionChanged(const TSet<UObject*>& NewSelection)
 {
 	if (auto Graph = Cast<UEdStateGraph>(this->GraphEditor->GetCurrentGraph()))
 	{
-		TArray<UEdStateNode*> Nodes;
+		TArray<UEdGraphNode*> Nodes;
 
 		for (const auto& Elem : NewSelection) 
 		{ 
-			if (UEdStateNode* CastElem = Cast<UEdStateNode>(Elem))
+			if (auto CastElem = Cast<UEdGraphNode>(Elem))
 			{
 				Nodes.Add(CastElem);
 			}			

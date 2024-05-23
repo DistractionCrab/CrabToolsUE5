@@ -66,6 +66,8 @@ class UStateMachineSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
+	static int32 CurrentCacheRefreshID;
+
 public:
 	virtual void BackwardCompatibilityNodeConversion(
 		UEdGraph* Graph, bool bOnlySafeChanges) const override;
@@ -109,4 +111,8 @@ public:
 	void BreakNodeLinks(UEdGraphNode& TargetNode) const;
 	void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const;
 	void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const;
+
+	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
+	virtual int32 GetCurrentVisualizationCacheID() const override;
+	virtual void ForceVisualizationCacheClear() const override;
 };

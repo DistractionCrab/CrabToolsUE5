@@ -6,6 +6,8 @@
 
 #define LOCTEXT_NAMESPACE "StateMachineSchema"
 
+int32 UStateMachineSchema::CurrentCacheRefreshID = 0;
+
 UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 	class UEdGraph* ParentGraph, 
 	UEdGraphPin* FromPin, 
@@ -127,6 +129,7 @@ UStateMachineSchema::UStateMachineSchema(
 
 void UStateMachineSchema::BackwardCompatibilityNodeConversion(UEdGraph* Graph, bool bOnlySafeChanges) const
 {
+	/*
 	if (Graph)
 	{
 		if (UStateMachineBlueprint* ProcStateMachineBlueprint = Cast<UStateMachineBlueprint>(Graph->GetOuter()))
@@ -136,6 +139,7 @@ void UStateMachineSchema::BackwardCompatibilityNodeConversion(UEdGraph* Graph, b
 	}
 
 	Super::BackwardCompatibilityNodeConversion(Graph, bOnlySafeChanges);
+	*/
 }
 
 EGraphType UStateMachineSchema::GetGraphType(const UEdGraph* TestEdGraph) const
@@ -223,7 +227,10 @@ bool UStateMachineSchema::CreateAutomaticConversionNodeAndConnections(UEdGraphPi
 
 	// Are nodes and pins all valid?
 	if (!NodeA || !NodeA->GetOutputPin() || !NodeB || !NodeB->GetInputPin())
+	{
 		return false;
+	}
+		
 
 	//UGenericGraph* Graph = NodeA->GenericGraphNode->GetGraph();
 
@@ -261,7 +268,7 @@ const FPinConnectionResponse UStateMachineSchema::CanCreateConnection(const UEdG
 
 	auto EdGraph = Cast<UEdStateGraph>(Out->GetOwningNode()->GetGraph());
 
-	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, LOCTEXT("PinConnect", "Connect nodes"));
+	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
 }
 
 bool UStateMachineSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
@@ -297,7 +304,6 @@ bool UStateMachineSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) co
 
 void UStateMachineSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("Creating the default nodes for graph."));
 	FGraphNodeCreator<UEdStartStateNode> NodeCreator(Graph);
 	auto ResultStartNode = NodeCreator.CreateNode();
 	NodeCreator.Finalize();
@@ -326,12 +332,12 @@ UEdGraphPin* UStateMachineSchema::DropPinOnNode(
 	auto EdNode = Cast<UEdBaseNode>(InTargetNode);
 	switch (InSourcePinDirection)
 	{
-	case EGPD_Input:
-		return EdNode->GetOutputPin();
-	case EGPD_Output:
-		return EdNode->GetInputPin();
-	default:
-		return nullptr;
+		case EGPD_Input:
+			return EdNode->GetOutputPin();
+		case EGPD_Output:
+			return EdNode->GetInputPin();
+		default:
+			return nullptr;
 	}
 }
 
@@ -359,6 +365,21 @@ void UStateMachineSchema::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakSinglePinLink", "Break Pin Link"));
 
 	Super::BreakSinglePinLink(SourcePin, TargetPin);
+}
+
+bool UStateMachineSchema::IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const
+{
+	return CurrentCacheRefreshID != InVisualizationCacheID;
+}
+
+int32 UStateMachineSchema::GetCurrentVisualizationCacheID() const
+{
+	return CurrentCacheRefreshID;
+}
+
+void UStateMachineSchema::ForceVisualizationCacheClear() const
+{
+	++CurrentCacheRefreshID;
 }
 
 #pragma endregion

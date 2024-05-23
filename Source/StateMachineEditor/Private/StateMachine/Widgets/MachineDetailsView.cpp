@@ -42,11 +42,18 @@ void SMachineDetailsView::AddReferencedObjects(FReferenceCollector& Collector)
 
 }
 
-void SMachineDetailsView::OnSelectionChanged(TArray<class UEdStateNode*>& SelectedNodes)
+void SMachineDetailsView::OnSelectionChanged(TArray<class UEdGraphNode*>& SelectedNodes)
 {
+	UE_LOG(LogTemp, Warning, TEXT("On Selection changed called?"));
 	if (SelectedNodes.Num() == 1)
 	{
 		Inspector->ShowDetailsForSingleObject(SelectedNodes[0]);
+	}
+	else
+	{
+		//TArray<UObject*> Objs;
+		//this->Inspector->ShowDetailsForObjects(Objs);
+		Inspector->ShowDetailsForSingleObject(nullptr);
 	}
 }
 
@@ -60,7 +67,7 @@ void SMachineDetailsView::OnGraphChanged(const FEdGraphEditAction& Action)
 			{
 				// Need to static cast due to limitations of this interface.
 				UObject* CastNode = const_cast<UEdGraphNode*>(Node);
-				Inspector->ShowDetailsForSingleObject(CastNode);
+				//Inspector->ShowDetailsForSingleObject(CastNode);
 			}
 		}
 	}
@@ -69,7 +76,7 @@ void SMachineDetailsView::OnGraphChanged(const FEdGraphEditAction& Action)
 		for (auto Node : Action.Nodes)
 		{
 			UObject* CastNode = const_cast<UEdGraphNode*>(Node);
-			Inspector->ShowDetailsForSingleObject(CastNode);
+			//Inspector->ShowDetailsForSingleObject(CastNode);
 		}
 	}
 	else

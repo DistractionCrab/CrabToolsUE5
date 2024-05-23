@@ -10,7 +10,7 @@ class FGraphActionEvents
 {
 public:
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdStateNode*>&)
+	DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdGraphNode*>&)
 	FNodeSelected OnNodeSelected;
 };
 
@@ -31,4 +31,6 @@ public:
 
 	FName GetNewStateName();
 	bool IsNameAvilable(FName Name) const;
+
+	void ClearEvents();
 };

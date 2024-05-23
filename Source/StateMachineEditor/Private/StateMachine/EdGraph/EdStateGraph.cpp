@@ -53,3 +53,17 @@ bool UEdStateGraph::IsNameAvilable(FName Name) const
 
 	return true;
 }
+
+
+void UEdStateGraph::ClearEvents()
+{
+	this->Events.OnNodeSelected.Clear();
+
+	for (auto Node : this->Nodes)
+	{
+		if (auto StateNode = Cast<UEdBaseNode>(Node))
+		{
+			StateNode->ClearEvents();
+		}
+	}
+}

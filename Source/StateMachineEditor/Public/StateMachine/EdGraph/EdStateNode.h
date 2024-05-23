@@ -50,4 +50,5 @@ public:
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
 
+	virtual void ClearEvents() override;
 };

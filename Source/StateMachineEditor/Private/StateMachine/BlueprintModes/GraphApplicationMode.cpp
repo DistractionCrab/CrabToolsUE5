@@ -51,7 +51,7 @@ FGraphApplicationMode::FGraphApplicationMode(
 		->Split(
 			FTabManager::NewStack()
 			->SetHideTabWell(false)
-			->SetSizeCoefficient(0.2f)
+			->SetSizeCoefficient(0.3f)
 			->AddTab(FMachineDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 	);

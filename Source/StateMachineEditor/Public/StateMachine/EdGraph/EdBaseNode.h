@@ -24,4 +24,6 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual UEdGraphPin* GetInputPin() const { return Pins[0]; }
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
+
+	virtual void ClearEvents() {}
 };

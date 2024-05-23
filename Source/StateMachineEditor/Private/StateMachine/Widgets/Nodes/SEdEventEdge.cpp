@@ -63,6 +63,7 @@ void SEdEventEdge::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 		UpdateGraphNode();
 	}
 	*/
+	UpdateGraphNode();
 }
 
 void SEdEventEdge::UpdateGraphNode()
