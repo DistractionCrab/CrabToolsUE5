@@ -1,16 +1,16 @@
-#include "StateMachine/EdGraph/EdEventEdge.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/EdBaseNode.h"
 
 
 #define LOCTEXT_NAMESPACE "EdNode_GenericGraphEdge"
 
-UEdEventEdge::UEdEventEdge()
+UEdTransition::UEdTransition()
 {
 	bCanRenameNode = true;
 }
 
 
-void UEdEventEdge::AllocateDefaultPins()
+void UEdTransition::AllocateDefaultPins()
 {
 	UEdGraphPin* Inputs = CreatePin(EGPD_Input, TEXT("Edge"), FName(), TEXT("In"));
 	Inputs->bHidden = true;
@@ -18,12 +18,12 @@ void UEdEventEdge::AllocateDefaultPins()
 	Outputs->bHidden = true;
 }
 
-FText UEdEventEdge::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UEdTransition::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	return FText();
 }
 
-void UEdEventEdge::PinConnectionListChanged(UEdGraphPin* Pin)
+void UEdTransition::PinConnectionListChanged(UEdGraphPin* Pin)
 {
 	if (Pin->LinkedTo.Num() == 0)
 	{
@@ -40,12 +40,12 @@ void UEdEventEdge::PinConnectionListChanged(UEdGraphPin* Pin)
 	}
 }
 
-void UEdEventEdge::PrepareForCopying()
+void UEdTransition::PrepareForCopying()
 {
 	
 }
 
-void UEdEventEdge::CreateConnections(UEdBaseNode* Start, UEdBaseNode* End)
+void UEdTransition::CreateConnections(UEdBaseStateNode* Start, UEdBaseStateNode* End)
 {
 	Pins[0]->Modify();
 	Pins[0]->LinkedTo.Empty();
@@ -61,11 +61,11 @@ void UEdEventEdge::CreateConnections(UEdBaseNode* Start, UEdBaseNode* End)
 	Pins[1]->MakeLinkTo(End->GetInputPin());
 }
 
-UEdBaseNode* UEdEventEdge::GetStartNode()
+UEdBaseStateNode* UEdTransition::GetStartNode()
 {
 	if (Pins[0]->LinkedTo.Num() > 0)
 	{
-		return Cast<UEdBaseNode>(Pins[0]->LinkedTo[0]->GetOwningNode());
+		return Cast<UEdBaseStateNode>(Pins[0]->LinkedTo[0]->GetOwningNode());
 	}
 	else
 	{
@@ -73,11 +73,11 @@ UEdBaseNode* UEdEventEdge::GetStartNode()
 	}
 }
 
-UEdBaseNode* UEdEventEdge::GetEndNode()
+UEdBaseStateNode* UEdTransition::GetEndNode()
 {
 	if (Pins[1]->LinkedTo.Num() > 0)
 	{
-		return Cast<UEdBaseNode>(Pins[1]->LinkedTo[0]->GetOwningNode());
+		return Cast<UEdBaseStateNode>(Pins[1]->LinkedTo[0]->GetOwningNode());
 	}
 	else
 	{

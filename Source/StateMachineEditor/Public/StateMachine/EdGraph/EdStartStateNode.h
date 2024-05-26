@@ -11,7 +11,7 @@
 
 
 UCLASS(MinimalAPI)
-class UEdStartStateNode : public UEdBaseNode
+class UEdStartStateNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
@@ -23,5 +23,6 @@ public:
 	UEdStartStateNode();
 	virtual ~UEdStartStateNode();
 
+	virtual FName GetStateName() const override { return FName("~Start~"); }
 	virtual bool CanUserDeleteNode() const override { return false; }
 };

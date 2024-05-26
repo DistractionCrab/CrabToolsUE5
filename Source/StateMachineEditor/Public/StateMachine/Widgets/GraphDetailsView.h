@@ -12,10 +12,18 @@
 
 #include "StateMachine/Editor.h"
 
+class UEdEventObject;
+class UEdTransition;
+class FGraphDetailsViewItem;
+using TablePtr = TSharedPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>>;
+using TableWeakPtr = TWeakPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>>;
+
 /*Base object to be put into the tree view. Used to generate the widgest for the TreeView.*/
 class FGraphDetailsViewItem: public TSharedFromThis<FGraphDetailsViewItem>
 {
 private:
+	TWeakPtr<FGraphDetailsViewItem> Parent;
+	TableWeakPtr TableOwner;
 	TArray<TSharedPtr<FGraphDetailsViewItem>> Children;
 
 public:
@@ -25,7 +33,11 @@ public:
 		bool bIsReadOnly);
 
 	void GetChildren(TArray<TSharedPtr<FGraphDetailsViewItem>>& OutChildren) const;
-	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item) { this->Children.Add(Item); }
+	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item);
+	void RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item);
+	void SetTableView(TableWeakPtr TableOwner);
+	TWeakPtr<FGraphDetailsViewItem> GetParent() const { return this->Parent; }
+
 };
 
 class FHeaderItem : public FGraphDetailsViewItem
@@ -41,17 +53,51 @@ public:
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly)
 		override;
+	FText GetHeaderText() const { return this->HeaderText; }
+};
+
+/* Used for Events and Statics to add an Add button to the header. */
+class FCreateHeaderItem : public FHeaderItem
+{
+protected:
+	TWeakObjectPtr<UEdStateGraph> GraphReference;
+
+public:
+	virtual ~FCreateHeaderItem() {}
+	FCreateHeaderItem(FText Text, TSharedPtr<class FEditor> InEditor);
+	FCreateHeaderItem(FString String, TSharedPtr<class FEditor> InEditor)
+		: FCreateHeaderItem(FText::FromString(String), InEditor) {}
+
+	virtual TSharedRef<ITableRow> GetEntryWidget(
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly)
+		override;
+
+	FReply OnAddClicked() { return this->OnAddImplementation();  }
+	virtual FReply OnAddImplementation() {  return FReply::Handled(); }
+};
+
+class FEventHeaderItem : public FCreateHeaderItem
+{
+	
+public:
+	FEventHeaderItem(FText Text, TSharedPtr<class FEditor> InEditor)
+		: FCreateHeaderItem(Text, InEditor)	{}
+	FEventHeaderItem(FString Text, TSharedPtr<class FEditor> InEditor)
+		: FCreateHeaderItem(Text, InEditor)	{}
+
+	virtual FReply OnAddImplementation() override;
 };
 
 class FStateItem : public FGraphDetailsViewItem
 {
 private:
-	UEdStateNode* NodeRef;
+	TWeakObjectPtr<UEdStateNode> NodeRef;
 
 	TSharedPtr<SInlineEditableTextBlock> InlineText;
 
 public:
-	virtual ~FStateItem() {}
+	virtual ~FStateItem();
 	FStateItem(UEdStateNode* NodePtr);
 
 	virtual TSharedRef<ITableRow> GetEntryWidget(
@@ -59,9 +105,54 @@ public:
 		bool bIsReadOnly)
 		override;
 private:
+	
+	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 	bool IsSelected() const;
 	void OnNameChanged(FName Name);
+	void OnNodeDeleted();
+};
+
+class FEventItem : public FGraphDetailsViewItem
+{
+private:
+	TSharedPtr<SInlineEditableTextBlock> InlineText;
+
+protected:
+	TWeakObjectPtr<UEdEventObject> EventReference;
+
+public:
+	FEventItem(TWeakObjectPtr<UEdEventObject> EventObject);
+
+	virtual TSharedRef<ITableRow> GetEntryWidget(
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly)
+		override;
+
+private:
+	bool IsSelected() const;
+	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
+	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
+
+	void OnEventRenamed(FName To);
+};
+
+class FTransitionItem : public FGraphDetailsViewItem
+{
+private:
+	TWeakObjectPtr<UEdTransition> NodeRef;
+
+public:
+	virtual ~FTransitionItem();
+	FTransitionItem(UEdTransition* NodePtr);
+
+	virtual TSharedRef<ITableRow> GetEntryWidget(
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly)
+		override;
+
+private:
+	void OnNodeDeleted();
 };
 
 /**
@@ -72,10 +163,14 @@ class STATEMACHINEEDITOR_API SGraphDetailsView
 : public SCompoundWidget, public FGCObject
 {
 private:
+	TWeakPtr<FEditor> EditorPtr;
 	TSharedPtr<class SSearchBox> FilterBox;
-	TSharedPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>> StateListWidget;
-	TArray<TSharedPtr<FGraphDetailsViewItem>> StateList;
+	TablePtr TreeView;
+	TArray<TSharedPtr<FGraphDetailsViewItem>> TreeViewList;
 	TSharedPtr<FGraphDetailsViewItem> StateRoot;
+	TSharedPtr<FGraphDetailsViewItem> EventRoot;
+	TSharedPtr<FGraphDetailsViewItem> AliasRoot;
+	TSharedPtr<FGraphDetailsViewItem> StaticsRoot;
 
 public:
 	SLATE_BEGIN_ARGS(SGraphDetailsView){}
@@ -93,8 +188,10 @@ public:
 private:
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
 	void OnGraphChanged(const FEdGraphEditAction& Action);
-	void AddState(class UEdStateNode* Node);
-	
+	void AddState(class UEdStateNode* Node);	
+	void AddTransition(class UEdTransition* Node);
+
+	void AddEvent(UEdEventObject* EventObject);
 
 	void OnItemSelected(TSharedPtr< FGraphDetailsViewItem > InSelectedItem, ESelectInfo::Type SelectInfo) {}
 	void OnItemDoubleClicked(TSharedPtr< FGraphDetailsViewItem > InClickedItem) {}
@@ -107,4 +204,6 @@ private:
 		TSharedPtr<FGraphDetailsViewItem> InItem,
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly);
+
+	void InitView(TSharedPtr<FEditor> InEditor);
 };

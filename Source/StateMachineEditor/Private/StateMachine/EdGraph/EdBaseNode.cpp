@@ -1,13 +1,13 @@
 #include "StateMachine/EdGraph/EdBaseNode.h"
 
 
-void UEdBaseNode::AllocateDefaultPins()
+void UEdBaseStateNode::AllocateDefaultPins()
 {
 	CreatePin(EGPD_Input, "MultipleNodes", FName(), TEXT("In"));
 	CreatePin(EGPD_Output, "MultipleNodes", FName(), TEXT("Out"));
 }
 
-void UEdBaseNode::AutowireNewNode(UEdGraphPin* FromPin)
+void UEdBaseStateNode::AutowireNewNode(UEdGraphPin* FromPin)
 {
 	Super::AutowireNewNode(FromPin);
 
@@ -18,4 +18,11 @@ void UEdBaseNode::AutowireNewNode(UEdGraphPin* FromPin)
 			FromPin->GetOwningNode()->NodeConnectionListChanged();
 		}
 	}
+}
+
+void UEdBaseNode::ClearEvents()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Clearing events in BaseNode."));
+	this->Events.OnNameChanged.Clear();
+	this->Events.OnNodeDeleted.Clear();
 }

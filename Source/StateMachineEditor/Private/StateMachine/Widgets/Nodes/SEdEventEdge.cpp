@@ -6,12 +6,12 @@
 #include "SGraphPanel.h"
 #include "EdGraphSchema_K2.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
-#include "StateMachine/EdGraph/EdEventEdge.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/StateConnectionDrawingPolicy.h"
 
 #define LOCTEXT_NAMESPACE "SEdEventEdge"
 
-void SEdEventEdge::Construct(const FArguments& InArgs, UEdEventEdge* InNode)
+void SEdEventEdge::Construct(const FArguments& InArgs, UEdTransition* InNode)
 {
 	this->GraphNode = InNode;
 	this->UpdateGraphNode();
@@ -24,7 +24,7 @@ bool SEdEventEdge::RequiresSecondPassLayout() const
 
 void SEdEventEdge::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const
 {
-	UEdEventEdge* EdgeNode = CastChecked<UEdEventEdge>(GraphNode);
+	UEdTransition* EdgeNode = CastChecked<UEdTransition>(GraphNode);
 
 	FGeometry StartGeom;
 	FGeometry EndGeom;

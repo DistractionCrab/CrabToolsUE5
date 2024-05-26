@@ -8,7 +8,7 @@
 #include "SGraphNode.h"
 
 class SToolTip;
-class UEdEventEdge;
+class UEdTransition;
 
 class STATEMACHINEEDITOR_API SEdEventEdge : public SGraphNode
 {
@@ -16,7 +16,7 @@ public:
 	SLATE_BEGIN_ARGS(SEdEventEdge){}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, UEdEventEdge* InNode);
+	void Construct(const FArguments& InArgs, UEdTransition* InNode);
 
 	virtual bool RequiresSecondPassLayout() const override;
 	virtual void PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const override;

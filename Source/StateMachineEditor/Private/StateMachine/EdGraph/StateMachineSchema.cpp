@@ -74,7 +74,7 @@ UEdGraphNode* FSMSchemaAction_NewEdge::PerformAction(
 	const FVector2D Location,
 	bool bSelectNewNode)
 {
-	UEdEventEdge* ResultNode = nullptr;
+	UEdTransition* ResultNode = nullptr;
 	UEdStateGraph* StateGraph = Cast<UEdStateGraph>(ParentGraph);
 
 	if (NodeTemplate != nullptr)
@@ -222,8 +222,8 @@ FConnectionDrawingPolicy* UStateMachineSchema::CreateConnectionDrawingPolicy(
 
 bool UStateMachineSchema::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
 {
-	auto NodeA = Cast<UEdBaseNode>(A->GetOwningNode());
-	auto NodeB = Cast<UEdBaseNode>(B->GetOwningNode());
+	auto NodeA = Cast<UEdBaseStateNode>(A->GetOwningNode());
+	auto NodeB = Cast<UEdBaseStateNode>(B->GetOwningNode());
 
 	// Are nodes and pins all valid?
 	if (!NodeA || !NodeA->GetOutputPin() || !NodeB || !NodeB->GetInputPin())
@@ -237,9 +237,9 @@ bool UStateMachineSchema::CreateAutomaticConversionNodeAndConnections(UEdGraphPi
 	FVector2D InitPos((NodeA->NodePosX + NodeB->NodePosX) / 2, (NodeA->NodePosY + NodeB->NodePosY) / 2);
 
 	FSMSchemaAction_NewEdge Action;
-	Action.SetNodeTemplate(NewObject<UEdEventEdge>(NodeA->GetGraph()));
+	Action.SetNodeTemplate(NewObject<UEdTransition>(NodeA->GetGraph()));
 	//Action.NodeTemplate->SetEdge(NewObject<UGenericGraphEdge>(Action.NodeTemplate, Graph->EdgeType));
-	UEdEventEdge* EdgeNode = Cast<UEdEventEdge>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
+	UEdTransition* EdgeNode = Cast<UEdTransition>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
 
 	// Always create connections from node A to B, don't allow adding in reverse
 	EdgeNode->CreateConnections(NodeA, NodeB);
@@ -258,8 +258,8 @@ const FPinConnectionResponse UStateMachineSchema::CanCreateConnection(const UEdG
 	const UEdGraphPin* Out = A;
 	const UEdGraphPin* In = B;
 
-	UEdBaseNode* EdNode_Out = Cast<UEdBaseNode>(Out->GetOwningNode());
-	UEdBaseNode* EdNode_In = Cast<UEdBaseNode>(In->GetOwningNode());
+	UEdBaseStateNode* EdNode_Out = Cast<UEdBaseStateNode>(Out->GetOwningNode());
+	UEdBaseStateNode* EdNode_In = Cast<UEdBaseStateNode>(In->GetOwningNode());
 
 	if (EdNode_Out == nullptr || EdNode_In == nullptr)
 	{
@@ -274,14 +274,14 @@ const FPinConnectionResponse UStateMachineSchema::CanCreateConnection(const UEdG
 bool UStateMachineSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
 {
 	// We don't actually care about the pin, we want the node that is being dragged between
-	auto NodeA = Cast<UEdBaseNode>(A->GetOwningNode());
-	auto NodeB = Cast<UEdBaseNode>(B->GetOwningNode());
+	auto NodeA = Cast<UEdBaseStateNode>(A->GetOwningNode());
+	auto NodeB = Cast<UEdBaseStateNode>(B->GetOwningNode());
 
 	// Check that this edge doesn't already exist
 	for (UEdGraphPin* TestPin : NodeA->GetOutputPin()->LinkedTo)
 	{
 		UEdGraphNode* ChildNode = TestPin->GetOwningNode();
-		if (UEdEventEdge* EdNode_Edge = Cast<UEdEventEdge>(ChildNode))
+		if (UEdTransition* EdNode_Edge = Cast<UEdTransition>(ChildNode))
 		{
 			ChildNode = EdNode_Edge->GetEndNode();
 		}
@@ -319,7 +319,7 @@ bool UStateMachineSchema::SupportsDropPinOnNode(
 	FText& OutErrorMessage) 
 	const
 {
-	return Cast<UEdBaseNode>(InTargetNode) != nullptr;
+	return Cast<UEdBaseStateNode>(InTargetNode) != nullptr;
 }
 
 UEdGraphPin* UStateMachineSchema::DropPinOnNode(
@@ -329,7 +329,7 @@ UEdGraphPin* UStateMachineSchema::DropPinOnNode(
 	EEdGraphPinDirection InSourcePinDirection) 
 	const
 {
-	auto EdNode = Cast<UEdBaseNode>(InTargetNode);
+	auto EdNode = Cast<UEdBaseStateNode>(InTargetNode);
 	switch (InSourcePinDirection)
 	{
 		case EGPD_Input:

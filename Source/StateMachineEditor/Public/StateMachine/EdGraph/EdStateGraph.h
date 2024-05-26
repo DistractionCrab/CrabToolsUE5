@@ -6,18 +6,28 @@
 #include "StateMachine/StateMachine.h"
 #include "EdStateGraph.generated.h"
 
+class UEdEventObject;
+
 class FGraphActionEvents
 {
 public:
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdGraphNode*>&)
 	FNodeSelected OnNodeSelected;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FEventCreated, UEdEventObject*)
+	FEventCreated OnEventCreated;
 };
 
 UCLASS(MinimalAPI)
 class UEdStateGraph : public UEdGraph
 {
 	GENERATED_BODY()
+
+private:
+
+	UPROPERTY(VisibleAnywhere, Category = "StateMachineEditor")
+	TArray<TObjectPtr<UEdEventObject>> EventObjects;
 
 public:
 
@@ -30,7 +40,15 @@ public:
 	virtual ~UEdStateGraph() {}
 
 	FName GetNewStateName();
-	bool IsNameAvilable(FName Name) const;
+	bool IsStateNameAvilable(FName Name) const;
+	bool IsEventNameAvilable(FName Name) const;
+	FName RenameEvent(UEdEventObject* EventObj, FName To);
+	void ClearDelegates();
 
-	void ClearEvents();
+	UEdEventObject* CreateEvent();
+
+	const TArray<TObjectPtr<UEdEventObject>>& GetEventList() const 
+	{ 
+		return this->EventObjects; 
+	}
 };

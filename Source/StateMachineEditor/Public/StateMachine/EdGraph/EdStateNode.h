@@ -9,15 +9,10 @@
 #include "EdStateNode.generated.h"
 
 
-class FEdStateNodeEvents
-{
-public:
-	DECLARE_MULTICAST_DELEGATE_OneParam(FNameChanged, FName)
-	FNameChanged OnNameChanged;
-};
+
 
 UCLASS(MinimalAPI)
-class UEdStateNode : public UEdBaseNode
+class UEdStateNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
@@ -34,9 +29,6 @@ class UEdStateNode : public UEdBaseNode
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
 	TArray<TObjectPtr<UStateNode>> Nodes;
 
-public:
-
-	FEdStateNodeEvents Events;
 
 public:
 	UEdStateNode();
@@ -46,9 +38,7 @@ public:
 
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
 
-	FName GetStateName() const { return this->StateName; }
+	virtual FName GetStateName() const override { return this->StateName; }
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
-
-	virtual void ClearEvents() override;
 };

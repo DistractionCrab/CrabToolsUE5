@@ -4,7 +4,7 @@
 #include "UObject/ObjectMacros.h"
 #include "EdGraphSchema_K2.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
-#include "StateMachine/EdGraph/EdEventEdge.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachineSchema.generated.h"
 
 
@@ -42,7 +42,7 @@ struct STATEMACHINEEDITOR_API FSMSchemaAction_NewEdge
 
 private:
 
-	TObjectPtr<UEdEventEdge> NodeTemplate;
+	TObjectPtr<UEdTransition> NodeTemplate;
 
 public:
 	FSMSchemaAction_NewEdge() : NodeTemplate(nullptr) {}
@@ -55,7 +55,7 @@ public:
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	//virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
-	void SetNodeTemplate(UEdEventEdge* Template) { this->NodeTemplate = Template; }
+	void SetNodeTemplate(UEdTransition* Template) { this->NodeTemplate = Template; }
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	virtual FString GetReferencerName() const override;

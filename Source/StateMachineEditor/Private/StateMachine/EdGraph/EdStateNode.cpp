@@ -18,7 +18,7 @@ FName UEdStateNode::SetStateName(FName NewName)
 {
 	if (UEdStateGraph* Graph = Cast<UEdStateGraph>(this->GetGraph()))
 	{
-		if (Graph->IsNameAvilable(NewName))
+		if (Graph->IsStateNameAvilable(NewName))
 		{
 			this->StateName = NewName;
 			this->Events.OnNameChanged.Broadcast(this->StateName);
@@ -28,7 +28,3 @@ FName UEdStateNode::SetStateName(FName NewName)
 	return this->StateName;
 }
 
-void UEdStateNode::ClearEvents()
-{
-	this->Events.OnNameChanged.Clear();
-}

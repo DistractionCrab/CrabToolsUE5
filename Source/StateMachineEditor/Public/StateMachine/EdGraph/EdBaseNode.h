@@ -7,23 +7,43 @@
 #include "StateMachine/StateMachine.h"
 #include "EdBaseNode.generated.h"
 
+class FEdNodeEvents
+{
+public:
+	DECLARE_MULTICAST_DELEGATE_OneParam(FNameChanged, FName)
+	FNameChanged OnNameChanged;
 
+	DECLARE_MULTICAST_DELEGATE(FNodeDeleted)
+	FNodeDeleted OnNodeDeleted;
+};
 
-/* Base Graph node to be used for states in the State Machine Graph. */
+/* Base Graph Node for both states and edges. */
 UCLASS(MinimalAPI)
 class UEdBaseNode : public UEdGraphNode
 {
 	GENERATED_BODY()
 
 public:
-	UEdBaseNode() {}
-	virtual ~UEdBaseNode() {}
+	/* Events for changes to this node. */
+	FEdNodeEvents Events;
+
+	virtual void ClearEvents();
+};
+
+/* Base State node to be used for states in the State Machine Graph. */
+UCLASS(MinimalAPI)
+class UEdBaseStateNode : public UEdBaseNode
+{
+	GENERATED_BODY()
+
+public:
+	UEdBaseStateNode() {}
+	virtual ~UEdBaseStateNode() {}
 
 
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
 	virtual void AllocateDefaultPins() override;
 	virtual UEdGraphPin* GetInputPin() const { return Pins[0]; }
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
-
-	virtual void ClearEvents() {}
+	virtual FName GetStateName() const { return NAME_None; }
 };

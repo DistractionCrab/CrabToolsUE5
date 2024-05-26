@@ -1,6 +1,6 @@
 #include "StateMachine/EdGraph/StateConnectionDrawingPolicy.h"
 #include "StateMachine/EdGraph/EdBaseNode.h"
-#include "StateMachine/EdGraph/EdEventEdge.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 
 
 FStateMachineConnectionDrawingPolicy::FStateMachineConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
@@ -121,7 +121,7 @@ FVector2D FStateMachineConnectionDrawingPolicy::ComputeSplineTangent(const FVect
 void FStateMachineConnectionDrawingPolicy::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget,
 	UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
 {
-	if (UEdEventEdge* EdgeNode = Cast<UEdEventEdge>(InputPin->GetOwningNode()))
+	if (UEdTransition* EdgeNode = Cast<UEdTransition>(InputPin->GetOwningNode()))
 	{
 		auto Start = EdgeNode->GetStartNode();
 		auto End = EdgeNode->GetEndNode();

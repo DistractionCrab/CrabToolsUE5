@@ -44,7 +44,6 @@ void SMachineDetailsView::AddReferencedObjects(FReferenceCollector& Collector)
 
 void SMachineDetailsView::OnSelectionChanged(TArray<class UEdGraphNode*>& SelectedNodes)
 {
-	UE_LOG(LogTemp, Warning, TEXT("On Selection changed called?"));
 	if (SelectedNodes.Num() == 1)
 	{
 		Inspector->ShowDetailsForSingleObject(SelectedNodes[0]);
