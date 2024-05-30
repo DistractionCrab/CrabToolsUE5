@@ -27,14 +27,22 @@ void SMachineDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor)
 
 	if (auto BPObj = InEditor->GetStateMachineBlueprintObj())
 	{
+		auto Graph = BPObj->StateMachineGraph();
+
 		FOnGraphChanged::FDelegate f;
 		f.BindRaw(this, &SMachineDetailsView::OnGraphChanged);
 
-		BPObj->StateMachineGraph()->AddOnGraphChangedHandler(f);
-		BPObj->StateMachineGraph()->Events.OnNodeSelected.AddRaw(
+		Graph->AddOnGraphChangedHandler(f);
+		Graph->Events.OnNodeSelected.AddRaw(
 			this, 
 			&SMachineDetailsView::OnSelectionChanged);
+		Graph->Events.OnObjectInspected.AddSP(this, &SMachineDetailsView::InspectObject);
 	}
+}
+
+void SMachineDetailsView::InspectObject(UObject* Obj)
+{
+	Inspector->ShowDetailsForSingleObject(Obj);
 }
 
 void SMachineDetailsView::AddReferencedObjects(FReferenceCollector& Collector)

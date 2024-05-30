@@ -52,3 +52,13 @@ UObject* UUtilsLibrary::GetOwnerAs(UActorComponent* Component, TSubclassOf<AActo
 	Result = ESearchResult::Found;
 	return nullptr;
 }
+
+void UUtilsLibrary::ActivateNAryGate(FNAryGate& Gate, ETriggerBranch& Result)
+{
+	Result = Gate.Activate();
+}
+
+void UUtilsLibrary::DeactivateNAryGate(FNAryGate& Gate, ETriggerBranch& Result)
+{
+	Result = Gate.Deactivate();
+}

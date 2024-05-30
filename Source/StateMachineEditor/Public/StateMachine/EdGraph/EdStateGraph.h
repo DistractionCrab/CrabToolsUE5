@@ -15,6 +15,9 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdGraphNode*>&)
 	FNodeSelected OnNodeSelected;
 
+	DECLARE_MULTICAST_DELEGATE_OneParam(FObjectInspected, UObject* Obj)
+	FObjectInspected OnObjectInspected;
+
 	DECLARE_MULTICAST_DELEGATE_OneParam(FEventCreated, UEdEventObject*)
 	FEventCreated OnEventCreated;
 };

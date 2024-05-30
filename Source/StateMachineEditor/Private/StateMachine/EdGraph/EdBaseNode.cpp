@@ -1,5 +1,14 @@
 #include "StateMachine/EdGraph/EdBaseNode.h"
+#include "StateMachine/EdGraph/EdStateGraph.h"
 
+
+void UEdBaseNode::Inspect()
+{
+	if (auto Graph = Cast<UEdStateGraph>(this->GetGraph()))
+	{
+		Graph->Events.OnObjectInspected.Broadcast(this);
+	}
+}
 
 void UEdBaseStateNode::AllocateDefaultPins()
 {

@@ -33,4 +33,6 @@ public:
 	FName GetName() { return this->EventName; }
 
 	FName RenameEvent(FName NewName);
+
+	void Inspect();
 };

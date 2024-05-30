@@ -291,8 +291,8 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 	bool bIsReadOnly)
 {
 	auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
-		.ShowSelection(true);
-	
+		.ShowSelection(true);		
+
 	// Make the text widget.
 	TSharedPtr<SWidget> TextWidget;
 	{
@@ -315,19 +315,15 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 				.Text(FText::FromName(this->NodeRef->GetStateName()))
 				.OnVerifyTextChanged(this, &FStateItem::OnVerifyNameTextChanged)
 				.OnTextCommitted(this, &FStateItem::OnNameTextCommited)
-				//.IsReadOnly(this, &SEdStateNode::IsNameReadOnly)
-				.IsSelected(this, &FStateItem::IsSelected)
+				.IsSelected(
+					TableRow, 
+					&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
 		];
 	}
 	
 	TableRow->SetRowContent(TextWidget.ToSharedRef());
 
 	return TableRow;
-}
-
-bool FStateItem::IsSelected() const
-{
-	return true;
 }
 
 bool FStateItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)
@@ -487,19 +483,15 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 					.Text(FText::FromName(this->EventReference.Get()->GetName()))
 					.OnVerifyTextChanged(this, &FEventItem::OnVerifyNameTextChanged)
 					.OnTextCommitted(this, &FEventItem::OnNameTextCommited)
-					//.IsReadOnly(this, &SEdStateNode::IsNameReadOnly)
-					.IsSelected(this, &FEventItem::IsSelected)
+					.IsSelected(
+						TableRow,
+						&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
 			];
 	}
 
 	TableRow->SetRowContent(TextWidget.ToSharedRef());
 
 	return TableRow;
-}
-
-bool FEventItem::IsSelected() const
-{
-	return true;
 }
 
 void FEventItem::OnEventRenamed(FName To)
@@ -559,7 +551,7 @@ void SGraphDetailsView::Construct(
 		.TreeItemsSource(&this->TreeViewList)
 		.OnGenerateRow(this, &SGraphDetailsView::OnGenerateRow, false)
 		.SelectionMode(ESelectionMode::Single)
-		.OnSelectionChanged(this, &SGraphDetailsView::OnItemSelected)
+		.OnSelectionChanged(this, &SGraphDetailsView::OnSelectionChanged)
 		.OnMouseButtonDoubleClick(this, &SGraphDetailsView::OnItemDoubleClicked)
 		//.OnContextMenuOpening(InArgs._OnContextMenuOpening)
 		.OnGetChildren(this, &SGraphDetailsView::OnGetChildrenForCategory)
@@ -623,6 +615,13 @@ void SGraphDetailsView::InitView(TSharedPtr<FEditor> InEditor)
 	}	
 }
 
+void SGraphDetailsView::OnSelectionChanged(
+	TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+	ESelectInfo::Type SelectInfo)
+{
+	SelectedItem->Select();
+}
+
 TSharedRef<ITableRow> SGraphDetailsView::OnGenerateRow(
 	TSharedPtr<FGraphDetailsViewItem> InItem,
 	const TSharedRef<STableViewBase>& OwnerTable,
@@ -646,7 +645,6 @@ void SGraphDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor) {
 		f.BindSP(this, &SGraphDetailsView::OnGraphChanged);
 		
 		Graph->AddOnGraphChangedHandler(f);
-
 		Graph->Events.OnEventCreated.AddSP(this, &SGraphDetailsView::AddEvent);
 	}
 }

@@ -1,6 +1,13 @@
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "STateMachine/EdGraph/EdStateGraph.h"
 
+void UEdEventObject::Inspect()
+{
+	if (auto Graph = this->GetGraph())
+	{
+		Graph->Events.OnObjectInspected.Broadcast(this);
+	}
+}
 
 FName UEdEventObject::RenameEvent(FName NewName)
 {

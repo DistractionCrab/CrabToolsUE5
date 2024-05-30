@@ -59,6 +59,7 @@ void UEdStateGraph::ClearDelegates()
 {
 	this->Events.OnNodeSelected.Clear();
 	this->Events.OnEventCreated.Clear();
+	this->Events.OnObjectInspected.Clear();
 
 	for (auto Node : this->Nodes)
 	{

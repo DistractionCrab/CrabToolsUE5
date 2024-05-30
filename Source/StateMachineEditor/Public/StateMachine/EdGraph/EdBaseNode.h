@@ -28,6 +28,8 @@ public:
 	FEdNodeEvents Events;
 
 	virtual void ClearEvents();
+
+	void Inspect();
 };
 
 /* Base State node to be used for states in the State Machine Graph. */

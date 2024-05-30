@@ -4,6 +4,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Utils/TimeGatedBool.h"
 #include "Utils/SetGatedBool.h"
+#include "Utils/NAryGate.h"
 #include "StateMachine/StateMachine.h"
 #include "UtilsLibrary.generated.h"
 
@@ -39,4 +40,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
 	UObject* GetOwnerAs(UActorComponent* Component, TSubclassOf<AActor> SClass, ESearchResult& Result);
+
+	UFUNCTION(BlueprintCallable, Category = "UtilityStructures", 
+		meta = (ExpandEnumAsExecs = "Result"))
+	void ActivateNAryGate(UPARAM(ref) FNAryGate& Gate, ETriggerBranch& Result);
+
+	UFUNCTION(BlueprintCallable, Category = "UtilityStructures",
+		meta = (ExpandEnumAsExecs = "Result"))
+	void DeactivateNAryGate(UPARAM(ref) FNAryGate& Gate, ETriggerBranch& Result);
 };

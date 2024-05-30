@@ -38,6 +38,7 @@ public:
 	void SetTableView(TableWeakPtr TableOwner);
 	TWeakPtr<FGraphDetailsViewItem> GetParent() const { return this->Parent; }
 
+	virtual void Select() {}
 };
 
 class FHeaderItem : public FGraphDetailsViewItem
@@ -108,9 +109,10 @@ private:
 	
 	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
-	bool IsSelected() const;
 	void OnNameChanged(FName Name);
 	void OnNodeDeleted();
+
+	void Select() { this->NodeRef->Inspect(); }
 };
 
 class FEventItem : public FGraphDetailsViewItem
@@ -130,11 +132,12 @@ public:
 		override;
 
 private:
-	bool IsSelected() const;
 	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 
 	void OnEventRenamed(FName To);
+
+	void Select() { this->EventReference->Inspect(); }
 };
 
 class FTransitionItem : public FGraphDetailsViewItem
@@ -206,4 +209,8 @@ private:
 		bool bIsReadOnly);
 
 	void InitView(TSharedPtr<FEditor> InEditor);
+
+	void OnSelectionChanged(
+		TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+		ESelectInfo::Type SelectInfo);
 };
