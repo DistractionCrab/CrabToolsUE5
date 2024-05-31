@@ -20,4 +20,6 @@ public:
 	{
 		return FModuleManager::LoadModuleChecked<IStateMachineEditorModule>("StateMachineEditor");
 	}
+
+	virtual FStateMachineBlueprintCompiler* GetRegisteredCompiler() = 0;
 };

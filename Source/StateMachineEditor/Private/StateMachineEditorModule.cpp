@@ -1,5 +1,7 @@
 #include "StateMachineEditorModule.h"
 #include "EdGraphUtilities.h"
+#include "Compiler/StateMachineBlueprintCompiler.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 #define LOCTEXT_NAMESPACE "FStateMachineEditorModule"
 
@@ -19,12 +21,29 @@ void FStateMachineEditorModule::StartupModule()
 
 
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphNodeFactory);
+
+
+	// Register widget blueprint compiler we do this no matter what.
+	IKismetCompilerInterface& KismetCompilerModule 
+		= FModuleManager::LoadModuleChecked<IKismetCompilerInterface>("KismetCompiler");
+	KismetCompilerModule.GetCompilers().Add(&StateMachineBlueprintCompiler);
+	KismetCompilerModule.OverrideBPTypeForClass(
+		UStateMachine::StaticClass(), UStateMachineBlueprint::StaticClass());
+
+	FKismetCompilerContext::RegisterCompilerForBP(
+		UStateMachineBlueprint::StaticClass(), 
+		&FStateMachineEditorModule::GetCompiler);
 }
 
 void FStateMachineEditorModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+
+	if (auto KismetCompilerModule = FModuleManager::GetModulePtr<IKismetCompilerInterface>("KismetCompiler"))
+	{
+		KismetCompilerModule->GetCompilers().Remove(&StateMachineBlueprintCompiler);
+	}
 }
 
 
@@ -43,6 +62,18 @@ void FStateMachineEditorModule::AddReferencedObjects(FReferenceCollector& Collec
 
 FString FStateMachineEditorModule::GetReferencerName() const {
 	return "StateMachineEditorModule";
+}
+
+TSharedPtr<FKismetCompilerContext> FStateMachineEditorModule::GetCompiler(
+	UBlueprint* BP, 
+	FCompilerResultsLog& InMessageLog, 
+	const FKismetCompilerOptions& InCompileOptions)
+{
+	return TSharedPtr<FKismetCompilerContext>(
+		new FStateMachineBlueprintCompilerContext(
+			CastChecked<UStateMachineBlueprint>(BP), 
+			InMessageLog, 
+			InCompileOptions));
 }
 
 

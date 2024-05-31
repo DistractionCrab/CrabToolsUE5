@@ -46,6 +46,8 @@ void FEditor::PostRedo(bool bSuccessful) {}
 void FEditor::Compile()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Compilation has started?"));
+
+	FBlueprintEditor::Compile();
 }
 //~ End FBlueprintEditor interface
 
