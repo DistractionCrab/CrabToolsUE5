@@ -6,7 +6,7 @@
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "DoorActor.generated.h"
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, meta=(PrioritizeCategories="DoorActor"))
 class ADoorActor : public AStaticMeshActor
 {
 	GENERATED_BODY()
@@ -23,13 +23,13 @@ public:
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DoorActor")
 	TObjectPtr<UCurveFloat> MovementCurve;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DoorActor")
 	float PlayRate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Default",
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DoorActor",
 		meta=(ClampMin="-360", ClampMax="360", UIMin="-360", UIMax="360.0"))
 	float AngleDelta;
 	float CurrentAlpha;
@@ -43,7 +43,7 @@ protected:
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, Category = "Default")
+	UPROPERTY(BlueprintReadWrite, Category = "DoorActor")
 	FFinishMovement OnFinishMovementEvent;
 
 protected:
@@ -63,10 +63,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="DoorActor")
 	void ActivateDoor(bool OpenQ);
 
+	UFUNCTION(BlueprintCallable, Category = "DoorActor")
+	void SetPlayRate(float NewPlayRate);
 	
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Default")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "DoorActor")
 	FORCEINLINE void OpenDoor() { ActivateDoor(true); }
 
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Default")
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "DoorActor")
 	FORCEINLINE void CloseDoor() { ActivateDoor(false); }
 };

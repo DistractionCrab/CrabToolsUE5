@@ -27,8 +27,7 @@ void FCrabToolsUE5EditorModule::StartupModule()
 
 void FCrabToolsUE5EditorModule::ShutdownModule() 
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+
 }
 
 FString FCrabToolsUE5EditorModule::GetReferencerName() const  {

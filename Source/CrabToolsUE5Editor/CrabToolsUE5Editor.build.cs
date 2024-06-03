@@ -28,6 +28,7 @@ public class CrabToolsUE5Editor : ModuleRules
 				"CoreUObject",
 				"UnrealEd",
 				"DeveloperSettings",
+				"Blutility",
 				// ... add other public dependencies that you statically link with here ...
 			});
 			
@@ -48,6 +49,7 @@ public class CrabToolsUE5Editor : ModuleRules
 				"EditorSubsystem",
 				"BlueprintGraph",
 				"PlacementMode",
+				"Blutility",
 			});
 	}
 }

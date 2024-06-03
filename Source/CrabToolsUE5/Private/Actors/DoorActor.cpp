@@ -84,3 +84,9 @@ void ADoorActor::FinishMovement()
 {
 	this->OnFinishMovementEvent.Broadcast();
 }
+
+void ADoorActor::SetPlayRate(float NewPlayRate)
+{
+	this->PlayRate = NewPlayRate;
+	this->MovementTimeline->SetPlayRate(this->PlayRate);
+}
