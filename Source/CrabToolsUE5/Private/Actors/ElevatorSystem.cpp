@@ -30,12 +30,6 @@ void AElevatorSystem::BeginPlay()
 	}
 }
 
-// Called every frame
-void AElevatorSystem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
 
 
 void AElevatorSystem::Step() {

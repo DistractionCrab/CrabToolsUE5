@@ -17,20 +17,20 @@ public:
 	AElevatorSystem();
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Elevator System")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElevatorSystem")
 	TArray<AActor*> Targets;
 
 	
 	UTimelineComponent* MovementTimeline;
 	FOnTimelineFloat MovementTrack;
 	FOnTimelineEvent EndMovementTrack;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Elevator System")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElevatorSystem")
 	UCurveFloat* MovementCurve;
 	UPROPERTY()
 	//TEnumAsByte<ETimelineDirection::Type> TimelineDirection;
 
 	TArray<int> MovementSequence;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Elevator System")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElevatorSystem")
 	int PositionIndex;
 	bool Reverse;
 
@@ -50,16 +50,14 @@ protected:
 	FVector GetMovementDirection();
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Elevator System")
+	UFUNCTION(BlueprintCallable, Category = "ElevatorSystem")
 	virtual void Step();
 
-	UFUNCTION(BlueprintCallable, Category = "Elevator System")
+	UFUNCTION(BlueprintCallable, Category = "ElevatorSystem")
 	virtual void UpdatePosition(float alpha);
 
-	UFUNCTION(BlueprintCallable, Category = "Elevator System")
+	UFUNCTION(BlueprintCallable, Category = "ElevatorSystem")
 	void GoToIndex(int i);
 	
 
@@ -69,6 +67,6 @@ public:
 	UFUNCTION()
 	void FinishedMovement();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Elevator System")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ElevatorSystem")
 	void PostFinishCallback();
 };
