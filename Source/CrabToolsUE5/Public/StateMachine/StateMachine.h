@@ -299,8 +299,6 @@ public:
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
-
-
 	/* 
 	* Tick function to be called regularly. This is managed by the owner object.
 	*/
@@ -323,7 +321,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetCurrentStateName();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	TArray<FString> StateOptions();
 
 	UFUNCTION()
@@ -367,5 +365,7 @@ public:
 
 	void Substitute(FName SlotName, UStateNode* Node);
 
+	// Procedural constructions functions.
+	void AddState(FName StateName);
 
 };

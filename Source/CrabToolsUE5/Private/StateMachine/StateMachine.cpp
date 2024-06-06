@@ -112,6 +112,11 @@ void UStateMachine::UpdateState(FName Name) {
 	}
 }
 
+void UStateMachine::AddState(FName StateName)
+{
+	this->Graph.Add(StateName, FStateData());
+}
+
 void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();

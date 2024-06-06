@@ -260,6 +260,12 @@ void FStateMachineBlueprintCompilerContext::OnPostCDOCompiled(const UObject::FPo
 	{
 		return;
 	}
+
+	if (auto SMPtr = Cast<UStateMachine>(NewClass->GetArchetypeForCDO()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Archetype CDO returned successfully?"));
+		//SMPtr->AddState("TestState");
+	}
 }
 
 void FStateMachineBlueprintCompilerContext::EnsureProperGeneratedClass(UClass*& TargetUClass)

@@ -18,7 +18,8 @@ class CRABTOOLSUE5_API UStateMachineComponent : public UActorComponent
 	UPROPERTY(EditAnywhere, Category = "StateMachine")
 	TSubclassOf<UStateMachine> MachineClass;
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "StateMachine", 
+		meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStateMachine> Machine;
 	// Cache of State Change Listeners to add to the machine when it is initiated.
 	TArray<FStateChangeDispatcher> StateChangeListenerCache;
@@ -33,7 +34,11 @@ protected:
 
 public:	
 	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(
+		float DeltaTime, 
+		ELevelTick TickType, 
+		FActorComponentTickFunction* ThisTickFunction)
+		override;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Event(FName EName);
