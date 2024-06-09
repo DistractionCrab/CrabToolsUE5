@@ -52,7 +52,7 @@ FBlueprintApplicationMode::FBlueprintApplicationMode(
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.80f)
-						->AddTab("Document", ETabState::ClosedTab)
+						->AddTab("Document", ETabState::OpenedTab)
 					)
 					->Split
 					(
@@ -93,7 +93,7 @@ void FBlueprintApplicationMode::PreDeactivateMode()
 
 void FBlueprintApplicationMode::PostActivateMode() 
 {
-
+	FBlueprintEditorApplicationMode::PostActivateMode();
 }
 
 

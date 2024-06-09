@@ -91,10 +91,6 @@ void UArrayNode::ExitWithData_Implementation(UObject* Data) {
 	}
 }
 
-UStateNode* UArrayNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
-	return this;
-}
-
 UStateNode* UArrayNode::Substitute(FName SlotName, UStateNode* Node) {
 	return this;
 }

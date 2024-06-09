@@ -65,7 +65,9 @@ struct  FStateData
 
 public:
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine")
+	//FStateData(): Node(nullptr) {}
+
+	UPROPERTY(EditAnywhere, Category = "StateMachine")
 	TObjectPtr<UStateNode> Node;
 	// Map from Event Name to StateName
 	UPROPERTY(EditAnywhere, Category = "StateMachine")
@@ -89,7 +91,8 @@ public:
 /**
  *
  */
-UCLASS(Blueprintable, Abstract, EditInlineNew, CollapseCategories, Category="StateMachine")
+UCLASS(Blueprintable, EditInlineNew, CollapseCategories, DisplayName="EmptyNode", 
+	Category = "StateMachine")
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
@@ -100,9 +103,8 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	TObjectPtr<UStateMachine> Owner;
 	bool bActive = false;
 
-	
-
 public:
+	
 
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
@@ -169,30 +171,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetStateName();
 
-	/* 
-	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
-	 * can be combersome for long paths, so avoid using frequently.
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
-	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
-
-	/*
-	 * Search for a node path in the machine hierarchy. Note this is a task that uses many arrays, and
-	 * can be combersome for long paths, so avoid using frequently.
-	 * 
-	 * The Path is also in reverse order to speed things up a bit. i.e. if your top level node is A with child C, to Get C, 
-	 * the array ['C', 'A'] should be passed.
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
-	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
-
 	FORCEINLINE bool Active() { return this->bActive; }
 
 	void GetEvents(TSet<FName>& List);
 	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node);
-
 	virtual UStateNode* ExtractAs(TSubclassOf<UStateNode> Class);
 };
 
@@ -205,6 +187,7 @@ class CRABTOOLSUE5_API UStateMachine : public UObject
 {
 	GENERATED_BODY()
 
+private:
 	// Internal Structure used for keeping track of state transitions and maintain State ID.
 	struct Transition {
 	private:
@@ -225,22 +208,28 @@ class CRABTOOLSUE5_API UStateMachine : public UObject
 		}
 	} TRANSITION;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true", GetOptions = "StateOptions"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true", GetOptions = "StateOptions"))
 	FName StartState;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, UStateNode*> SharedNodes;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FAliasData> Aliases;
 
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true"))
 	TArray<FName> StateList;
 
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
@@ -250,6 +239,7 @@ class CRABTOOLSUE5_API UStateMachine : public UObject
 	void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
 	bool HasEventVariable(FName VName);
 	FName GetEventVarName(FName EName);
+	void InitFromArchetype();
 
 public:
 
@@ -271,16 +261,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", 
-		meta = (ExpandEnumAsExecs = "Branches"))	
-	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
-	virtual UStateNode* FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine", 
-		meta=(ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByArray(const TArray<FString>& Path, ESearchResult& Branches);
-	virtual UStateNode* FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
@@ -313,8 +293,6 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
-	virtual void PostCDOContruct() override;
 	
 	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
 
@@ -367,5 +345,52 @@ public:
 
 	// Procedural constructions functions.
 	void AddState(FName StateName);
+	void ClearStates() { this->Graph.Empty(); }
+	template <class T> T* AddStateWithNode(FName StateName)
+	{
+		auto Node = NewObject<T>(this);
+		FStateData SData;
 
+		SData.Node = Node;
+		this->Graph.Add(StateName, SData);
+
+		return Node;
+	}
+
+	void AddStateWithNode(FName StateName, UStateNode* Node)
+	{
+		FStateData Data;
+		Data.Node = Cast<UStateNode>(DuplicateObject(Node, this));
+		this->Graph.Add(StateName, Data);
+	}
+
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
+	void PrintTestData()
+	{
+		size_t Ptr = reinterpret_cast<size_t>(this);
+		UE_LOG(LogTemp, Warning, TEXT("Printing for %s : %d"), *this->GetClass()->GetFName().ToString(), Ptr);
+		for (auto Data : this->Graph)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("State Found: %s"), *Data.Key.ToString());
+			if (Data.Value.Node)
+			{
+				Ptr = reinterpret_cast<size_t>(Data.Value.Node.Get());
+				UE_LOG(LogTemp, Warning, 
+					TEXT("-- Node ( %s ) Found: %d"), *Data.Value.Node->GetClass()->GetFName().ToString(), Ptr);
+
+				Ptr = reinterpret_cast<size_t>(Data.Value.Node.Get()->GetOuter());
+				UE_LOG(LogTemp, Warning,
+					TEXT("--Outer ( %s ) Found: %d"), *Data.Value.Node->GetOuter()->GetClass()->GetFName().ToString(), Ptr);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("-- Node was null."));
+			}
+
+			UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
+		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
+	}	
 };

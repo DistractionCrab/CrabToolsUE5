@@ -1,10 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "StateMachine/HierarchyNode.h"
 
 void UHierarchyNode::Initialize_Implementation(UStateMachine* POwner) {
-	UStateNode::Initialize(POwner);
+	UStateNode::Initialize_Implementation(POwner);
 
 	if (this->MachineClass.Get() != nullptr) {
 		this->SubMachine = NewObject<UStateMachine>(

@@ -35,7 +35,7 @@ public:
 private:
 
 	/** The temporary variable that captures and reinstances components after compiling finishes. */
-	TComponentReregisterContext<UStateMachineComponent>* ReRegister;
+	//TComponentReregisterContext<UStateMachineComponent>* ReRegister;
 
 	/**
 	* The current count on the number of compiles that have occurred.  We don't want to re-register components until all
@@ -118,17 +118,5 @@ public:
 
 protected:
 
-	UStateMachineBlueprintGeneratedClass* NewStateMachineBlueprintClass;
-	//UWidgetGraphSchema* WidgetSchema;
-
-	/*
-	// Map of properties created for widgets; to aid in debug data generation
-	TMap<UWidget*, FProperty*> WidgetToMemberVariableMap;
-
-	// Map of properties created in parent widget for bind widget validation
-	TMap<UWidget*, FProperty*> ParentWidgetToBindWidgetMap;
-
-	// Map of properties created for widget animations; to aid in debug data generation
-	TMap<UWidgetAnimation*, FProperty*> WidgetAnimToMemberVariableMap;
-	*/
+	TObjectPtr<UStateMachineBlueprintGeneratedClass> NewStateMachineBlueprintClass;
 };

@@ -18,9 +18,9 @@ class CRABTOOLSUE5_API UStateMachineComponent : public UActorComponent
 	UPROPERTY(EditAnywhere, Category = "StateMachine")
 	TSubclassOf<UStateMachine> MachineClass;
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "StateMachine", 
-		meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "StateMachine", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStateMachine> Machine;
+
 	// Cache of State Change Listeners to add to the machine when it is initiated.
 	TArray<FStateChangeDispatcher> StateChangeListenerCache;
 
@@ -48,9 +48,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(ExpandEnumAsExecs="Branches"))
 	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
-
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNodeByPath(const FString& Path, ESearchResult& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);

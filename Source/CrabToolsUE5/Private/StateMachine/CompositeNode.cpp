@@ -94,31 +94,6 @@ void UCompositeNode::ExitWithData_Implementation(UObject* Data) {
 	}
 }
 
-UStateNode* UCompositeNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
-	if (Path.Num() == 0) {
-		Branches = ESearchResult::NotFound;
-		return nullptr;
-	}
-	else {
-		FName Name(Path.Last());
-		if (this->Nodes.Contains(Name)) {
-			if (Path.Num() == 1) {
-				Branches = ESearchResult::Found;
-				return this->Nodes[Name];
-			}
-			else {
-				TArray<FString> Tail(Path);
-				Tail.Pop();
-				return this->Nodes[Name]->FindNodeByArray(Tail, Branches);
-			}
-		}
-		else {
-			Branches = ESearchResult::NotFound;
-			return nullptr;
-		}
-	}
-}
-
 UStateNode* UCompositeNode::Substitute(FName SlotName, UStateNode* Node) {
 	for (auto& Pair : this->Nodes) {
 		this->Nodes[Pair.Key] = Pair.Value->Substitute(SlotName, Node);

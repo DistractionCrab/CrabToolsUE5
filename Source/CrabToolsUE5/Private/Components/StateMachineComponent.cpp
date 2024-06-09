@@ -19,14 +19,16 @@ void UStateMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	if (this->MachineClass.Get() != nullptr) {
-		if (this->Machine != nullptr) {
-			this->Machine = NewObject<UStateMachine>(
+		if (this->Machine == nullptr) {
+			/*this->Machine = NewObject<UStateMachine>(
 				this,
 				this->MachineClass,
 				NAME_None,
 				RF_NoFlags,
 				this->MachineClass.GetDefaultObject(),
 				true);
+			*/
+			this->Machine = NewObject<UStateMachine>(this, this->MachineClass);
 		}		
 
 		for (auto const& l : this->StateChangeListenerCache) {
@@ -34,6 +36,10 @@ void UStateMachineComponent::BeginPlay()
 		}
 
 		this->StateChangeListenerCache.Empty();
+	}
+
+	if (this->Machine)
+	{		
 		this->Machine->Initialize_Internal(this->GetOwner());
 	}
 }
@@ -71,17 +77,6 @@ UStateNode* UStateMachineComponent::FindNode(FName NodeName, ESearchResult& Bran
 		return nullptr;
 	}
 }
-
-UStateNode* UStateMachineComponent::FindNodeByPath(const FString& Path, ESearchResult& Branches) {
-	if (this->HasMachine()) {
-		return this->Machine->FindNodeByPath(Path, Branches);
-	}
-	else {
-		Branches = ESearchResult::NotFound;
-		return nullptr;
-	}
-}
-
 
 void UStateMachineComponent::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	if (this->HasMachine()) {

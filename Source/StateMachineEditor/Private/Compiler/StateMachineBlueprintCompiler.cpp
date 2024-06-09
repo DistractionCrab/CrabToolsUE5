@@ -2,6 +2,9 @@
 #include "Components/StateMachineComponent.h"
 #include "Components/SlateWrapperTypes.h"
 #include "Blueprint/UserWidget.h"
+#include "StateMachine/CompositeNode.h"
+#include "StateMachine/StateMachine.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 
 #include "K2Node_FunctionEntry.h"
@@ -78,8 +81,8 @@ UStateMachineBlueprintGeneratedClass* FStateMachineBlueprintCompilerContext::FCr
 //////////////////////////////////////////////////////////////////////////
 // FStateMachineBlueprintCompiler
 FStateMachineBlueprintCompiler::FStateMachineBlueprintCompiler()
-	: ReRegister(nullptr)
-	, CompileCount(0)
+	: //ReRegister(nullptr)
+	 CompileCount(0)
 {
 
 }
@@ -91,8 +94,8 @@ bool FStateMachineBlueprintCompiler::CanCompile(const UBlueprint* Blueprint)
 
 void FStateMachineBlueprintCompiler::PreCompile(UBlueprint* Blueprint, const FKismetCompilerOptions& CompileOptions)
 {
-	if (ReRegister == nullptr
-		&& CanCompile(Blueprint)
+	if (//ReRegister == nullptr
+		CanCompile(Blueprint)
 		&& CompileOptions.CompileType == EKismetCompileType::Full)
 	{
 		//ReRegister = new TComponentReregisterContext<UStateMachineComponent>();
@@ -115,10 +118,10 @@ void FStateMachineBlueprintCompiler::PostCompile(UBlueprint* Blueprint, const FK
 {
 	CompileCount--;
 
-	if (CompileCount == 0 && ReRegister)
+	if (CompileCount == 0)// && ReRegister)
 	{
-		delete ReRegister;
-		ReRegister = nullptr;
+		//delete ReRegister;
+		//ReRegister = nullptr;
 
 		if (GIsEditor && GEditor)
 		{
@@ -192,6 +195,11 @@ void FStateMachineBlueprintCompilerContext::ValidateStateMachineNames()
 void FStateMachineBlueprintCompilerContext::CleanAndSanitizeClass(UBlueprintGeneratedClass* ClassToClean, UObject*& InOutOldCDO)
 {
 	Super::CleanAndSanitizeClass(ClassToClean, InOutOldCDO);
+
+	if (auto StateMachine = Cast<UStateMachine>(InOutOldCDO))
+	{
+		StateMachine->ClearStates();
+	}
 }
 
 void FStateMachineBlueprintCompilerContext::SaveSubObjectsFromCleanAndSanitizeClass(FSubobjectCollection& SubObjectsToSave, UBlueprintGeneratedClass* ClassToClean)
@@ -222,7 +230,16 @@ void FStateMachineBlueprintCompilerContext::CreateClassVariablesFromBlueprint()
 
 void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObject* DefaultObject)
 {
+	
+	Super::CopyTermDefaultsToDefaultObject(DefaultObject);
 
+	if (this->bIsFullCompile)
+	{
+		if (auto StateMachine = Cast<UStateMachine>(DefaultObject))
+		{
+			StateMachine->ClearStates();
+		}
+	}
 }
 
 
@@ -248,6 +265,14 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 	if (BPGClass == nullptr)
 		return;
 
+	if (this->bIsFullCompile && !bIsSkeletonOnly)
+	{
+		if (auto SMBP = this->StateMachineBlueprint())
+		{			
+			BPGClass->StateMachineArchetype = SMBP->StateMachineGraph()->GenerateStateMachine(BPGClass);
+		}
+		
+	}
 
 	Super::FinishCompilingClass(Class);
 }
@@ -259,12 +284,6 @@ void FStateMachineBlueprintCompilerContext::OnPostCDOCompiled(const UObject::FPo
 	if (Context.bIsSkeletonOnly)
 	{
 		return;
-	}
-
-	if (auto SMPtr = Cast<UStateMachine>(NewClass->GetArchetypeForCDO()))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Archetype CDO returned successfully?"));
-		//SMPtr->AddState("TestState");
 	}
 }
 

@@ -4,6 +4,7 @@
 #include "Algo/Reverse.h"
 #include "EdGraphSchema_K2.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 
 namespace Constants {
 
@@ -13,6 +14,7 @@ namespace Constants {
 
 void UStateMachine::Initialize_Internal(AActor* POwner) {
 	this->Owner = POwner;
+	this->InitFromArchetype();
 	//this->CurrentStateName = this->StartState;
 	this->Initialize(POwner);
 
@@ -47,6 +49,7 @@ void UStateMachine::Initialize_Internal(AActor* POwner) {
 		}
 	}
 
+	
 	for (auto& pair : this->Graph) {
 		auto& StateName = pair.Key;
 		auto& StateData = pair.Value;
@@ -116,6 +119,7 @@ void UStateMachine::AddState(FName StateName)
 {
 	this->Graph.Add(StateName, FStateData());
 }
+
 
 void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
@@ -221,14 +225,42 @@ void UStateMachine::EventWithData(FName EName, UObject* Data) {
 UStateNode* UStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
 	if (this->Graph.Contains(NodeName)) {		
 		auto Node = this->Graph[NodeName].Node;
-		if (Node) {
+		UE_LOG(LogTemp, Warning, TEXT("Contains the state, but node????"));
+
+		if (Node) 
+		{
 			Branches = ESearchResult::Found;
-		} else {
+		} 
+		else 
+		{
+			UE_LOG(LogTemp, Warning, TEXT("State found, but node was null...????"));
 			Branches = ESearchResult::NotFound;
+
+			auto DefObj = Cast<UStateMachine>(this->GetClass()->GetDefaultObject());
+
+			if (DefObj)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Looping through default Object"));
+				for (auto StateData : DefObj->Graph)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("-- StateName: %s"), *StateData.Key.ToString());
+					if (StateData.Value.Node)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("-- Default Object had a node."));
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("-- Default Object did not have a node."));
+					}
+					
+				}
+			}
 		}
+
 		return Node;
 	}
-	else {
+	else 
+	{
 		Branches = ESearchResult::NotFound;
 		return nullptr;
 	}
@@ -307,14 +339,29 @@ void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 	Super::PostEditChangeChainProperty(e);
 }
 
-void UStateMachine::PostCDOCompiled(const FPostCDOCompiledContext& Context) {
-	Super::PostCDOCompiled(Context);
+void UStateMachine::InitFromArchetype()
+{	
+	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass()))
+	{
+		if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(BlueprintAsset->GeneratedClass))
+		{
+			if (BMBPG->StateMachineArchetype)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Attemping to copy BP graph to here."));
 
-	//this->ValidateEventProps();
-}
+				for (auto State : BMBPG->StateMachineArchetype->Graph)
+				{
+					if (!this->Graph.Contains(State.Key))
+					{
+						FStateData Data;
+						Data.Node = DuplicateObject(State.Value.Node, this);
 
-void UStateMachine::PostCDOContruct() {
-	Super::PostCDOContruct();	
+						this->Graph.Add(State.Key, Data);
+					}
+				}
+			}
+		}
+	}
 }
 
 /* Simply iterates through the graph and rebinds condition callbacks. */
@@ -361,40 +408,6 @@ FName UStateMachine::GetStateName(UStateNode* Node) {
 	}
 
 	return Found;
-}
-
-UStateNode* UStateMachine::FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches) {
-	TArray<FString> PathList;
-
-	Path.ParseIntoArray(PathList, TEXT("/"), true);
-	Algo::Reverse(PathList);
-
-	return this->FindNodeByArray(PathList, Branches);
-}
-
-UStateNode* UStateMachine::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
-	if (Path.Num() == 0) {
-		Branches = ESearchResult::NotFound;
-		return nullptr;
-	}
-	else {
-		FName Name(Path.Last());
-		if (this->Graph.Contains(Name)) {
-			if (Path.Num() == 1) {
-				Branches = ESearchResult::Found;
-				return this->Graph[Name].Node;
-			}
-			else {
-				TArray<FString> Tail(Path);
-				Tail.Pop();
-				return this->Graph[Name].Node->FindNodeByArray(Tail, Branches);
-			}			
-		}
-		else {
-			Branches = ESearchResult::NotFound;
-			return nullptr;
-		}
-	}
 }
 
 FName UStateMachine::GetCurrentStateName() {
@@ -639,16 +652,6 @@ void UStateNode::EventWithData_Implementation(FName EName, UObject* Data) {
 
 void UStateNode::SetOwner(UStateMachine* Parent) {
 	this->Owner = Parent;
-}
-
-UStateNode* UStateNode::FindNodeByPath_Implementation(const FString& Path, ESearchResult& Branches) {
-	TArray<FString> PathList;
-	Path.ParseIntoArray(PathList, TEXT("/"), true);
-	return this->FindNodeByArray(PathList, Branches);
-}
-
-UStateNode* UStateNode::FindNodeByArray_Implementation(const TArray<FString>& Path, ESearchResult& Branches) {
-	return nullptr;
 }
 
 FName UStateNode::GetStateName() {

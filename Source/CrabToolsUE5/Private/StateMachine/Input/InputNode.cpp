@@ -6,6 +6,8 @@ void UInputNode::Initialize_Implementation(UStateMachine* POwner) {
 
 	this->PawnOwner = Cast<APawn>(POwner->GetOwner());
 
+	if (!this->Action) { return; }
+
 	if (this->PawnOwner.IsValid()) {
 		UEnhancedInputComponent* Eic = CastChecked<UEnhancedInputComponent>(this->PawnOwner->InputComponent);
 		

@@ -7,9 +7,15 @@
 
 #include "StateMachineBlueprintGeneratedClass.generated.h"
 
+class UStateMachine;
+
 UCLASS(MinimalAPI)
 class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient)
+	TObjectPtr<UStateMachine> StateMachineArchetype;
 
 };

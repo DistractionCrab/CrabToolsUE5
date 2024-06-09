@@ -133,3 +133,30 @@ FName UEdStateGraph::RenameEvent(UEdEventObject* EventObj, FName To)
 		return EventObj->GetName();
 	}
 }
+
+TArray<TObjectPtr<UEdStateNode>> UEdStateGraph::GetStates()
+{
+	TArray<TObjectPtr<UEdStateNode>> StateNodes;
+
+	for (auto Node : this->Nodes)
+	{
+		if (auto StateNode = Cast<UEdStateNode>(Node))
+		{
+			StateNodes.Add(StateNode);
+		}
+	}
+
+	return StateNodes;
+}
+
+UStateMachine* UEdStateGraph::GenerateStateMachine(UObject* Outer)
+{
+	auto StateMachine = NewObject<UStateMachine>(Outer);
+
+	for (auto State : this->GetStates())
+	{
+		StateMachine->AddStateWithNode(State->GetStateName(), State->GetCompiledNode());
+	}
+
+	return StateMachine;
+}

@@ -54,4 +54,8 @@ public:
 	{ 
 		return this->EventObjects; 
 	}
+
+	TArray<TObjectPtr<class UEdStateNode>> GetStates();
+
+	UStateMachine* GenerateStateMachine(UObject* Outer);
 };

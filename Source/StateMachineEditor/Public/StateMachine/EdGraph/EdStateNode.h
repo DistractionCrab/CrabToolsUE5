@@ -41,4 +41,8 @@ public:
 	virtual FName GetStateName() const override { return this->StateName; }
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
+
+	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
+
+	UStateNode* GetCompiledNode();
 };
