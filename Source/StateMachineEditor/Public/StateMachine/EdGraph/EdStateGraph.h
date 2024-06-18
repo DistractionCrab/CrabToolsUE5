@@ -7,6 +7,8 @@
 #include "EdStateGraph.generated.h"
 
 class UEdEventObject;
+class UEdBaseNode;
+class UEdStartStateNode;
 
 class FGraphActionEvents
 {
@@ -56,6 +58,8 @@ public:
 	}
 
 	TArray<TObjectPtr<class UEdStateNode>> GetStates();
-
 	UStateMachine* GenerateStateMachine(UObject* Outer);
+	FName GetStartStateName();
+	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
+	UEdStartStateNode* GetStartNode() const;
 };

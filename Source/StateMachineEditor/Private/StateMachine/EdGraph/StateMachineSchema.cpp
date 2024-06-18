@@ -183,10 +183,6 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 			if (It->GetName().StartsWith("REINST") || It->GetName().StartsWith("SKEL"))
 				continue;
 
-			//if (!Graph->GetClass()->IsChildOf(NodeType.GetDefaultObject()->CompatibleGraphType))
-			//	continue;
-
-			//FText Desc = FText::FromString(NodeType->GetDefaultObjectName().ToString());
 			FString Title = NodeType->GetName();
 			Title.RemoveFromEnd("_C");
 			FText Desc = FText::FromString(Title);
@@ -199,7 +195,6 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 
 			Action->SetNodeTemplate(NewObject<UEdStateNode>(ContextMenuBuilder.OwnerOfTemporaries));
 
-			//Action->NodeTemplate->GenericGraphNode->Graph = Graph;
 			ContextMenuBuilder.AddAction(Action);
 
 			Visited.Add(NodeType);
@@ -261,14 +256,44 @@ const FPinConnectionResponse UStateMachineSchema::CanCreateConnection(const UEdG
 	UEdBaseStateNode* EdNode_Out = Cast<UEdBaseStateNode>(Out->GetOwningNode());
 	UEdBaseStateNode* EdNode_In = Cast<UEdBaseStateNode>(In->GetOwningNode());
 
+	auto EdGraph = Cast<UEdStateGraph>(Out->GetOwningNode()->GetGraph());
+	check(EdGraph);
+
 	if (EdNode_Out == nullptr || EdNode_In == nullptr)
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UGenericGraphEdNode"));
+		return FPinConnectionResponse(
+			CONNECT_RESPONSE_DISALLOW, 
+			LOCTEXT("PinError", "Invalid Node Connection."));
+	}
+	else if (auto StartNode = Cast<UEdStartStateNode>(EdNode_Out))
+	{
+		auto Destinations = EdGraph->GetDestinations(EdNode_Out);
+
+		if (Destinations.Num() > 0)
+		{
+			return FPinConnectionResponse(
+				CONNECT_RESPONSE_DISALLOW, 
+				LOCTEXT("PinError", "Cannot link Start State to multiple other nodes."));
+		}
+		else
+		{
+			return FPinConnectionResponse(
+				CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, 
+				LOCTEXT("PinConnect", "Connect nodes with edge"));
+		}
+	}
+	else if (Cast<UEdStartStateNode>(EdNode_In))
+	{
+		return FPinConnectionResponse(
+			CONNECT_RESPONSE_DISALLOW, 
+			LOCTEXT("PinError", "Cannot connect to the StartNode as a Destination."));
 	}
 
-	auto EdGraph = Cast<UEdStateGraph>(Out->GetOwningNode()->GetGraph());
+	
 
-	return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
+	return FPinConnectionResponse(
+		CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, 
+		LOCTEXT("PinConnect", "Connect nodes with edge"));
 }
 
 bool UStateMachineSchema::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const

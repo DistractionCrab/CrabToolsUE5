@@ -1,6 +1,9 @@
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
+#include "StateMachine/EdGraph/EdBaseNode.h"
+#include "StateMachine/EdGraph/EdStartStateNode.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 
 #define DEFAULT_NODE_NAME "NewState"
 #define DEFAULT_EVENT_NAME "NewEvent"
@@ -36,6 +39,56 @@ FName UEdStateGraph::GetNewStateName()
 	DefaultName.AppendInt(index);
 
 	return FName(DefaultName);
+}
+
+UEdStartStateNode* UEdStateGraph::GetStartNode() const
+{
+	TArray<UEdStartStateNode*> PossibleStarts;
+	this->GetNodesOfClass<UEdStartStateNode>(PossibleStarts);
+
+	// Should never be null.
+	return PossibleStarts[0];
+}
+
+TArray<UEdBaseNode*> UEdStateGraph::GetDestinations(UEdBaseNode* Node) const
+{
+	TArray<UEdBaseNode*> Destinations;
+
+	TArray<UEdTransition*> Transitions;
+	this->GetNodesOfClass<UEdTransition>(Transitions);
+
+	for (auto Trans : Transitions)
+	{
+		if (Trans->GetStartNode() == Node)
+		{
+			Destinations.Add(Trans->GetEndNode());
+		}
+	}
+
+	return Destinations;
+}
+
+FName UEdStateGraph::GetStartStateName()
+{
+	TArray<UEdTransition*> Transitions;
+	this->GetNodesOfClass<UEdTransition>(Transitions);
+
+	for (auto Trans : Transitions)
+	{
+		if (auto Start = Cast<UEdStartStateNode>(Trans->GetStartNode()))
+		{
+			if (auto Dest = Cast<UEdStateNode>(Trans->GetEndNode()))
+			{
+				return Dest->GetStateName();
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Destination from Start node was a state node."));
+			}
+		}
+	}
+
+	return NAME_None;
 }
 
 bool UEdStateGraph::IsStateNameAvilable(FName Name) const
@@ -157,6 +210,8 @@ UStateMachine* UEdStateGraph::GenerateStateMachine(UObject* Outer)
 	{
 		StateMachine->AddStateWithNode(State->GetStateName(), State->GetCompiledNode());
 	}
+
+	StateMachine->StartState = this->GetStartStateName();
 
 	return StateMachine;
 }

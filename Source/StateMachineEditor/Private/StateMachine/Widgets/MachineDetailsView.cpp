@@ -52,7 +52,7 @@ void SMachineDetailsView::AddReferencedObjects(FReferenceCollector& Collector)
 
 void SMachineDetailsView::OnSelectionChanged(TArray<class UEdGraphNode*>& SelectedNodes)
 {
-	if (SelectedNodes.Num() == 1)
+	if (SelectedNodes.Num() == 1 && SelectedNodes[0])
 	{
 		Inspector->ShowDetailsForSingleObject(SelectedNodes[0]);
 	}

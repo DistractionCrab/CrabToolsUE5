@@ -15,7 +15,6 @@ class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient)
+	UPROPERTY()
 	TObjectPtr<UStateMachine> StateMachineArchetype;
-
 };

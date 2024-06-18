@@ -12,43 +12,16 @@ namespace Constants {
 
 #pragma region StateMachine Code
 
-void UStateMachine::Initialize_Internal(AActor* POwner) {
+void UStateMachine::Initialize_Internal(AActor* POwner)
+{
+	UE_LOG(LogTemp, Warning, TEXT("StateMachine Outer: %s"), *this->GetOuter()->GetClass()->GetFName().ToString());
 	this->Owner = POwner;
 	this->InitFromArchetype();
-	//this->CurrentStateName = this->StartState;
 	this->Initialize(POwner);
 
 	for (auto& Pair : this->SharedNodes) {
 		this->Substitute(Pair.Key, Pair.Value);
 	}
-
-	// Now setup the inverse alias map.
-	for (const auto& pair : this->Aliases) {
-		for (const auto& StateName : pair.Value.States) {
-			auto Data = this->Graph.Find(StateName);
-			if (Data == nullptr) {
-				// Shouldn't happen unless someone edited the aliases directly outside of the editor.
-				UE_LOGFMT(LogTemp, Error, "Alias refers to nonexistent state: Alias: {0}, State: {1}", pair.Key, StateName);
-			}
-			else {
-				for (const auto& Transitions : pair.Value.Transitions) {
-					if (Data->Transitions.Contains(Transitions.Key)) {
-						UE_LOGFMT(
-							LogTemp,
-							Error,
-							"Alias overwrites event transition for state: Alias: {0}, State: {1}, Event {2}",
-							pair.Key,
-							StateName,
-							Transitions.Key);
-					}
-					else {
-						Data->Transitions.Add(Transitions.Key, Transitions.Value);
-					}
-				}
-			}
-		}
-	}
-
 	
 	for (auto& pair : this->Graph) {
 		auto& StateName = pair.Key;
@@ -63,9 +36,7 @@ void UStateMachine::Initialize_Internal(AActor* POwner) {
 	this->UpdateState(this->StartState);
 }
 
-void UStateMachine::Initialize_Implementation(AActor* POwner) {
-	
-}
+void UStateMachine::Initialize_Implementation(AActor* POwner) {}
 
 UStateMachine* UStateNode::GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) {
 	auto Class = SClass.Get();
@@ -296,46 +267,8 @@ void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange) {
 	Super::PreEditChange(PropertyAboutToChange);
 }
 
-void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& e) {
-	
-	FName PropertyName = (e.Property != NULL) ? e.Property->GetFName() : NAME_None;
-
-	if (PropertyName == "Graph_Key") {
-		FName OldValue = NAME_None;
-		FName NewValue = NAME_None;
-
-		// First find the old value of what was changed.
-		for (const auto& Name : this->StateList) {
-			if (!this->Graph.Contains(Name)) {
-				OldValue = Name;
-				break;
-			}
-		}
-
-		// If an old value was found, save it and continue.
-		if (OldValue != NAME_None) {
-			// Find the value the old value was changed to and save it.
-			for (const auto& Node : this->Graph) {
-				if (!this->StateList.Contains(Node.Key)) {
-					NewValue = Node.Key;
-					break;
-				}
-			}
-
-			// Loop through aliases and remap state names in both what aliases refer to and what their
-			// transition destinations refer to.
-			for (auto& AliasNode : this->Aliases) {
-				AliasNode.Value.States.Remove(OldValue);
-				AliasNode.Value.States.Add(NewValue);
-
-				for (auto& TransNode : AliasNode.Value.Transitions) {
-					if (TransNode.Value.Destination == OldValue) {
-						TransNode.Value.Destination = NewValue;
-					}
-				}
-			}
-		}
-	}
+void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEvent& e)
+{
 	Super::PostEditChangeChainProperty(e);
 }
 
@@ -347,7 +280,7 @@ void UStateMachine::InitFromArchetype()
 		{
 			if (BMBPG->StateMachineArchetype)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Attemping to copy BP graph to here."));
+				this->StartState = BMBPG->StateMachineArchetype->StartState;
 
 				for (auto State : BMBPG->StateMachineArchetype->Graph)
 				{
@@ -379,21 +312,8 @@ void UStateMachine::RebindConditions() {
 	}
 }
 
-void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
-	FName PropertyName = (e.Property != NULL) ? e.Property->GetFName() : NAME_None;
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UStateMachine, Aliases)) {
-		
-	} else if (PropertyName == GET_MEMBER_NAME_CHECKED(UStateMachine, Graph)) {
-		this->StateList.Reset();
-		for (const auto& States : this->Graph) {
-			if (!this->StateList.Contains(States.Key)) {
-				this->StateList.Add(States.Key);
-			}
-		}
-	}
-
-
+void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e)
+{
     Super::PostEditChangeProperty(e);
 }
 

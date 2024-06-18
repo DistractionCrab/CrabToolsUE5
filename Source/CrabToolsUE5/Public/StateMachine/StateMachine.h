@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -91,7 +89,7 @@ public:
 /**
  *
  */
-UCLASS(Blueprintable, EditInlineNew, CollapseCategories, DisplayName="EmptyNode", 
+UCLASS(Abstract, Blueprintable, EditInlineNew, CollapseCategories, DisplayName="EmptyNode", 
 	Category = "StateMachine")
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
@@ -208,29 +206,23 @@ private:
 		}
 	} TRANSITION;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine", 
-		meta = (AllowPrivateAccess = "true", GetOptions = "StateOptions"))
-	FName StartState;
+	
 
+	/* The Graph of the state machine. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
 
+	/* Nodes to be substituted into the graph later. */
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, UStateNode*> SharedNodes;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine", 
-		meta = (AllowPrivateAccess = "true"))
-	TMap<FName, FAliasData> Aliases;
-
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
-		meta = (AllowPrivateAccess = "true"))
-	TArray<FName> StateList;
-
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
+
+	UPROPERTY()
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
@@ -240,6 +232,12 @@ private:
 	bool HasEventVariable(FName VName);
 	FName GetEventVarName(FName EName);
 	void InitFromArchetype();
+
+public:
+
+	UPROPERTY(BlueprintReadOnly, Category = "StateMachine",
+		meta = (GetOptions = "StateOptions"))
+	FName StartState;
 
 public:
 
