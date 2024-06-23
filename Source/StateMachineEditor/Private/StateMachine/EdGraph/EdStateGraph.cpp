@@ -4,9 +4,33 @@
 #include "StateMachine/EdGraph/EdStartStateNode.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/EdGraph/EdTransition.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 #define DEFAULT_NODE_NAME "NewState"
 #define DEFAULT_EVENT_NAME "NewEvent"
+
+UEdStateGraph::UEdStateGraph()
+{
+
+}
+
+void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
+{
+	Super::NotifyGraphChanged(Action);
+
+	if (Action.Action & EEdGraphActionType::GRAPHACTION_AddNode)
+	{
+		for (auto Node : Action.Nodes)
+		{
+			UEdStateNode* CastNode = Cast<UEdStateNode>(const_cast<UEdGraphNode*>(Node));
+
+			if (CastNode)
+			{
+				this->Events.OnStateAdded.Broadcast(CastNode);
+			}			
+		}
+	}
+}
 
 FName UEdStateGraph::GetNewStateName()
 {
@@ -112,7 +136,6 @@ void UEdStateGraph::ClearDelegates()
 {
 	this->Events.OnNodeSelected.Clear();
 	this->Events.OnEventCreated.Clear();
-	this->Events.OnObjectInspected.Clear();
 
 	for (auto Node : this->Nodes)
 	{
@@ -214,4 +237,29 @@ UStateMachine* UEdStateGraph::GenerateStateMachine(UObject* Outer)
 	StateMachine->StartState = this->GetStartStateName();
 
 	return StateMachine;
+}
+
+bool UEdStateGraph::IsMainGraph()
+{
+	if (auto BP = this->GetBlueprintOwner())
+	{
+		return BP->IsMainGraph(this);
+	}
+
+	return false;
+}
+
+UStateMachineBlueprint* UEdStateGraph::GetBlueprintOwner()
+{
+	return Cast<UStateMachineBlueprint>(this->GetOuter());
+}
+
+void UEdStateGraph::Select()
+{
+	this->GetBlueprintOwner()->SelectGraph(this);
+}
+
+void UEdStateGraph::Inspect()
+{
+	this->GetBlueprintOwner()->Events.OnObjectInspected.Broadcast(this);
 }

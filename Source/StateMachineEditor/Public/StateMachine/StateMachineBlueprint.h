@@ -6,6 +6,17 @@
 
 #include "StateMachineBlueprint.generated.h"
 
+class FStateMachineBlueprintEditorEvents
+{
+public:
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FGraphSelected, UEdStateGraph*)
+	FGraphSelected OnGraphSelected;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FObjectInspected, UObject* Obj)
+	FObjectInspected OnObjectInspected;
+};
+
 UCLASS(BlueprintType)
 class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint
 {
@@ -13,11 +24,29 @@ class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint
 
 private:
 	UPROPERTY()
-	class UEdStateGraph* EdGraph;
+	class UEdStateGraph* MainGraph;
+	
+	UPROPERTY()
+	TArray<class UEdStateGraph*> SubGraphs;
 
 public:
+
+	FStateMachineBlueprintEditorEvents Events;
+
+public:
+	void SelectGraph(UEdStateGraph* Graph);
 	UClass* GetBlueprintClass() const override;
 	virtual bool SupportsInputEvents() const override;
 
-	UEdStateGraph* StateMachineGraph() ;
+	UEdStateGraph* GetMainGraph();
+	UEdStateGraph* AddSubGraph();
+
+	bool IsMainGraph(UEdStateGraph* Graph);
+	void RenameGraph(UEdStateGraph* Graph, FName Name);
+	const TArray<class UEdStateGraph*>& GetSubgraphs() { return this->SubGraphs; }
+
+private:
+
+	void InspectObject(UObject* Obj);
+	FName GetNewGraphName();
 };

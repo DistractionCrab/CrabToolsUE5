@@ -4,11 +4,13 @@
 #include "SGraphNode.h"
 #include "EdGraph/EdGraph.h"
 #include "StateMachine/StateMachine.h"
+#include "GraphEditAction.h"
 #include "EdStateGraph.generated.h"
 
 class UEdEventObject;
 class UEdBaseNode;
 class UEdStartStateNode;
+class UEdStateNode;
 
 class FGraphActionEvents
 {
@@ -17,11 +19,17 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdGraphNode*>&)
 	FNodeSelected OnNodeSelected;
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FObjectInspected, UObject* Obj)
-	FObjectInspected OnObjectInspected;
-
 	DECLARE_MULTICAST_DELEGATE_OneParam(FEventCreated, UEdEventObject*)
 	FEventCreated OnEventCreated;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FNameChanged, FName)
+	FNameChanged OnNameChanged;
+
+	DECLARE_MULTICAST_DELEGATE(FGraphDeleted)
+	FGraphDeleted OnGraphDeleted;
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FStateAdded, UEdStateNode*)
+	FStateAdded OnStateAdded;
 };
 
 UCLASS(MinimalAPI)
@@ -41,7 +49,7 @@ public:
 
 public:
 
-	UEdStateGraph() {}
+	UEdStateGraph();
 	virtual ~UEdStateGraph() {}
 
 	FName GetNewStateName();
@@ -49,6 +57,7 @@ public:
 	bool IsEventNameAvilable(FName Name) const;
 	FName RenameEvent(UEdEventObject* EventObj, FName To);
 	void ClearDelegates();
+	void Select();
 
 	UEdEventObject* CreateEvent();
 
@@ -62,4 +71,11 @@ public:
 	FName GetStartStateName();
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
 	UEdStartStateNode* GetStartNode() const;
+
+	void Inspect();
+
+	bool IsMainGraph();
+	class UStateMachineBlueprint* GetBlueprintOwner();
+
+	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 };

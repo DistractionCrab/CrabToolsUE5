@@ -2,44 +2,56 @@
 #include "StateMachine/Widgets/Nodes/EdStateNodeFactory.h"
 #include "StateMachine/StateMachineBlueprint.h"
 
+#include "Widgets/Layout/SWidgetSwitcher.h"
+
 #define LOCTEXT_NAMESPACE "SGraphView"
 
 void SGraphView::Construct(
 	const FArguments& InArgs,
-	TSharedPtr<class FEditor> InBlueprintEditor) 
+	TSharedPtr<class FEditor> InBlueprintEditor)
 {
-	//SGraphEditor::Construct(InArgs);
 	FGraphAppearanceInfo AppInfo;
-	//AppInfo.CornerText = LOCTEXT("AppearanceCornerText_StateMachine", "State Machine Graph");
 	
 	if (auto BP = Cast<UStateMachineBlueprint>(InBlueprintEditor->GetBlueprintObj())) {		
+		auto Graph = BP->GetMainGraph();
 		
 		SGraphEditor::FGraphEditorEvents InEvents;
-
-		/*
-		InEvents.OnSelectionChanged
-			= SGraphEditor::FOnSelectionChanged::CreateLambda([] (
-				const TSet<class UObject*>& NewSelection)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Selected objects?"));
-				});
-		*/
 
 		InEvents.OnSelectionChanged.BindRaw(this, &SGraphView::OnSelectionChanged);
 
 		ChildSlot
 		[
-			SAssignNew(GraphEditor, SGraphEditor)
-				.IsEditable(true)
-				.Appearance(AppInfo)
-				.GraphToEdit(BP->StateMachineGraph())
-				.GraphEvents(InEvents)			
+			SAssignNew(TabsWidget, SWidgetSwitcher)
+			+ SWidgetSwitcher::Slot()
+			[
+				SAssignNew(GraphEditor, SGraphEditor)
+					.IsEditable(true)
+					.Appearance(AppInfo)
+					.GraphToEdit(Graph)
+					.GraphEvents(InEvents)
+			]
 		];
+
+		this->GraphToEditorMap.Add(Graph, this->GraphEditor);
+		this->TabsWidget->SetActiveWidget(this->GraphEditor.ToSharedRef());
+
+		this->BindEvents(BP);
 	}
 }
 
-void SGraphView::AddReferencedObjects(FReferenceCollector& Collector) {
+void SGraphView::AddReferencedObjects(FReferenceCollector& Collector)
+{
 
+}
+
+void SGraphView::BindEvents(UStateMachineBlueprint* Blueprint)
+{
+	Blueprint->Events.OnGraphSelected.AddSP(this, &SGraphView::OnGraphSelected);
+}
+
+void SGraphView::OnGraphSelected(UEdStateGraph* Graph)
+{
+	
 }
 
 void SGraphView::OnSelectionChanged(const TSet<UObject*>& NewSelection)

@@ -269,7 +269,7 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 	{
 		if (auto SMBP = this->StateMachineBlueprint())
 		{			
-			BPGClass->StateMachineArchetype = SMBP->StateMachineGraph()->GenerateStateMachine(BPGClass);
+			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(BPGClass);
 		}
 		
 	}

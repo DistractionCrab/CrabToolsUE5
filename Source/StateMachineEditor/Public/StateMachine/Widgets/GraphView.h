@@ -23,14 +23,6 @@
 class FMenuBuilder;
 class FScopedTransaction;
 class SBox;
-class SCanvas;
-class SPaintSurface;
-class SRuler;
-class SZoomPan;
-class UPanelWidget;
-class UWidgetBlueprint;
-class FHittestGrid;
-struct FOnPaintHandlerParams;
 struct FWidgetHitResult;
 class UWidgetEditingProjectSettings;
 
@@ -39,8 +31,10 @@ class STATEMACHINEEDITOR_API SGraphView : public SCompoundWidget, public FGCObje
 {
 
 private:
+
 	TSharedPtr<SGraphEditor> GraphEditor;
-	//TSharedPtr<SVerticalBox> StateList;
+	TSharedPtr<SWidgetSwitcher> TabsWidget;
+	TMap<TWeakObjectPtr<UEdGraph>, TSharedPtr<SGraphEditor>> GraphToEditorMap;
 
 public:
 	SLATE_BEGIN_ARGS( SGraphView ) {}
@@ -62,6 +56,8 @@ public:
 
 private:
 	void OnSelectionChanged(const TSet<class UObject*>& NewSelection);
+	void OnGraphSelected(UEdStateGraph* Graph);
+	void BindEvents(UStateMachineBlueprint* Blueprint);
 
 	//virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 };

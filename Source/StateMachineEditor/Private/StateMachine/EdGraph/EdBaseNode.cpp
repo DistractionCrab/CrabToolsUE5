@@ -1,12 +1,13 @@
 #include "StateMachine/EdGraph/EdBaseNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 
 void UEdBaseNode::Inspect()
 {
 	if (auto Graph = Cast<UEdStateGraph>(this->GetGraph()))
 	{
-		Graph->Events.OnObjectInspected.Broadcast(this);
+		Graph->GetBlueprintOwner()->Events.OnObjectInspected.Broadcast(this);
 	}
 }
 

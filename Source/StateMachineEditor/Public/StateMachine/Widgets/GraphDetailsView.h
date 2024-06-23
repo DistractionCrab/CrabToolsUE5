@@ -9,9 +9,12 @@
 #include "Widgets/Views/SExpanderArrow.h"
 #include "Widgets/Views/STableRow.h"
 #include "Widgets/Views/STreeView.h"
+#include "Widgets/Layout/SWidgetSwitcher.h"
 
 #include "StateMachine/Editor.h"
 
+class UStateMachineBlueprint;
+class UEdStateGraph;
 class UEdEventObject;
 class UEdTransition;
 class FGraphDetailsViewItem;
@@ -19,7 +22,7 @@ using TablePtr = TSharedPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>>;
 using TableWeakPtr = TWeakPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>>;
 
 /*Base object to be put into the tree view. Used to generate the widgest for the TreeView.*/
-class FGraphDetailsViewItem: public TSharedFromThis<FGraphDetailsViewItem>
+class FGraphDetailsViewItem : public TSharedFromThis<FGraphDetailsViewItem>
 {
 private:
 	TWeakPtr<FGraphDetailsViewItem> Parent;
@@ -33,27 +36,32 @@ public:
 		bool bIsReadOnly);
 
 	void GetChildren(TArray<TSharedPtr<FGraphDetailsViewItem>>& OutChildren) const;
-	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item);
+	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
 	void RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item);
 	void SetTableView(TableWeakPtr TableOwner);
 	TWeakPtr<FGraphDetailsViewItem> GetParent() const { return this->Parent; }
-
 	virtual void Select() {}
+	virtual void InitView() {}
 };
 
 class FHeaderItem : public FGraphDetailsViewItem
 {
 private:
+
 	FText HeaderText;
 
 public:
 	virtual ~FHeaderItem() {}
-	FHeaderItem(FText Text) : HeaderText(Text) {};
-	FHeaderItem(FString String) : HeaderText(FText::FromString(String)) {};
+	FHeaderItem(FText Text)
+		: HeaderText(Text) {}
+	FHeaderItem(FString String)
+		: HeaderText(FText::FromString(String)) {}
+
 	virtual TSharedRef<ITableRow> GetEntryWidget(
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly)
 		override;
+
 	FText GetHeaderText() const { return this->HeaderText; }
 };
 
@@ -61,13 +69,15 @@ public:
 class FCreateHeaderItem : public FHeaderItem
 {
 protected:
-	TWeakObjectPtr<UEdStateGraph> GraphReference;
+
+	TWeakObjectPtr<UEdStateGraph> GraphRef;
 
 public:
+
 	virtual ~FCreateHeaderItem() {}
-	FCreateHeaderItem(FText Text, TSharedPtr<class FEditor> InEditor);
-	FCreateHeaderItem(FString String, TSharedPtr<class FEditor> InEditor)
-		: FCreateHeaderItem(FText::FromString(String), InEditor) {}
+	FCreateHeaderItem(UEdStateGraph* Graph, FText Text);
+	FCreateHeaderItem(UEdStateGraph* Graph, FString String)
+		: FCreateHeaderItem(Graph, FText::FromString(String)) {}
 
 	virtual TSharedRef<ITableRow> GetEntryWidget(
 		const TSharedRef<STableViewBase>& OwnerTable,
@@ -78,14 +88,38 @@ public:
 	virtual FReply OnAddImplementation() {  return FReply::Handled(); }
 };
 
+/*
+class FStateMachineHeaderItem : public FHeaderItem
+{
+protected:
+
+	TWeakObjectPtr<UStateMachineBlueprint> BPRef;
+
+public:
+	FStateMachineHeaderItem(UStateMachineBlueprint* BP, FText Text);
+	FStateMachineHeaderItem(UStateMachineBlueprint* BP, FString Text)
+		: FStateMachineHeaderItem(BP, FText::FromString(Text))
+	{}
+
+	virtual TSharedRef<ITableRow> GetEntryWidget(
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly)
+		override;
+
+	virtual FReply OnAdd();
+};
+*/
+
 class FEventHeaderItem : public FCreateHeaderItem
 {
 	
 public:
-	FEventHeaderItem(FText Text, TSharedPtr<class FEditor> InEditor)
-		: FCreateHeaderItem(Text, InEditor)	{}
-	FEventHeaderItem(FString Text, TSharedPtr<class FEditor> InEditor)
-		: FCreateHeaderItem(Text, InEditor)	{}
+	
+	FEventHeaderItem(UEdStateGraph* Graph, FText Text)
+		: FCreateHeaderItem(Graph, Text) {}
+	FEventHeaderItem(UEdStateGraph* Graph, FString Text)
+		: FCreateHeaderItem(Graph, Text) {}
+	
 
 	virtual FReply OnAddImplementation() override;
 };
@@ -112,7 +146,48 @@ private:
 	void OnNameChanged(FName Name);
 	void OnNodeDeleted();
 
-	void Select() { this->NodeRef->Inspect(); }
+	void Select() override { this->NodeRef->Inspect(); }
+};
+
+class FStateMachineItem : public FGraphDetailsViewItem
+{
+private:
+	TWeakObjectPtr<UEdStateGraph> GraphRef;
+
+	TSharedPtr<FGraphDetailsViewItem> StateRoot;
+	TSharedPtr<FGraphDetailsViewItem> EventRoot;
+	TSharedPtr<FGraphDetailsViewItem> AliasRoot;
+	TSharedPtr<FGraphDetailsViewItem> StaticsRoot;
+
+	TSharedPtr<SInlineEditableTextBlock> InlineText;
+
+public:
+	virtual ~FStateMachineItem();
+	FStateMachineItem(UEdStateGraph* GraphPtr);
+
+	virtual TSharedRef<ITableRow> GetEntryWidget(
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly)
+		override;
+
+	void AddState(UEdStateNode* State, bool DeferRefresh);
+	void AddEvent(UEdEventObject* State, bool DeferRefresh);
+
+private:
+
+	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
+	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
+	void OnNameChanged(FName Name);
+	void OnNodeDeleted();
+	void OnEventCreated(UEdEventObject* Event, bool DeferRefresh);
+	void OnGraphChanged(const FEdGraphEditAction& Action);
+
+	void Select() override 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Selecting a Graph."));
+		this->GraphRef.Get()->Inspect();
+		this->GraphRef->Select();
+	}
 };
 
 class FEventItem : public FGraphDetailsViewItem
@@ -158,6 +233,53 @@ private:
 	void OnNodeDeleted();
 };
 
+/* Widget responsible for listing the details of individual state machines. */
+class STATEMACHINEEDITOR_API SSubGraphDetails
+: public SCompoundWidget, public FGCObject
+{
+private:
+	TablePtr TreeView;
+
+	TSharedPtr<FGraphDetailsViewItem> StateRoot;
+	TSharedPtr<FGraphDetailsViewItem> EventRoot;
+	TSharedPtr<FGraphDetailsViewItem> AliasRoot;
+	TSharedPtr<FGraphDetailsViewItem> StaticsRoot;
+
+	// TreeView array.
+	TArray<TSharedPtr<FGraphDetailsViewItem>> TreeViewList;
+
+	SLATE_BEGIN_ARGS(SSubGraphDetails) {}
+	SLATE_END_ARGS()
+
+public:
+	void Construct(const FArguments& InArgs, UEdStateGraph* GraphPtr);
+
+	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	virtual FString GetReferencerName() const override
+	{
+		return TEXT("SSubGraphDetails");
+	}
+
+	void AddState(UEdStateNode* Node, bool DeferRefresh);
+
+	void Refresh() { this->TreeView->RequestListRefresh(); }
+
+private:
+	void OnItemSelected(TSharedPtr< FGraphDetailsViewItem > InSelectedItem, ESelectInfo::Type SelectInfo) {}
+	void OnItemDoubleClicked(TSharedPtr< FGraphDetailsViewItem > InClickedItem) {}
+	void OnGetChildrenForCategory(TSharedPtr<FGraphDetailsViewItem> InItem, TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren);
+	void OnItemScrolledIntoView(TSharedPtr<FGraphDetailsViewItem> InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
+	void OnSetExpansionRecursive(TSharedPtr<FGraphDetailsViewItem> InTreeNode, bool bInIsItemExpanded) {}
+	TSharedRef<ITableRow> OnGenerateRow(
+		TSharedPtr<FGraphDetailsViewItem> InItem,
+		const TSharedRef<STableViewBase>& OwnerTable,
+		bool bIsReadOnly);
+
+	void OnSelectionChanged(
+		TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+		ESelectInfo::Type SelectInfo);
+};
+
 /**
  * The tab which shows an overview of the State Machine graph, such as
  * Edges, Nodes, Events, or Aliases.
@@ -170,10 +292,8 @@ private:
 	TSharedPtr<class SSearchBox> FilterBox;
 	TablePtr TreeView;
 	TArray<TSharedPtr<FGraphDetailsViewItem>> TreeViewList;
-	TSharedPtr<FGraphDetailsViewItem> StateRoot;
-	TSharedPtr<FGraphDetailsViewItem> EventRoot;
-	TSharedPtr<FGraphDetailsViewItem> AliasRoot;
-	TSharedPtr<FGraphDetailsViewItem> StaticsRoot;
+	TSharedPtr<SWidgetSwitcher> DetailsTabs;
+	TMap<UEdStateGraph*, TSharedPtr<SSubGraphDetails>> GraphToWidgetMap;
 
 public:
 	SLATE_BEGIN_ARGS(SGraphDetailsView){}
@@ -189,12 +309,14 @@ public:
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	
 private:
+	FReply OnAddStateMachine();
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
-	void OnGraphChanged(const FEdGraphEditAction& Action);
-	void AddState(class UEdStateNode* Node);	
-	void AddTransition(class UEdTransition* Node);
+	void InitView(TSharedPtr<FEditor> InEditor);	
+	void InitGraphDetailsView(UEdStateGraph* Graph);
 
-	void AddEvent(UEdEventObject* EventObject);
+	// Event Handlers for State Machine changes.
+	void OnGraphSelected(UEdStateGraph* Graph);
+	void OnStateAdded(UEdStateNode* Node);
 
 	void OnItemSelected(TSharedPtr< FGraphDetailsViewItem > InSelectedItem, ESelectInfo::Type SelectInfo) {}
 	void OnItemDoubleClicked(TSharedPtr< FGraphDetailsViewItem > InClickedItem) {}
@@ -202,13 +324,14 @@ private:
 	void OnItemScrolledIntoView(TSharedPtr<FGraphDetailsViewItem> InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
 	void OnSetExpansionRecursive(TSharedPtr<FGraphDetailsViewItem> InTreeNode, bool bInIsItemExpanded) {}
 
+
 	// Section Functions.
 	TSharedRef<ITableRow> OnGenerateRow(
 		TSharedPtr<FGraphDetailsViewItem> InItem,
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly);
 
-	void InitView(TSharedPtr<FEditor> InEditor);
+	
 
 	void OnSelectionChanged(
 		TSharedPtr<FGraphDetailsViewItem> SelectedItem,
