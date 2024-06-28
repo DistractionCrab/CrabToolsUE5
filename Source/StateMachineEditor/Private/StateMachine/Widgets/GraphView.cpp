@@ -12,11 +12,11 @@ void SGraphView::Construct(
 {
 	FGraphAppearanceInfo AppInfo;
 	
-	if (auto BP = Cast<UStateMachineBlueprint>(InBlueprintEditor->GetBlueprintObj())) {		
-		auto Graph = BP->GetMainGraph();
+	if (auto BP = Cast<UStateMachineBlueprint>(InBlueprintEditor->GetBlueprintObj())) {
+		this->BlueprintRef = BP;
+		auto Graph = BP->GetMainGraph();		
 		
 		SGraphEditor::FGraphEditorEvents InEvents;
-
 		InEvents.OnSelectionChanged.BindRaw(this, &SGraphView::OnSelectionChanged);
 
 		ChildSlot
@@ -39,6 +39,22 @@ void SGraphView::Construct(
 	}
 }
 
+void SGraphView::AddGraphToEditor(UEdGraph* Graph)
+{
+	FGraphAppearanceInfo AppInfo;
+	SGraphEditor::FGraphEditorEvents InEvents;
+	InEvents.OnSelectionChanged.BindRaw(this, &SGraphView::OnSelectionChanged);
+
+	TSharedPtr<SGraphEditor> NewEditor = SNew(SGraphEditor)
+		.IsEditable(true)
+		.Appearance(AppInfo)
+		.GraphToEdit(Graph)
+		.GraphEvents(InEvents);
+
+	this->TabsWidget->AddSlot(this->TabsWidget->GetNumWidgets())[NewEditor.ToSharedRef()];
+	this->GraphToEditorMap.Add(Graph, NewEditor);
+}
+
 void SGraphView::AddReferencedObjects(FReferenceCollector& Collector)
 {
 
@@ -51,7 +67,14 @@ void SGraphView::BindEvents(UStateMachineBlueprint* Blueprint)
 
 void SGraphView::OnGraphSelected(UEdStateGraph* Graph)
 {
-	
+	if (!this->GraphToEditorMap.Contains(Graph))
+	{
+		this->AddGraphToEditor(Graph);
+	}
+
+	auto Widget = this->GraphToEditorMap[Graph];
+	this->TabsWidget->SetActiveWidget(Widget.ToSharedRef());
+	this->GraphEditor = Widget;
 }
 
 void SGraphView::OnSelectionChanged(const TSet<UObject*>& NewSelection)
@@ -69,6 +92,12 @@ void SGraphView::OnSelectionChanged(const TSet<UObject*>& NewSelection)
 		}
 		
 		Graph->Events.OnNodeSelected.Broadcast(Nodes);
+
+		// If a singular node was selected, send that for inspection also.
+		if (Nodes.Num() == 1)
+		{
+			this->BlueprintRef->Events.OnObjectInspected.Broadcast(Nodes[0]);
+		}
 	}
 }
 

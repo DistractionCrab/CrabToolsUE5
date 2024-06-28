@@ -1,9 +1,9 @@
 #include "StateMachine/HierarchyNode.h"
 
-void UHierarchyNode::Initialize_Implementation(UStateMachine* POwner) {
-	UStateNode::Initialize_Implementation(POwner);
-
-	if (this->MachineClass.Get() != nullptr) {
+void UHierarchyNode::Initialize_Implementation() {
+	UStateNode::Initialize_Implementation();
+	/*
+	if (this->MachineClass.Get() != nullptr && !this->SubMachine) {
 		this->SubMachine = NewObject<UStateMachine>(
 			this,
 			this->MachineClass, 
@@ -16,8 +16,12 @@ void UHierarchyNode::Initialize_Implementation(UStateMachine* POwner) {
 			this->SubMachine->Substitute(Pair.Key, Pair.Value);
 		}
 
-		this->SubMachine->Initialize_Internal(POwner->GetOwner());
+		this->SubMachine->Initialize_Internal(this->GetMachine()->GetOwner());
+
+		FStateChangeDispatcher f;
+		
 	}
+	*/
 }
 
 void UHierarchyNode::PerformExit() {
@@ -26,8 +30,9 @@ void UHierarchyNode::PerformExit() {
 		FName SubStateName = this->SubMachine->GetCurrentStateName();
 
 		if (this->ExitStates.Contains(SubStateName)) {
-			this->GoTo(this->ExitStates[SubStateName]);
-		}		
+			//this->GoTo(this->ExitStates[SubStateName]);
+			this->GetMachine()->Event(this->ExitStates[SubStateName]);
+		}
 	}
 }
 
@@ -65,10 +70,28 @@ void UHierarchyNode::Exit_Implementation() {
 
 }
 
-UStateNode* UHierarchyNode::Substitute(FName SlotName, UStateNode* Node) {
+/*
+UStateNode* UHierarchyNode::Substitute(FName StateSlotName, UStateNode* Node) {
 	for (auto& Pair : this->SubstituteNodes) {
-		this->SubstituteNodes[Pair.Key] = Pair.Value->Substitute(SlotName, Node);
+		this->SubstituteNodes[Pair.Key] = Pair.Value->Substitute(StateSlotName, Node);
 	}
 
 	return this;
+}
+*/
+
+
+TArray<FString> UHierarchyNode::GetMachineOptions(FName Value) const
+{
+	UE_LOG(LogTemp, Warning, TEXT("Testing outer chain..."));
+
+	const UObject* Outer = this;
+
+	do
+	{
+		UE_LOG(LogTemp, Warning, TEXT("-- Outer: %s"), *Outer->GetFName().ToString());
+		Outer = Outer->GetOuter();
+	} while (Outer);
+
+	return { "Waffles" };
 }

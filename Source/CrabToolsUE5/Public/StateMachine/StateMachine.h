@@ -106,8 +106,8 @@ public:
 
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
-	void Initialize(UStateMachine* POwner);
-	virtual void Initialize_Implementation(UStateMachine* POwner);
+	void Initialize();
+	virtual void Initialize_Implementation();
 
 	/**
 	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a
@@ -222,16 +222,15 @@ private:
 		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
 
+
+	UPROPERTY()
+	TObjectPtr<UStateMachine> RootMachine;
+
 	UPROPERTY()
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	void RebindConditions();
-	void ValidateEventProps();
-	void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
-	bool HasEventVariable(FName VName);
-	FName GetEventVarName(FName EName);
-	void InitFromArchetype();
+	
 
 public:
 
@@ -243,8 +242,8 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Initialize(AActor* POwner);
-
 	virtual void Initialize_Implementation(AActor* POwner);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner();
 
@@ -341,6 +340,10 @@ public:
 
 	void Substitute(FName SlotName, UStateNode* Node);
 
+	UFUNCTION(BlueprintCallable, Category="StateMachine")
+	UStateMachine* GetRootMachine() { return this->RootMachine; }
+	void SetRootMachine(UStateMachine* NewRoot) { this->RootMachine = NewRoot; }
+
 	// Procedural constructions functions.
 	void AddState(FName StateName);
 	void ClearStates() { this->Graph.Empty(); }
@@ -390,5 +393,13 @@ public:
 
 		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
 		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
-	}	
+	}
+
+	private:
+		void RebindConditions();
+		void ValidateEventProps();
+		void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
+		bool HasEventVariable(FName VName);
+		FName GetEventVarName(FName EName);
+		void InitFromArchetype();
 };

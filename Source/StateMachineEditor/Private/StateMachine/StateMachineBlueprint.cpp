@@ -29,13 +29,15 @@ bool UStateMachineBlueprint::SupportsInputEvents() const
 
 UEdStateGraph* UStateMachineBlueprint::GetMainGraph()
 {
-	if (this->MainGraph == nullptr) {
+	if (this->MainGraph == nullptr)
+	{
 		this->MainGraph = CastChecked<UEdStateGraph>(FBlueprintEditorUtils::CreateNewGraph(
 			this,
 			"MainGraph",
 			UEdStateGraph::StaticClass(),
 			UStateMachineSchema::StaticClass()));
 
+		this->MainGraph->bIsMainGraph = true;
 		const UEdGraphSchema* Schema = this->MainGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*this->MainGraph);
 	}
@@ -107,25 +109,45 @@ void UStateMachineBlueprint::RenameGraph(UEdStateGraph* Graph, FName Name)
 
 void UStateMachineBlueprint::SelectGraph(UEdStateGraph* Graph)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attempging to Select Graph"));
-
 	if (Graph == this->MainGraph)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Main Graph Case..."));
 		this->Events.OnGraphSelected.Broadcast(Graph);
 	}
 	else if (this->SubGraphs.Contains(Graph))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("SubGraph Case..."));
 		this->Events.OnGraphSelected.Broadcast(Graph);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Else Case...?"));
 	}
 }
 
 void UStateMachineBlueprint::InspectObject(UObject* Obj)
 {
 	this->Events.OnObjectInspected.Broadcast(Obj);
+}
+
+TArray<FString> UStateMachineBlueprint::GetMachineOptions() const
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("Attemping to get machine options."));
+	TArray<FString> Names;
+
+	for (auto Graph : this->SubGraphs)
+	{
+		Names.Add(Graph->GetName());
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UStateMachineBlueprint::GetSubMachineStateOptions(FName MachineName) const
+{
+	auto Found = this->SubGraphs.FindByPredicate([&](UEdStateGraph* A) { return MachineName == A->GetName(); });
+
+	if (Found)
+	{
+		return (*Found)->GetStateOptions();
+	}
+
+	return TArray<FString>();
 }

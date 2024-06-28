@@ -9,7 +9,8 @@ struct FEventTransitionData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
+		meta=(GetOptions="GetConditionOptions"))
 	FName Condition = FName("TrueCondition");
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
@@ -21,7 +22,8 @@ class UEdTransition : public UEdBaseNode
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
+	UPROPERTY(EditDefaultsOnly, Category="StateMachineEditor",
+		meta=(GetKeyOptions="GetEventOptions"))
 	TMap<FName, FEventTransitionData> EventToConditionMap;
 
 public:
@@ -31,11 +33,9 @@ public:
 	class UEdGraph* Graph;
 
 	virtual void AllocateDefaultPins() override;
-
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 
 	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
-
 	virtual void PrepareForCopying() override;
 
 	virtual UEdGraphPin* GetInputPin() const { return Pins[0]; }
@@ -45,4 +45,7 @@ public:
 
 	UEdBaseStateNode* GetStartNode();
 	UEdBaseStateNode* GetEndNode();
+
+	//UFUNCTION()
+	//TArray<FString> GetConditionOptions() const;
 };

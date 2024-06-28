@@ -3,6 +3,8 @@
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "EdEventObject.generated.h"
 
+class UEdStateGraph;
+
 class FEventObjectActionEvents
 {
 public:
@@ -28,7 +30,7 @@ public:
 	FEventObjectActionEvents Events;
 
 public:
-	class UEdStateGraph* GetGraph() const;
+	UEdStateGraph* GetGraph() const;
 	void SetName(FName Name);
 	FName GetName() { return this->EventName; }
 

@@ -1,9 +1,9 @@
 #include "StateMachine/ArrayNode.h"
 
-void UArrayNode::Initialize_Implementation(UStateMachine* POwner) {
-	Super::Initialize_Implementation(POwner);
+void UArrayNode::Initialize_Implementation() {
+	Super::Initialize_Implementation();
 	for (auto& Node : this->Nodes) {
-		Node->Initialize_Internal(POwner);
+		Node->Initialize_Internal(this->GetMachine());
 	}
 }
 

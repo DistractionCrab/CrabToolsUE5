@@ -11,11 +11,12 @@
 
 UEdStateGraph::UEdStateGraph()
 {
-
+	this->SourceClass = UStateMachine::StaticClass();
 }
 
 void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
+
 	Super::NotifyGraphChanged(Action);
 
 	if (Action.Action & EEdGraphActionType::GRAPHACTION_AddNode)
@@ -30,6 +31,8 @@ void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 			}			
 		}
 	}
+
+	this->GetBlueprintOwner()->Modify();
 }
 
 FName UEdStateGraph::GetNewStateName()
@@ -107,7 +110,7 @@ FName UEdStateGraph::GetStartStateName()
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Destination from Start node was a state node."));
+				UE_LOG(LogTemp, Error, TEXT("Destination from Start node was not a state node."));
 			}
 		}
 	}
@@ -249,7 +252,7 @@ bool UEdStateGraph::IsMainGraph()
 	return false;
 }
 
-UStateMachineBlueprint* UEdStateGraph::GetBlueprintOwner()
+UStateMachineBlueprint* UEdStateGraph::GetBlueprintOwner() const
 {
 	return Cast<UStateMachineBlueprint>(this->GetOuter());
 }
@@ -262,4 +265,71 @@ void UEdStateGraph::Select()
 void UEdStateGraph::Inspect()
 {
 	this->GetBlueprintOwner()->Events.OnObjectInspected.Broadcast(this);
+}
+
+TArray<FString> UEdStateGraph::GetStateOptions() const
+{
+	TArray<FString> Names;
+
+	for (auto Node : this->Nodes)
+	{
+		if (auto StateNode = Cast<UEdStateNode>(Node))
+		{
+			Names.Add(StateNode->GetStateName().ToString());
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UEdStateGraph::GetEventOptions() const
+{
+	TArray<FString> Names;
+
+	for (auto Ev : this->EventObjects)
+	{
+		Names.Add(Ev->GetName().ToString());
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UEdStateGraph::GetConditionOptions() const
+{
+	TArray<FString> Names;
+	//auto GraphRef = Cast<UEdStateGraph>(this->GetGraph());
+	//auto BP = GraphRef->GetBlueprintOwner();
+	
+
+	UClass* ClassBase;
+
+	if (this->bIsMainGraph)
+	{
+		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
+	}
+	else
+	{
+		ClassBase = this->SourceClass.Get();
+	}
+
+	// Find the example function to check against to find others of the same signature.
+	auto FnArchetype = ClassBase->FindFunctionByName("TrueCondition");
+
+	for (TFieldIterator<UFunction> FIT(ClassBase, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
+		UFunction* f = *FIT;
+
+		if (f->IsSignatureCompatibleWith(FnArchetype))
+		{
+			Names.Add(f->GetName());
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
 }

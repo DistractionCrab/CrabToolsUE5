@@ -38,14 +38,21 @@ class UEdStateGraph : public UEdGraph
 	GENERATED_BODY()
 
 private:
+	UPROPERTY(EditAnywhere, Category="StateMachineEditor",
+		meta=(AllowPrivateAccess, EditCondition="!bIsMainGraph", EditConditionHides))
+	TSubclassOf<UStateMachine> SourceClass;
 
-	UPROPERTY(VisibleAnywhere, Category = "StateMachineEditor")
+	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor",
+		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
 	TArray<TObjectPtr<UEdEventObject>> EventObjects;
 
 public:
 
 	/* Events that are used by the Graph Editor to communicate. */
 	FGraphActionEvents Events;
+
+	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor")
+	bool bIsMainGraph = false;
 
 public:
 
@@ -75,7 +82,16 @@ public:
 	void Inspect();
 
 	bool IsMainGraph();
-	class UStateMachineBlueprint* GetBlueprintOwner();
+	class UStateMachineBlueprint* GetBlueprintOwner() const;
 
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
+
+	UFUNCTION()
+	TArray<FString> GetStateOptions() const;
+
+	UFUNCTION()
+	TArray<FString> GetEventOptions() const;
+
+	UFUNCTION()
+	TArray<FString> GetConditionOptions() const;
 };

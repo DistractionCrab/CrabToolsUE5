@@ -49,7 +49,7 @@ protected:
 
 public:
 
-	virtual void Initialize_Implementation(UStateMachine* POwner) override;
+	virtual void Initialize_Implementation() override;
 	
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")

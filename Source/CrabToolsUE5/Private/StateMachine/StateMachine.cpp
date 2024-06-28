@@ -6,7 +6,8 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 
-namespace Constants {
+namespace Constants
+{
 
 }
 
@@ -299,15 +300,13 @@ void UStateMachine::InitFromArchetype()
 
 /* Simply iterates through the graph and rebinds condition callbacks. */
 void UStateMachine::RebindConditions() {
-	TArray<FString> ValidFunctions = this->ConditionOptions();
+	//UStateMachine* Callee = this->RootMachine.Get() ? this->RootMachine.Get() : this;
+	//TArray<FString> ValidFunctions = this->ConditionOptions();
 	
 	for (auto& pairs : this->Graph) {
 		for (auto& tpairs : pairs.Value.Transitions) {
-			if (ValidFunctions.Contains(tpairs.Value.Condition.ToString())) {
-				tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
-				tpairs.Value.DataConditionCallback.BindUFunction(this, tpairs.Value.DataCondition);
-			}
-			
+			tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
+			tpairs.Value.DataConditionCallback.BindUFunction(this, tpairs.Value.DataCondition);
 		}
 	}
 }
@@ -527,12 +526,10 @@ UStateNode* UStateMachine::FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESe
 
 void UStateNode::Initialize_Internal(UStateMachine* POwner) {
 	this->Owner = POwner;
-	this->Initialize(POwner);
+	this->Initialize();
 }
 
-void UStateNode::Initialize_Implementation(UStateMachine* POwner) {
-	
-}
+void UStateNode::Initialize_Implementation() {}
 
 UStateNode* UStateNode::Substitute(FName SlotName, UStateNode* Node) {
 	return this;

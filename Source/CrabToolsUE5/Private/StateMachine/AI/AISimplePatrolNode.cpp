@@ -1,8 +1,8 @@
 #include "StateMachine/AI/AISimplePatrolNode.h"
 #include "AIController.h"
 
-void UAISimplePatrolNode::Initialize_Implementation(UStateMachine* POwner) {
-	Super::Initialize_Implementation(POwner);
+void UAISimplePatrolNode::Initialize_Implementation() {
+	Super::Initialize_Implementation();
 
 	auto CtrlQ = this->GetAIController();
 

@@ -88,28 +88,6 @@ public:
 	virtual FReply OnAddImplementation() {  return FReply::Handled(); }
 };
 
-/*
-class FStateMachineHeaderItem : public FHeaderItem
-{
-protected:
-
-	TWeakObjectPtr<UStateMachineBlueprint> BPRef;
-
-public:
-	FStateMachineHeaderItem(UStateMachineBlueprint* BP, FText Text);
-	FStateMachineHeaderItem(UStateMachineBlueprint* BP, FString Text)
-		: FStateMachineHeaderItem(BP, FText::FromString(Text))
-	{}
-
-	virtual TSharedRef<ITableRow> GetEntryWidget(
-		const TSharedRef<STableViewBase>& OwnerTable,
-		bool bIsReadOnly)
-		override;
-
-	virtual FReply OnAdd();
-};
-*/
-
 class FEventHeaderItem : public FCreateHeaderItem
 {
 	
@@ -171,7 +149,6 @@ public:
 		override;
 
 	void AddState(UEdStateNode* State, bool DeferRefresh);
-	void AddEvent(UEdEventObject* State, bool DeferRefresh);
 
 private:
 
@@ -238,6 +215,7 @@ class STATEMACHINEEDITOR_API SSubGraphDetails
 : public SCompoundWidget, public FGCObject
 {
 private:
+	TWeakObjectPtr<UEdStateGraph> GraphRef;
 	TablePtr TreeView;
 
 	TSharedPtr<FGraphDetailsViewItem> StateRoot;
@@ -261,7 +239,7 @@ public:
 	}
 
 	void AddState(UEdStateNode* Node, bool DeferRefresh);
-
+	void AddEvent(UEdEventObject* Node, bool DeferRefresh);
 	void Refresh() { this->TreeView->RequestListRefresh(); }
 
 private:
@@ -278,6 +256,11 @@ private:
 	void OnSelectionChanged(
 		TSharedPtr<FGraphDetailsViewItem> SelectedItem,
 		ESelectInfo::Type SelectInfo);
+
+	void BindEvents();
+
+	void OnStateAdded(UEdStateNode* State);
+	void OnEventAdded(UEdEventObject* Event);
 };
 
 /**

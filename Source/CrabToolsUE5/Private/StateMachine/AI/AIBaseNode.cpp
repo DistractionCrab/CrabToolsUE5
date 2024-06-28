@@ -1,7 +1,8 @@
 #include "StateMachine/AI/AIBaseNode.h"
+#include "AIController.h"
 
-void UAIBaseNode::Initialize_Implementation(UStateMachine* POwner) {
-	auto PawnQ = Cast<APawn>(POwner->GetOwner());
+void UAIBaseNode::Initialize_Implementation() {
+	auto PawnQ = Cast<APawn>(this->GetMachine()->GetOwner());
 
 	if (PawnQ) {
 		this->PawnRef = PawnQ;

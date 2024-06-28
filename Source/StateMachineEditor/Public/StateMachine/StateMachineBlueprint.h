@@ -49,4 +49,12 @@ private:
 
 	void InspectObject(UObject* Obj);
 	FName GetNewGraphName();
+
+	/* Returns the list of submachines to use for Hierarchy nodes. */
+	UFUNCTION()
+	TArray<FString> GetMachineOptions() const;
+
+	/* Used by Hierarchy nodes to generate states for their slot. */
+	UFUNCTION()
+	TArray<FString> GetSubMachineStateOptions(FName MachineName) const;
 };

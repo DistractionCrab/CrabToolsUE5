@@ -1,5 +1,8 @@
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/EdBaseNode.h"
+#include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/EdGraph/EdEventObject.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 
 #define LOCTEXT_NAMESPACE "EdNode_GenericGraphEdge"
@@ -84,6 +87,42 @@ UEdBaseStateNode* UEdTransition::GetEndNode()
 		return nullptr;
 	}
 }
+
+
+/*
+TArray<FString> UEdTransition::GetConditionOptions() const
+{
+	TArray<FString> Names;
+	auto GraphRef = Cast<UEdStateGraph>(this->GetGraph());
+	auto BP = GraphRef->GetBlueprintOwner();	
+	auto base = BP->GeneratedClass->FindFunctionByName("TrueCondition");
+
+	if (base)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found the base function?"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Did not find the base function?!?"));
+	}
+
+	for (TFieldIterator<UFunction> FIT(BP->GeneratedClass, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
+		UFunction* f = *FIT;
+
+		UE_LOG(LogTemp, Warning, TEXT("Found function: %s"), *f->GetFName().ToString());
+
+		if (f->IsSignatureCompatibleWith(base))
+		{
+			Names.Add(f->GetName());
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+*/
 
 #undef LOCTEXT_NAMESPACE
 

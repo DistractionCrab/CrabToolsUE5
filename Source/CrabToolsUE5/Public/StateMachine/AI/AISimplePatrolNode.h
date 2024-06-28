@@ -5,6 +5,8 @@
 #include "Actors/PatrolPath.h"
 #include "AISimplePatrolNode.generated.h"
 
+class UPathFollowingComponent;
+
 /**
  * Simple node for making an entity follow a PatrolPath actor's path.
  */
@@ -19,6 +21,6 @@ class CRABTOOLSUE5_API UAISimplePatrolNode : public UAIBaseNode
 
 public:
 
-	virtual void Initialize_Implementation(UStateMachine* POwner) override;
+	virtual void Initialize_Implementation() override;
 	
 };

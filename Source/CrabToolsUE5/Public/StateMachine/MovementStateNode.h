@@ -25,7 +25,7 @@ class CRABTOOLSUE5_API UMovementStateNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation(UStateMachine* POwner) override;
+	virtual void Initialize_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")

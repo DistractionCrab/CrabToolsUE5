@@ -125,9 +125,11 @@ FGraphAppearanceInfo FEditor::GetGraphAppearance(class UEdGraph* InGraph) const 
 	return AppearanceInfo;
 }
 
+/*
 TSubclassOf<UEdGraphSchema> FEditor::GetDefaultSchemaClass() const {
 	return UStateMachineSchema::StaticClass();
 }
+*/
 
 void FEditor::CreateEditorModeManager()
 {

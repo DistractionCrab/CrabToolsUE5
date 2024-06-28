@@ -20,18 +20,13 @@
 #include "Layout/WidgetPath.h"
 #include "GraphEditor.h"
 
-class FMenuBuilder;
-class FScopedTransaction;
-class SBox;
-struct FWidgetHitResult;
-class UWidgetEditingProjectSettings;
-
 
 class STATEMACHINEEDITOR_API SGraphView : public SCompoundWidget, public FGCObject
 {
 
 private:
 
+	TWeakObjectPtr<UStateMachineBlueprint> BlueprintRef;
 	TSharedPtr<SGraphEditor> GraphEditor;
 	TSharedPtr<SWidgetSwitcher> TabsWidget;
 	TMap<TWeakObjectPtr<UEdGraph>, TSharedPtr<SGraphEditor>> GraphToEditorMap;
@@ -58,6 +53,8 @@ private:
 	void OnSelectionChanged(const TSet<class UObject*>& NewSelection);
 	void OnGraphSelected(UEdStateGraph* Graph);
 	void BindEvents(UStateMachineBlueprint* Blueprint);
+
+	void AddGraphToEditor(UEdGraph* Graph);
 
 	//virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 };

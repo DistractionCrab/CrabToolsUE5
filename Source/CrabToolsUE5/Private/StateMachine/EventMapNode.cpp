@@ -9,7 +9,7 @@ void UEventMapNode::Event_Implementation(FName Event) {
 	}
 }
 
-void UEventMapNode::Initialize_Implementation(UStateMachine* POwner) {
+void UEventMapNode::Initialize_Implementation() {
 	for (const auto& Pair : this->EventMap) {
 		FEventHandler f;
 		f.BindUFunction(this, Pair.Value);

@@ -4,17 +4,17 @@ void UMovementStateNode::Tick_Implementation(float DeltaTime) {
 	this->ApplyMovement();
 }
 
-void UMovementStateNode::Initialize_Implementation(UStateMachine* POwner) {
-	Super::Initialize_Implementation(POwner);
-
+void UMovementStateNode::Initialize_Implementation() {
+	Super::Initialize_Implementation();
+	auto MachineOwner = this->GetMachine();
 	// If the owning actor has a perspective manager, store it for simple use.
-	auto Persp = POwner->GetOwner()->FindComponentByClass<UPerspectiveManager>();
+	auto Persp = MachineOwner->GetOwner()->FindComponentByClass<UPerspectiveManager>();
 
 	if (Persp != nullptr) {
 		this->Perspective = Persp;
 	}
 
-	auto Pawn = Cast<APawn>(POwner->GetOwner());
+	auto Pawn = Cast<APawn>(MachineOwner->GetOwner());
 
 	if (Pawn != nullptr) {
 		this->PawnOwner = Pawn;

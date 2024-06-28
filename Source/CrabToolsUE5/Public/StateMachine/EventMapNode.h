@@ -22,7 +22,7 @@ public:
 
 public:
 	virtual void Event_Implementation(FName Event) override;
-	virtual void Initialize_Implementation(UStateMachine* POwner) override;
+	virtual void Initialize_Implementation() override;
 
 	UFUNCTION()
 	TArray<FString> HandlerNameOptions();

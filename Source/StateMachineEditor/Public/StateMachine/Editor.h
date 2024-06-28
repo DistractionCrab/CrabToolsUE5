@@ -66,7 +66,7 @@ public:
 	//~ Begin FBlueprintEditor interface
 	virtual void RegisterApplicationModes(const TArray<UBlueprint*>& InBlueprints, bool bShouldOpenInDefaultsMode, bool bNewlyCreated = false) override;
 	virtual FGraphAppearanceInfo GetGraphAppearance(class UEdGraph* InGraph) const override;
-	virtual TSubclassOf<UEdGraphSchema> GetDefaultSchemaClass() const override;
+	//virtual TSubclassOf<UEdGraphSchema> GetDefaultSchemaClass() const override;
 	//~ End FBlueprintEditor interface
 
 	void CreateEditorModeManager() override;

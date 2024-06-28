@@ -2,8 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/StateMachine.h"
-#include "AIController.h"
 #include "AIBaseNode.generated.h"
+
+class AAIController;
 
 /**
  * Simple node for making an entity follow a PatrolPath actor's path.
@@ -18,7 +19,7 @@ class CRABTOOLSUE5_API UAIBaseNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation(UStateMachine* POwner) override;
+	virtual void Initialize_Implementation() override;
 
 	/* Return the AIController that was retrieved by the Pawn onwer of the state machine. */
 	FORCEINLINE AAIController* GetAIController() { return this->AICtrl.Get(); }

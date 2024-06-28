@@ -1,7 +1,7 @@
 #include "StateMachine/Input/SprintMovementNode.h"
 
-void USprintMovementNode::Initialize_Implementation(UStateMachine* POwner) {
-	Super::Initialize_Implementation(POwner);
+void USprintMovementNode::Initialize_Implementation() {
+	Super::Initialize_Implementation();
 
 	auto Pawn = this->GetPawn();
 

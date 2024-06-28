@@ -5,11 +5,11 @@ UMovementInputNode::UMovementInputNode() {
 }
 
 
-void UMovementInputNode::Initialize_Implementation(UStateMachine* POwner) {
-	Super::Initialize_Implementation(POwner);
+void UMovementInputNode::Initialize_Implementation() {
+	Super::Initialize_Implementation();
 
 	// If the owning actor has a perspective manager, store it for simple use.
-	auto Persp = POwner->GetOwner()->FindComponentByClass<UPerspectiveManager>();
+	auto Persp = this->GetMachine()->GetOwner()->FindComponentByClass<UPerspectiveManager>();
 	this->Perspective = Persp;
 }
 
