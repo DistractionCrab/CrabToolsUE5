@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/IStateMachineLike.h"
 
 #include "StateMachineBlueprint.generated.h"
 
@@ -18,7 +19,7 @@ public:
 };
 
 UCLASS(BlueprintType)
-class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint
+class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint, public IStateMachineLike
 {
 	GENERATED_UCLASS_BODY()
 
@@ -45,16 +46,15 @@ public:
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
 	const TArray<class UEdStateGraph*>& GetSubgraphs() { return this->SubGraphs; }
 
+	// IStateMachineLike Interface
+	virtual TArray<FString> GetMachineOptions() const override;
+
 private:
 
 	void InspectObject(UObject* Obj);
 	FName GetNewGraphName();
 
-	/* Returns the list of submachines to use for Hierarchy nodes. */
-	UFUNCTION()
-	TArray<FString> GetMachineOptions() const;
-
 	/* Used by Hierarchy nodes to generate states for their slot. */
 	UFUNCTION()
-	TArray<FString> GetSubMachineStateOptions(FName MachineName) const;
+	TArray<FString> GetSubMachineStateOptions(FName MachineName) const;	
 };

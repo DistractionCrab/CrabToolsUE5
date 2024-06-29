@@ -126,8 +126,6 @@ void UStateMachineBlueprint::InspectObject(UObject* Obj)
 
 TArray<FString> UStateMachineBlueprint::GetMachineOptions() const
 {
-
-	UE_LOG(LogTemp, Warning, TEXT("Attemping to get machine options."));
 	TArray<FString> Names;
 
 	for (auto Graph : this->SubGraphs)

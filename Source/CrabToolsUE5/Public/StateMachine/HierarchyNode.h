@@ -21,13 +21,13 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 
 	/* Name of the submachine to be placed in this node. */
 	UPROPERTY(EditAnywhere, Category="StateMachine",
-		meta=(GetOptions="GetMachineOptions(SlotName)"))
+		meta=(GetOptions="GetMachineOptions"))
 	FName SlotName;
 
 	/* Map of SubMachine states and events to be emitted to the SM of this node. */
 	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", 
 		meta = (AllowPrivateAccess = "true", 
-			GetKeyOptions="GetSubMachineStateOptions(SlotName)"))
+			GetKeyOptions="GetSubMachineStateOptions"))
 	TMap<FName, FName> ExitStates;
 
 	/* Whether or not the submachine should be reset when this node is entered. */
@@ -56,6 +56,8 @@ public:
 
 	void PerformExit();
 
-	UFUNCTION()
-	TArray<FString> GetMachineOptions(FName Value) const;
+	#if WITH_EDITORONLY_DATA
+		UFUNCTION()
+		TArray<FString> GetMachineOptions() const;
+	#endif
 };

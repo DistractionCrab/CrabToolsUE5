@@ -4,7 +4,9 @@
 #include "SGraphNode.h"
 #include "EdGraph/EdGraph.h"
 #include "StateMachine/StateMachine.h"
+#include "StateMachine/IStateMachineLike.h"
 #include "GraphEditAction.h"
+
 #include "EdStateGraph.generated.h"
 
 class UEdEventObject;
@@ -33,7 +35,7 @@ public:
 };
 
 UCLASS(MinimalAPI)
-class UEdStateGraph : public UEdGraph
+class UEdStateGraph : public UEdGraph, public IStateMachineLike
 {
 	GENERATED_BODY()
 
@@ -86,12 +88,13 @@ public:
 
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 
-	UFUNCTION()
-	TArray<FString> GetStateOptions() const;
-
-	UFUNCTION()
-	TArray<FString> GetEventOptions() const;
+	
 
 	UFUNCTION()
 	TArray<FString> GetConditionOptions() const;
+
+	// IStateMachineLike Interface
+	virtual TArray<FString> GetMachineOptions() const override;
+	virtual TArray<FString> GetStateOptions() const override;
+	virtual TArray<FString> GetEventOptions() const override;
 };

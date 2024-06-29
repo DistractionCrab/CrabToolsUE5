@@ -1,5 +1,7 @@
 #include "StateMachine/HierarchyNode.h"
 
+#include "StateMachine/IStateMachineLike.h"
+
 void UHierarchyNode::Initialize_Implementation() {
 	UStateNode::Initialize_Implementation();
 	/*
@@ -80,18 +82,22 @@ UStateNode* UHierarchyNode::Substitute(FName StateSlotName, UStateNode* Node) {
 }
 */
 
-
-TArray<FString> UHierarchyNode::GetMachineOptions(FName Value) const
-{
-	UE_LOG(LogTemp, Warning, TEXT("Testing outer chain..."));
-
-	const UObject* Outer = this;
-
-	do
+// Editor helper functions.
+#if WITH_EDITORONLY_DATA
+	TArray<FString> UHierarchyNode::GetMachineOptions() const
 	{
-		UE_LOG(LogTemp, Warning, TEXT("-- Outer: %s"), *Outer->GetFName().ToString());
-		Outer = Outer->GetOuter();
-	} while (Outer);
+		const UObject* Outer = this;
 
-	return { "Waffles" };
-}
+		do
+		{
+			if (auto SMLike = Cast<IStateMachineLike>(Outer))
+			{
+				return SMLike->GetMachineOptions();
+			}
+			Outer = Outer->GetOuter();
+
+		} while (Outer);
+
+		return { };
+	}
+#endif

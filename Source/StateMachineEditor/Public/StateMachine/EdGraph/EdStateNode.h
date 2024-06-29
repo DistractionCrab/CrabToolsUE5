@@ -45,4 +45,5 @@ public:
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
 
 	UStateNode* GetCompiledNode();
+
 };

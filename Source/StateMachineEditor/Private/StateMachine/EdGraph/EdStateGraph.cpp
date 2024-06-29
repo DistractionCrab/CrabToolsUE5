@@ -333,3 +333,8 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 
 	return Names;
 }
+
+TArray<FString> UEdStateGraph::GetMachineOptions() const
+{
+	return this->GetBlueprintOwner()->GetMachineOptions();
+}

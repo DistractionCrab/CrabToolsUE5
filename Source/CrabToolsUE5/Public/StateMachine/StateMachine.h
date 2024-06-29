@@ -171,6 +171,10 @@ public:
 
 	FORCEINLINE bool Active() { return this->bActive; }
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
+	void GetEmittedEvents(TArray<FName>& EventsList);
+	virtual void GetEmittedEvents_Implementation(TArray<FName>& EventsList) {}
+
 	void GetEvents(TSet<FName>& List);
 	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node);
 	virtual UStateNode* ExtractAs(TSubclassOf<UStateNode> Class);
@@ -230,7 +234,8 @@ private:
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 public:
 
