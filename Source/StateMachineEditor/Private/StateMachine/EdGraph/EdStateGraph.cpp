@@ -6,6 +6,7 @@
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
 
+#define LOCTEXT_NAMESPACE "EdStateGraph"
 #define DEFAULT_NODE_NAME "NewState"
 #define DEFAULT_EVENT_NAME "NewEvent"
 
@@ -176,13 +177,17 @@ UEdEventObject* UEdStateGraph::CreateEvent()
 
 	DefaultName.AppendInt(index);
 
+	const FScopedTransaction Transaction(LOCTEXT("CreateEvent", "Create Event"));
+	this->Modify();
+
 	auto NewName = FName(DefaultName);
 	auto NewEventObject = NewObject<UEdEventObject>(this);
 	NewEventObject->SetName(NewName);
 
 	this->EventObjects.Add(NewEventObject);
-
 	this->Events.OnEventCreated.Broadcast(NewEventObject);
+
+	
 
 	return NewEventObject;
 }
@@ -301,9 +306,6 @@ TArray<FString> UEdStateGraph::GetEventOptions() const
 TArray<FString> UEdStateGraph::GetConditionOptions() const
 {
 	TArray<FString> Names;
-	//auto GraphRef = Cast<UEdStateGraph>(this->GetGraph());
-	//auto BP = GraphRef->GetBlueprintOwner();
-	
 
 	UClass* ClassBase;
 
@@ -338,3 +340,18 @@ TArray<FString> UEdStateGraph::GetMachineOptions() const
 {
 	return this->GetBlueprintOwner()->GetMachineOptions();
 }
+
+void UEdStateGraph::PostEditUndo()
+{
+	Super::PostEditUndo();
+	UE_LOG(LogTemp, Warning, TEXT("Called PostEditUndo"));
+}
+
+void UEdStateGraph::PostEditChangeProperty(
+	FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	UE_LOG(LogTemp, Warning, TEXT("Called PostEditChanged"));
+}
+
+#undef LOCTEXT_NAMESPACE

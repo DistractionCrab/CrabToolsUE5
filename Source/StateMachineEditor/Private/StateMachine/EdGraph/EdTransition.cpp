@@ -89,40 +89,16 @@ UEdBaseStateNode* UEdTransition::GetEndNode()
 }
 
 
-/*
+
+TArray<FString> UEdTransition::GetEventOptions() const
+{
+	return Cast<UEdStateGraph>(this->GetGraph())->GetEventOptions();
+}
+
 TArray<FString> UEdTransition::GetConditionOptions() const
 {
-	TArray<FString> Names;
-	auto GraphRef = Cast<UEdStateGraph>(this->GetGraph());
-	auto BP = GraphRef->GetBlueprintOwner();	
-	auto base = BP->GeneratedClass->FindFunctionByName("TrueCondition");
-
-	if (base)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Found the base function?"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Did not find the base function?!?"));
-	}
-
-	for (TFieldIterator<UFunction> FIT(BP->GeneratedClass, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
-	{
-		UFunction* f = *FIT;
-
-		UE_LOG(LogTemp, Warning, TEXT("Found function: %s"), *f->GetFName().ToString());
-
-		if (f->IsSignatureCompatibleWith(base))
-		{
-			Names.Add(f->GetName());
-		}
-	}
-
-	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
-
-	return Names;
+	return Cast<UEdStateGraph>(this->GetGraph())->GetConditionOptions();
 }
-*/
 
 #undef LOCTEXT_NAMESPACE
 

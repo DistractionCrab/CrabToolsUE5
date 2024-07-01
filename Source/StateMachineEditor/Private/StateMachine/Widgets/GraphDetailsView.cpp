@@ -877,6 +877,11 @@ void SGraphDetailsView::InitGraphDetailsView(UEdStateGraph* Graph)
 		Widget->AddState(Node, true);
 	}
 
+	for (auto Ev : Graph->GetEventList())
+	{
+		Widget->AddEvent(Ev, true);
+	}
+
 	//Graph->Events.OnStateAdded.AddRaw(this, &SGraphDetailsView::OnStateAdded);
 
 	Widget->Refresh();

@@ -87,14 +87,15 @@ public:
 	class UStateMachineBlueprint* GetBlueprintOwner() const;
 
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
+	virtual void PostEditUndo() override;
+	virtual void PostEditChangeProperty(
+		FPropertyChangedEvent& PropertyChangedEvent) override;
 
 	
-
-	UFUNCTION()
-	TArray<FString> GetConditionOptions() const;
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
 	virtual TArray<FString> GetStateOptions() const override;
 	virtual TArray<FString> GetEventOptions() const override;
+	virtual TArray<FString> GetConditionOptions() const override;
 };

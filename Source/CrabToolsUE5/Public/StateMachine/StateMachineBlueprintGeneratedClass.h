@@ -7,6 +7,7 @@
 
 #include "StateMachineBlueprintGeneratedClass.generated.h"
 
+struct FStateData;
 class UStateMachine;
 
 UCLASS(MinimalAPI)
@@ -17,4 +18,6 @@ class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 public:
 	UPROPERTY()
 	TObjectPtr<UStateMachine> StateMachineArchetype;
+
+	FStateData GetStateData(FName StateName);
 };

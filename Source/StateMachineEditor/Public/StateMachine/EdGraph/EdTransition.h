@@ -46,6 +46,9 @@ public:
 	UEdBaseStateNode* GetStartNode();
 	UEdBaseStateNode* GetEndNode();
 
-	//UFUNCTION()
-	//TArray<FString> GetConditionOptions() const;
+	UFUNCTION()
+	TArray<FString> GetConditionOptions() const;
+
+	UFUNCTION()
+	TArray<FString> GetEventOptions() const;
 };
