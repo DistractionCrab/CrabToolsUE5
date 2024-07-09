@@ -1,9 +1,6 @@
 #include "StateMachine/PlaceholderNode.h"
 
-UStateNode* UPlaceholderNode::Substitute(FName SlotNameSearch, UStateNode* Node) {
-	if (this->SlotName == SlotNameSearch) {
-		return Node;
-	} else {
-		return this;
-	}	
+void UPlaceholderNode::Initialize_Implementation()
+{
+	this->SubNode = *this->GetMachine()->GetSharedNodes().Find(this->SlotName);
 }

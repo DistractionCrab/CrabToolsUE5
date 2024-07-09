@@ -93,29 +93,3 @@ void UCompositeNode::ExitWithData_Implementation(UObject* Data) {
 		}
 	}
 }
-
-UStateNode* UCompositeNode::Substitute(FName SlotName, UStateNode* Node) {
-	for (auto& Pair : this->Nodes) {
-		this->Nodes[Pair.Key] = Pair.Value->Substitute(SlotName, Node);
-	}
-
-	return this;
-}
-
-UStateNode* UCompositeNode::ExtractAs(TSubclassOf<UStateNode> Class) {
-	auto Check = Super::ExtractAs(Class);
-
-	if (!Check) {
-		for (auto Node : this->Nodes) {
-			if (Node.Value) {
-				Check = Node.Value->ExtractAs(Class);
-
-				if (Check) {
-					break;
-				}
-			}			
-		}
-	}
-
-	return Check;
-}

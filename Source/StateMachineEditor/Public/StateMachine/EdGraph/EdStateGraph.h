@@ -13,6 +13,7 @@ class UEdEventObject;
 class UEdBaseNode;
 class UEdStartStateNode;
 class UEdStateNode;
+class UStateMachineArchetype;
 
 class FGraphActionEvents
 {
@@ -76,7 +77,7 @@ public:
 	}
 
 	TArray<TObjectPtr<class UEdStateNode>> GetStates();
-	UStateMachine* GenerateStateMachine(UObject* Outer);
+	UStateMachineArchetype* GenerateStateMachine(UObject* Outer);
 	FName GetStartStateName();
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
 	UEdStartStateNode* GetStartNode() const;

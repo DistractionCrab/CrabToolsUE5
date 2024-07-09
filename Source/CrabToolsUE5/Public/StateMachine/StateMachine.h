@@ -12,6 +12,7 @@
 class UStateNode;
 class UStateMachine;
 class UNodeTransition;
+class UStateMachineBlueprintGeneratedClass;
 
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
@@ -57,7 +58,7 @@ public:
 
 
 USTRUCT(BlueprintType)
-struct  FStateData
+struct FStateData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -176,8 +177,6 @@ public:
 	virtual void GetEmittedEvents_Implementation(TArray<FName>& EventsList) {}
 
 	void GetEvents(TSet<FName>& List);
-	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node);
-	virtual UStateNode* ExtractAs(TSubclassOf<UStateNode> Class);
 };
 
 
@@ -210,25 +209,19 @@ private:
 		}
 	} TRANSITION;
 
-	
-
 	/* The Graph of the state machine. */
-	UPROPERTY(EditAnywhere, Category = "StateMachine", 
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
 
 	/* Nodes to be substituted into the graph later. */
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true"))
-	TMap<FName, UStateNode*> SharedNodes;
+	TMap<FName, TObjectPtr<UStateNode>> SharedNodes;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
-
-
-	UPROPERTY()
-	TObjectPtr<UStateMachine> RootMachine;
 
 	UPROPERTY()
 	TObjectPtr<AActor> Owner;
@@ -236,6 +229,16 @@ private:
 
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
+
+	/* Reference to the archetype for this SM from a Generated Class. */
+	TObjectPtr<UStateMachine> MachineArchetype;
+	/* Reference to a parent which uses this state machine as a sub machine. */
+	TObjectPtr<UStateMachine> ParentMachine;
+	/* The key/name of this submachine in the parent. */
+	FName ParentKey;
+	/* Reference to the generated class for this machine. */
+	TSubclassOf<UStateMachine> ArchetypeClass;
+
 
 public:
 
@@ -246,8 +249,8 @@ public:
 public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
-	void Initialize(AActor* POwner);
-	virtual void Initialize_Implementation(AActor* POwner);
+	void Initialize();
+	virtual void Initialize_Implementation();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner();
@@ -277,9 +280,6 @@ public:
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
-		meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
 	/* 
 	* Tick function to be called regularly. This is managed by the owner object.
@@ -296,7 +296,8 @@ public:
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 	
-	FORCEINLINE FStateData* GetCurrentState() { return this->Graph.Find(this->CurrentStateName); }
+	FStateData* GetCurrentState();
+	FStateData* GetStateData(FName Name);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetCurrentStateName();
@@ -342,16 +343,12 @@ public:
 	bool ValidDataCondition(UObject* Data);
 
 	TSet<FName> GetEvents() const;
-
-	void Substitute(FName SlotName, UStateNode* Node);
-
-	UFUNCTION(BlueprintCallable, Category="StateMachine")
-	UStateMachine* GetRootMachine() { return this->RootMachine; }
-	void SetRootMachine(UStateMachine* NewRoot) { this->RootMachine = NewRoot; }
+	TMap<FName, TObjectPtr<UStateNode>> GetSharedNodes() { return this->SharedNodes; }
 
 	// Procedural constructions functions.
 	void AddState(FName StateName);
 	void ClearStates() { this->Graph.Empty(); }
+
 	template <class T> T* AddStateWithNode(FName StateName)
 	{
 		auto Node = NewObject<T>(this);

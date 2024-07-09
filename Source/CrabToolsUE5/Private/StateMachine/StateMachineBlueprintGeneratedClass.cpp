@@ -1,9 +1,54 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
-#include "StateMachine/StateMachine.h"
 
-FStateData UStateMachineBlueprintGeneratedClass::GetStateData(FName StateName)
+FName GenerateStateName(UStateMachine* Outer, FName StateName)
 {
-	FStateData Data;
+	FString NameBase = "";
+	NameBase.Append(Outer->GetName());
+	NameBase.Append("::");
+	NameBase.Append(StateName.ToString());
 
-	return Data;
+	return FName(NameBase);
+}
+
+bool UStateMachineBlueprintGeneratedClass::GetStateData(
+	FStateData& Output,
+	UStateMachine* Outer,
+	FName MachineName,
+	FName StateName)
+{
+	UStateMachineArchetype* Machine = nullptr;
+
+	if (MachineName == NAME_None)
+	{
+		Machine = this->StateMachineArchetype;
+	}
+	else if (this->SubStateMachineArchetypes.Contains(MachineName)) 
+	{
+		Machine = this->SubStateMachineArchetypes[MachineName];
+	}
+
+	if (Machine)
+	{
+		auto ArchData = Machine->GetStateData(StateName);
+
+		if (!ArchData)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ArchData was null???"));
+		}
+		else
+		{
+			if (!ArchData->Node)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("ArchData->Node was null???"));
+			}
+		}
+		if (ArchData)
+		{
+			Output.Transitions.Append(ArchData->Transitions);
+			Output.Node = DuplicateObject(ArchData->Node, Outer, GenerateStateName(Outer, StateName));
+			return true;
+		}		
+	}
+
+	return false;
 }

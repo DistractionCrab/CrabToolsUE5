@@ -32,7 +32,11 @@ FName UEdStateNode::SetStateName(FName NewName)
 
 UStateNode* UEdStateNode::GetCompiledNode()
 {
-	if (this->Nodes.Num() == 1)
+	if (this->Nodes.Num() == 0)
+	{
+		return NewObject<UStateNode>(this);
+	} 
+	else if (this->Nodes.Num() == 1)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Returning simple node for compile."));
 		return this->Nodes[0];

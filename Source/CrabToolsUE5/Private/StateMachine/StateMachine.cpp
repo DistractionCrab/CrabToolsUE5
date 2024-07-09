@@ -5,6 +5,7 @@
 #include "EdGraphSchema_K2.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
+#include "StateMachine/ArrayNode.h"
 
 namespace Constants
 {
@@ -15,11 +16,11 @@ namespace Constants
 
 void UStateMachine::Initialize_Internal(AActor* POwner)
 {
-	UE_LOG(LogTemp, Warning, TEXT("StateMachine Outer: %s"), *this->GetOuter()->GetClass()->GetFName().ToString());
 	this->Owner = POwner;
 	this->InitFromArchetype();
-	this->Initialize(POwner);
+	this->Initialize();
 
+	/*
 	for (auto& Pair : this->SharedNodes) {
 		this->Substitute(Pair.Key, Pair.Value);
 	}
@@ -32,12 +33,19 @@ void UStateMachine::Initialize_Internal(AActor* POwner)
 			StateData.Node->Initialize_Internal(this);
 		}
 	}
+	*/
+
+	// Shared nodes always exist, and should be initialize from the beginning.
+	for (auto& Node : this->SharedNodes)
+	{
+		Node.Value->Initialize_Internal(this);
+	}
 
 	this->RebindConditions();
-	this->UpdateState(this->StartState);
+	this->UpdateState(this->StartState);	
 }
 
-void UStateMachine::Initialize_Implementation(AActor* POwner) {}
+void UStateMachine::Initialize_Implementation() {}
 
 UStateMachine* UStateNode::GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) {
 	auto Class = SClass.Get();
@@ -57,8 +65,14 @@ AActor* UStateMachine::GetOwner() {
 	return this->Owner;
 }
 
+void UStateMachine::AddState(FName StateName)
+{
+	this->Graph.Add(StateName, FStateData());
+}
+
 void UStateMachine::UpdateState(FName Name) {
-	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
+	UE_LOG(LogTemp, Warning, TEXT("Updating State"));
+	if (Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
@@ -68,10 +82,11 @@ void UStateMachine::UpdateState(FName Name) {
 		// called already, and this function will have returned;
 		if (CurrentState && CurrentState->Node) CurrentState->Node->Exit_Internal();
 
-		if (this->TRANSITION.Valid(TID)) { 
+		if (this->TRANSITION.Valid(TID)) {
+			UE_LOG(LogTemp, Warning, TEXT("Attemping to transition to the new state."));
 			this->CurrentStateName = Name;
 			CurrentState = this->GetCurrentState();
-			if (CurrentState->Node) CurrentState->Node->Enter_Internal();
+			if (CurrentState && CurrentState->Node) CurrentState->Node->Enter_Internal();
 
 			
 			if (this->TRANSITION.Valid(TID)) {
@@ -86,12 +101,6 @@ void UStateMachine::UpdateState(FName Name) {
 		}	
 	}
 }
-
-void UStateMachine::AddState(FName StateName)
-{
-	this->Graph.Add(StateName, FStateData());
-}
-
 
 void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
@@ -264,7 +273,8 @@ void UStateMachine::StateChangeObject(UObject* Obj) {
 	}
 }
 
-void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange) {
+void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange)
+{
 	Super::PreEditChange(PropertyAboutToChange);
 }
 
@@ -273,26 +283,38 @@ void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 	Super::PostEditChangeChainProperty(e);
 }
 
+FStateData* UStateMachine::GetStateData(FName Name)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attemping to get state data for state: %s"), *Name.ToString());
+	return this->Graph.Find(Name);
+}
+
 void UStateMachine::InitFromArchetype()
 {	
+	UE_LOG(LogTemp, Warning, TEXT("Attempting InitFromArchetype."));
 	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass()))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Finding Blueprint Assets fine?"));
 		if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(BlueprintAsset->GeneratedClass))
 		{
-			if (BMBPG->StateMachineArchetype)
+			UE_LOG(LogTemp, Warning, TEXT("Initializing data from generated class."));
+			this->ArchetypeClass = BMBPG;
+			this->MachineArchetype = BMBPG->StateMachineArchetype;
+			this->StartState = this->MachineArchetype->StartState;
+
+			for (auto& SubMachine : BMBPG->SubStateMachineArchetypes)
 			{
-				this->StartState = BMBPG->StateMachineArchetype->StartState;
+				UStateMachine* DupMachine = NewObject<UStateMachine>(
+					this, 
+					SubMachine.Value->ArchetypeClass.Get());
 
-				for (auto State : BMBPG->StateMachineArchetype->Graph)
-				{
-					if (!this->Graph.Contains(State.Key))
-					{
-						FStateData Data;
-						Data.Node = DuplicateObject(State.Value.Node, this);
+				DupMachine->ParentMachine = this;
+				DupMachine->MachineArchetype = SubMachine.Value;
+				DupMachine->ParentKey = SubMachine.Key;
 
-						this->Graph.Add(State.Key, Data);
-					}
-				}
+				this->SubMachines.Add(SubMachine.Key, DupMachine);
+
+				DupMachine->Initialize_Internal(this->Owner);
 			}
 		}
 	}
@@ -481,14 +503,6 @@ void UStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, F
 	*/
 }
 
-void UStateMachine::Substitute(FName SlotName, UStateNode* Node) {
-	for (auto& pair : this->Graph) {
-		if (pair.Value.Node) {
-			pair.Value.Node = pair.Value.Node->Substitute(SlotName, Node);
-		}
-	}
-}
-
 UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
 	auto Node = this->GetCurrentState();
 	if (Class.Get() && Node) {		
@@ -502,23 +516,59 @@ UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESea
 	return nullptr;
 }
 
-UStateNode* UStateMachine::FindCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
-	auto Node = this->GetCurrentState();
+FStateData* UStateMachine::GetCurrentState()
+{
+	//UE_LOG(LogTemp, Warning, TEXT("Getting Current State: %s"), *this->CurrentStateName.ToString());
 
-	if (Node) {
-		if (Node->Node) {
-			auto Value = Node->Node->ExtractAs(Class);
+	auto FoundData = this->Graph.Find(this->CurrentStateName);
 
-			if (Value) {
-				Branches = ESearchResult::Found;
-				return Value;
-			}	
+	if (FoundData)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Found State Data already..."));
+		return FoundData;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Attempting GC copying."));
+		auto SourceMachine = this->MachineArchetype.Get() ? this->MachineArchetype.Get() : this;
+
+		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ArchetypeClass.Get()))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Acquiring data from BPGC"));
+			FStateData Data;
+			bool Found = BPGC->GetStateData(Data, this, NAME_None, this->CurrentStateName);			
+
+			if (Found)
+			{
+				if (this->ParentMachine && this->ParentMachine->ArchetypeClass)
+				{
+					auto SupBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->ArchetypeClass.Get());
+					FStateData SubData;
+					bool SubFound = SupBPGC->GetStateData(SubData, this, this->ParentKey, this->CurrentStateName);
+					
+
+					if (SubFound && SubData.Node && Data.Node)
+					{
+						auto ANode = NewObject<UArrayNode>(this);
+						ANode->AddNode(Data.Node);
+						ANode->AddNode(SubData.Node);
+
+						Data.Node = ANode;
+					}
+				}
+
+				this->Graph.Add(this->CurrentStateName, Data);
+
+				Data.Node->Initialize_Internal(this);
+
+				return this->Graph.Find(this->CurrentStateName);
+			}
 		}
 	}
 
-	Branches = ESearchResult::NotFound;
 	return nullptr;
 }
+
 
 #pragma endregion
 
@@ -531,9 +581,6 @@ void UStateNode::Initialize_Internal(UStateMachine* POwner) {
 
 void UStateNode::Initialize_Implementation() {}
 
-UStateNode* UStateNode::Substitute(FName SlotName, UStateNode* Node) {
-	return this;
-}
 
 UStateMachine* UStateNode::GetMachine() {
 	return this->Owner;
@@ -629,14 +676,6 @@ void UStateNode::GetEvents(TSet<FName>& List) {
 
 }
 
-UStateNode* UStateNode::ExtractAs(TSubclassOf<UStateNode> Class) {
-	if (this->IsA(Class.Get())) {
-		return this;
-	}
-	else {
-		return nullptr;
-	}
-}
 
 #pragma endregion
 

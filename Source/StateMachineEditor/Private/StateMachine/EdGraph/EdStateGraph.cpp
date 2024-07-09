@@ -5,6 +5,7 @@
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
+#include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 
 #define LOCTEXT_NAMESPACE "EdStateGraph"
 #define DEFAULT_NODE_NAME "NewState"
@@ -233,9 +234,9 @@ TArray<TObjectPtr<UEdStateNode>> UEdStateGraph::GetStates()
 	return StateNodes;
 }
 
-UStateMachine* UEdStateGraph::GenerateStateMachine(UObject* Outer)
+UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(UObject* Outer)
 {
-	auto StateMachine = NewObject<UStateMachine>(Outer);
+	auto StateMachine = NewObject<UStateMachineArchetype>(Outer);
 
 	for (auto State : this->GetStates())
 	{
@@ -243,6 +244,7 @@ UStateMachine* UEdStateGraph::GenerateStateMachine(UObject* Outer)
 	}
 
 	StateMachine->StartState = this->GetStartStateName();
+	StateMachine->ArchetypeClass = this->SourceClass;
 
 	return StateMachine;
 }

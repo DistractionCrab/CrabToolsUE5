@@ -90,25 +90,3 @@ void UArrayNode::ExitWithData_Implementation(UObject* Data) {
 		}
 	}
 }
-
-UStateNode* UArrayNode::Substitute(FName SlotName, UStateNode* Node) {
-	return this;
-}
-
-UStateNode* UArrayNode::ExtractAs(TSubclassOf<UStateNode> Class) {
-	auto Check = Super::ExtractAs(Class);
-
-	if (!Check) {
-		for (auto Node : this->Nodes) {
-			if (Node) {
-				Check = Node->ExtractAs(Class);
-
-				if (Check) {
-					break;
-				}
-			}			
-		}
-	}
-
-	return Check;
-}

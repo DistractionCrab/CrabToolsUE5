@@ -270,6 +270,13 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 		if (auto SMBP = this->StateMachineBlueprint())
 		{			
 			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(BPGClass);
+
+			for (auto& SubGraph : SMBP->GetSubgraphs())
+			{
+				BPGClass->SubStateMachineArchetypes.Add(
+					SubGraph->GetFName(), 
+					SubGraph->GenerateStateMachine(BPGClass));
+			}
 		}
 		
 	}

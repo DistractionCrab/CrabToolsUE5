@@ -25,6 +25,4 @@ public:
 	virtual void EnterWithData_Implementation(UObject* Data) override;
 	virtual void Exit_Implementation() override;	
 	virtual void ExitWithData_Implementation(UObject* Data) override;
-	virtual UStateNode* Substitute(FName SlotName, UStateNode* Node) override;
-	virtual UStateNode* ExtractAs(TSubclassOf<UStateNode> Class) override;
 };

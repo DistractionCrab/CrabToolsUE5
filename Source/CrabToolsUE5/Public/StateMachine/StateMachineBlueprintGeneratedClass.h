@@ -4,11 +4,23 @@
 #include "UObject/ObjectMacros.h"
 #include "Binding/DynamicPropertyPath.h"
 #include "Engine/BlueprintGeneratedClass.h"
-
+#include "StateMachine/StateMachine.h"
 #include "StateMachineBlueprintGeneratedClass.generated.h"
 
 struct FStateData;
 class UStateMachine;
+
+UCLASS()
+class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TSubclassOf<UStateMachine> ArchetypeClass;
+};
+
+
 
 UCLASS(MinimalAPI)
 class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
@@ -17,7 +29,10 @@ class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 
 public:
 	UPROPERTY()
-	TObjectPtr<UStateMachine> StateMachineArchetype;
+	TObjectPtr<UStateMachineArchetype> StateMachineArchetype;
 
-	FStateData GetStateData(FName StateName);
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UStateMachineArchetype>> SubStateMachineArchetypes;
+
+	bool GetStateData(FStateData& Output, UStateMachine* Outer, FName Machine, FName StateName);
 };
