@@ -43,8 +43,8 @@ public:
 
 	void CreateConnections(UEdBaseStateNode* Start, UEdBaseStateNode* End);
 
-	UEdBaseStateNode* GetStartNode();
-	UEdBaseStateNode* GetEndNode();
+	UEdBaseStateNode* GetStartNode() const;
+	UEdBaseStateNode* GetEndNode() const;
 
 	UFUNCTION()
 	TArray<FString> GetConditionOptions() const;

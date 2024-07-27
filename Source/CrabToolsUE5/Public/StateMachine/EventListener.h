@@ -16,9 +16,9 @@ class IEventListenerInterface
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="ProcStateMachine")
 	void Event(FName EName);
-	void Event_Implementation(FName EName) {}
+	virtual void Event_Implementation(FName EName) {}
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="ProcStateMachine")
 	void EventWithData(FName EName, UObject* Data);
-	void EventWithData_Implementation(FName EName, UObject* Data) {}
+	virtual void EventWithData_Implementation(FName EName, UObject* Data) {}
 };

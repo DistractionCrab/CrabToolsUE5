@@ -6,6 +6,8 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/ArrayNode.h"
+#include "Utils/UtilsLibrary.h"
+#include "StateMachine/IStateMachineLike.h"
 
 namespace Constants
 {
@@ -426,10 +428,6 @@ TSet<FName> UStateMachine::GetEvents() const {
 	for (const auto& States : this->Graph) {
 		for (const auto& Event : States.Value.Transitions) {
 			List.Add(Event.Key);
-
-			if (!States.Value.Node) {
-				States.Value.Node->GetEvents(List);
-			}
 		}
 	}
 
@@ -574,6 +572,11 @@ FStateData* UStateMachine::GetCurrentState()
 
 #pragma region NodeCode
 
+UStateNode::UStateNode()
+{
+
+}
+
 void UStateNode::Initialize_Internal(UStateMachine* POwner) {
 	this->Owner = POwner;
 	this->Initialize();
@@ -672,10 +675,94 @@ void UStateNode::EnterWithData_Implementation(UObject* Data) {
 	this->Enter();
 }
 
-void UStateNode::GetEvents(TSet<FName>& List) {
+void UStateNode::DeleteEvent_Implementation(FName Event)
+{
+	for (TFieldIterator<FStructProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
+		FStructProperty* f = *FIT;
 
+		if (f->Struct == FEventSlot::StaticStruct())
+		{
+			auto Value = f->ContainerPtrToValuePtr<FEventSlot>(this);
+			if (Value->EventName == Event)
+			{
+				Value->EventName = NAME_None;
+			}
+		}
+	}
 }
 
+void UStateNode::RenameEvent_Implementation(FName From, FName To)
+{
+	for (TFieldIterator<FStructProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
+		FStructProperty* f = *FIT;
+
+		if (f->Struct == FEventSlot::StaticStruct())
+		{
+			auto Value = f->ContainerPtrToValuePtr<FEventSlot>(this);
+			if (Value->EventName == From)
+			{
+				Value->EventName = To;
+			}
+		}
+	}
+}
+
+#if WITH_EDITOR
+void UStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UStateNode, EmittedEvents))
+	{
+		auto Removed = this->EmittedEvents.Difference(this->PreEditEmittedEvents);
+		if (Removed.Num() > 0)
+		{
+			if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
+			{
+				auto Replaced = this->PreEditEmittedEvents.Difference(this->EmittedEvents).Array();
+				if (Removed.Num() == 1 && Replaced.Num() == 1)
+				{
+					StateLike->RenameEvent(Replaced[0], Removed.Array()[0]);
+				}
+				else
+				{
+					for (auto EName : Removed)
+					{
+						StateLike->DeleteEvent(EName);
+					}
+				}
+			}
+		}		
+
+		this->PreEditEmittedEvents.Empty();
+	}
+}
+
+void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
+{
+	Super::PreEditChange(PropertyAboutToChange);
+
+	if (PropertyAboutToChange->GetFName() == GET_MEMBER_NAME_CHECKED(UStateNode, EmittedEvents))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Prechange called and found."));
+		for (auto EventName : this->EmittedEvents)
+		{
+			this->PreEditEmittedEvents.Add(EventName);
+		}
+	}
+}
+
+TArray<FString> UStateNode::GetEventOptions() const
+{
+	if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
+	{
+		return StateLike->GetEventOptions();
+	}
+
+	return { FName(NAME_None).ToString() };
+}
+#endif
 
 #pragma endregion
 

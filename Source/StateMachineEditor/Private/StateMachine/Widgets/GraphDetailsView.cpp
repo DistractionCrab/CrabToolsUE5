@@ -15,20 +15,22 @@
 
 #define LOCTEXT_NAMESPACE "PSM"
 
-template<typename ItemType>
-class SCategoryHeaderTableRow : public STableRow<ItemType>
+//template<typename ItemType>
+//class SCategoryHeaderTableRow : public STableRow<ItemType>
+class SCategoryHeaderTableRow : public STableRow<TSharedPtr<FGraphDetailsViewItem>>
 {
 private:
 	TSharedPtr<SBorder> ContentBorder;
 
 public:
+
 	SLATE_BEGIN_ARGS(SCategoryHeaderTableRow) {}
 		SLATE_DEFAULT_SLOT(typename SCategoryHeaderTableRow::FArguments, Content)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
 	{
-		STableRow<ItemType>::ChildSlot
+		STableRow<TSharedPtr<FGraphDetailsViewItem>>::ChildSlot
 			.Padding(0.0f, 2.0f, .0f, 0.0f)
 			[
 				SAssignNew(ContentBorder, SBorder)
@@ -41,7 +43,7 @@ public:
 					.Padding(5.0f)
 					.AutoWidth()
 					[
-						SNew(SExpanderArrow, STableRow< ItemType >::SharedThis(this))
+						SNew(SExpanderArrow, STableRow< TSharedPtr<FGraphDetailsViewItem> >::SharedThis(this))
 					]
 					+ SHorizontalBox::Slot()
 					.VAlign(VAlign_Center)
@@ -52,8 +54,8 @@ public:
 				]
 			];
 
-		STableRow < ItemType >::ConstructInternal(
-			typename STableRow< ItemType >::FArguments()
+		STableRow < TSharedPtr<FGraphDetailsViewItem> >::ConstructInternal(
+			typename STableRow< TSharedPtr<FGraphDetailsViewItem> >::FArguments()
 			.Style(FAppStyle::Get(), "DetailsView.TreeView.TableRow")
 			.ShowSelection(false),
 			InOwnerTableView
@@ -62,7 +64,7 @@ public:
 
 	const FSlateBrush* GetBackgroundImage() const
 	{
-		if (STableRow<ItemType>::IsHovered())
+		if (STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsHovered())
 		{
 			return FAppStyle::Get().GetBrush("Brushes.Secondary");
 		}
@@ -87,17 +89,38 @@ public:
 		return nullptr;
 	}
 
-	FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+	FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override
 	{
 		if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 		{
-			STableRow<ItemType>::ToggleExpansion();
+			STableRow<TSharedPtr<FGraphDetailsViewItem>>::ToggleExpansion();
 			return FReply::Handled();
 		}
 		else
 		{
 			return FReply::Unhandled();
 		}
+	}
+
+	
+};
+
+class SGraphItemRow :public STableRow<TSharedPtr<FGraphDetailsViewItem>>
+{
+
+public:
+
+	SLATE_BEGIN_ARGS(SGraphItemRow) {}
+		SLATE_DEFAULT_SLOT(typename SGraphItemRow::FArguments, Content)
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
+	{
+		STableRow<TSharedPtr<FGraphDetailsViewItem>>::ConstructInternal(
+			STableRow<TSharedPtr<FGraphDetailsViewItem>>::FArguments()
+			.ShowSelection(true),
+			InOwnerTableView
+		);
 	}
 };
 
@@ -115,10 +138,13 @@ void FGraphDetailsViewItem::AddChild(TSharedPtr<FGraphDetailsViewItem> Item, boo
 	}
 }
 
-void FGraphDetailsViewItem::RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item)
+void FGraphDetailsViewItem::RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh)
 {
 	this->Children.Remove(Item);
-	this->TableOwner.Pin()->RequestListRefresh();
+	if (!DeferRefresh)
+	{
+		this->TableOwner.Pin()->RequestListRefresh();
+	}
 }
 
 void FGraphDetailsViewItem::SetTableView(TableWeakPtr NewTableOwner)
@@ -134,7 +160,7 @@ TSharedRef<ITableRow> FGraphDetailsViewItem::GetEntryWidget(
 	TSharedPtr<IToolTip> SectionToolTip;
 	TSharedPtr<STableRow<TSharedPtr<FGraphDetailsViewItem>>> TableRow;
 
-	TableRow = SNew(SCategoryHeaderTableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	TableRow = SNew(SCategoryHeaderTableRow, OwnerTable)
 		.ToolTip(SectionToolTip);
 	TableRow->SetRowContent(SNew(STextBlock).Text(FText::FromString("NULL WIDGET")));
 
@@ -150,7 +176,7 @@ TSharedRef<ITableRow> FHeaderItem::GetEntryWidget(
 	TSharedPtr<IToolTip> SectionToolTip;
 	TSharedPtr<STableRow<TSharedPtr<FGraphDetailsViewItem>>> TableRow;
 
-	TableRow = SNew(SCategoryHeaderTableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	TableRow = SNew(SCategoryHeaderTableRow, OwnerTable)
 		.ToolTip(SectionToolTip);
 
 	TSharedPtr<SHorizontalBox> RowContainer;
@@ -206,7 +232,7 @@ TSharedRef<ITableRow> FCreateHeaderItem::GetEntryWidget(
 	TSharedPtr<IToolTip> SectionToolTip;
 	TSharedPtr<STableRow<TSharedPtr<FGraphDetailsViewItem>>> TableRow;
 
-	TableRow = SNew(SCategoryHeaderTableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	TableRow = SNew(SCategoryHeaderTableRow, OwnerTable)
 		.ToolTip(SectionToolTip);
 
 	TSharedPtr<SHorizontalBox> RowContainer;
@@ -382,6 +408,11 @@ void FStateItem::OnNodeDeleted()
 	this->GetParent().Pin()->RemoveChild(this->AsShared());
 }
 
+void FStateItem::Delete(bool DeferRefresh)
+{
+	this->NodeRef->Delete();
+}
+
 #pragma endregion
 
 #pragma region StateMachineItem
@@ -389,8 +420,8 @@ void FStateItem::OnNodeDeleted()
 FStateMachineItem::FStateMachineItem(UEdStateGraph* GraphPtr)
 : GraphRef(GraphPtr)
 {
-	//GraphPtr->Events.OnNameChanged.AddRaw(this, &FStateMachineItem::OnNameChanged);
-	GraphPtr->Events.OnGraphDeleted.AddRaw(this, &FStateMachineItem::OnNodeDeleted);
+	GraphPtr->Events.OnNameChanged.AddRaw(this, &FStateMachineItem::OnNameChanged);
+	GraphPtr->Events.OnGraphDeleted.AddRaw(this, &FStateMachineItem::OnGraphDeleted);
 	//GraphPtr->Events.OnEventCreated.AddRaw(this, &FStateMachineItem::OnEventCreated, false);
 }
 
@@ -501,7 +532,7 @@ bool FStateMachineItem::OnVerifyNameTextChanged(const FText& InText, FText& OutE
 void FStateMachineItem::OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo)
 {
 	FName NewName(InText.ToString());
-	//this->GraphRef->SetName(NewName);
+	this->GraphRef->RenameGraph(NewName);
 }
 
 void FStateMachineItem::OnNameChanged(FName Name)
@@ -509,9 +540,17 @@ void FStateMachineItem::OnNameChanged(FName Name)
 	this->InlineText->SetText(FText::FromName(Name));
 }
 
-void FStateMachineItem::OnNodeDeleted()
+void FStateMachineItem::OnGraphDeleted()
 {
 	this->GetParent().Pin()->RemoveChild(this->AsShared());
+}
+
+void FStateMachineItem::Delete(bool DeferRefresh)
+{
+	if (this->GraphRef.IsValid())
+	{
+		this->GraphRef->Delete();
+	}
 }
 
 #pragma endregion
@@ -598,8 +637,8 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
-	auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
-		.ShowSelection(true);
+	//auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	auto TableRow = SNew(SGraphItemRow, OwnerTable);
 
 	// Make the text widget.
 	TSharedPtr<SWidget> TextWidget;
@@ -668,6 +707,11 @@ void FEventItem::OnNameTextCommited(const FText& InText, ETextCommit::Type Commi
 {
 	FName NewName(InText.ToString());
 	this->EventReference.Get()->RenameEvent(NewName);
+}
+
+void FEventItem::Delete(bool DeferRefresh)
+{
+	this->EventReference->Delete();
 }
 
 #pragma endregion
@@ -748,6 +792,16 @@ void SSubGraphDetails::AddEvent(UEdEventObject* Node, bool DeferRefresh)
 	TSharedPtr<FGraphDetailsViewItem> Item = MakeShareable(new FEventItem(Node));
 
 	this->EventRoot->AddChild(Item, DeferRefresh);
+}
+
+FReply SSubGraphDetails::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& KeyEvent)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Key Was Pressed"));
+	for (auto Item : this->TreeView->GetSelectedItems())
+	{
+		Item->Delete(true);
+	}
+	return FReply::Unhandled();
 }
 
 void SGraphDetailsView::Construct(

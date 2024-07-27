@@ -92,7 +92,8 @@ public:
 	virtual void PostEditChangeProperty(
 		FPropertyChangedEvent& PropertyChangedEvent) override;
 
-	
+	void Delete();
+	void RenameGraph(FName NewName);
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;

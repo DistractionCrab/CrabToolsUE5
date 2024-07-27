@@ -1,5 +1,6 @@
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/EdBaseNode.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/StateMachineBlueprint.h"
@@ -64,7 +65,7 @@ void UEdTransition::CreateConnections(UEdBaseStateNode* Start, UEdBaseStateNode*
 	Pins[1]->MakeLinkTo(End->GetInputPin());
 }
 
-UEdBaseStateNode* UEdTransition::GetStartNode()
+UEdBaseStateNode* UEdTransition::GetStartNode() const
 {
 	if (Pins[0]->LinkedTo.Num() > 0)
 	{
@@ -76,7 +77,7 @@ UEdBaseStateNode* UEdTransition::GetStartNode()
 	}
 }
 
-UEdBaseStateNode* UEdTransition::GetEndNode()
+UEdBaseStateNode* UEdTransition::GetEndNode() const
 {
 	if (Pins[1]->LinkedTo.Num() > 0)
 	{
@@ -92,6 +93,11 @@ UEdBaseStateNode* UEdTransition::GetEndNode()
 
 TArray<FString> UEdTransition::GetEventOptions() const
 {
+	if (auto StateNode = Cast<UEdStateNode>(this->GetStartNode()))
+	{
+		return StateNode->GetEventOptions();
+	}
+
 	return Cast<UEdStateGraph>(this->GetGraph())->GetEventOptions();
 }
 

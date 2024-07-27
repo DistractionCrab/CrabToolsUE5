@@ -38,7 +38,6 @@ UStateNode* UEdStateNode::GetCompiledNode()
 	} 
 	else if (this->Nodes.Num() == 1)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Returning simple node for compile."));
 		return this->Nodes[0];
 	}
 	else
@@ -52,4 +51,45 @@ UStateNode* UEdStateNode::GetCompiledNode()
 
 		return ArrayNode;
 	}
+}
+
+void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	UE_LOG(LogTemp, Warning, TEXT("PostEdit"));
+
+	if (PropertyChangedEvent.Property)
+	{
+		if (PropertyChangedEvent.MemberProperty)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("PostEdit: Member Property was not null."));
+			UE_LOG(LogTemp, Warning, TEXT("PostEdit: Found a class: %s"),
+				*PropertyChangedEvent.MemberProperty->GetName());
+		}		
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PostEdit: Property was null."));
+	}
+}
+
+TArray<FString> UEdStateNode::GetEventOptions() const
+{
+	TSet<FName> EventsSet;
+
+	for (auto Node : this->Nodes)
+	{
+		Node->GetEmittedEvents(EventsSet);
+	}
+
+	TArray<FString> EventArray;
+	for (auto Event : EventsSet) { EventArray.Add(Event.ToString()); }
+	for (auto Event : this->GetStateGraph()->GetEventOptions()) { EventArray.Add(Event); }
+	
+	return EventArray;
+}
+
+void UEdStateNode::Delete()
+{
+
 }

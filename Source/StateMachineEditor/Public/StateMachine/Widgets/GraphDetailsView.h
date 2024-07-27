@@ -37,11 +37,12 @@ public:
 
 	void GetChildren(TArray<TSharedPtr<FGraphDetailsViewItem>>& OutChildren) const;
 	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
-	void RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item);
+	void RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
 	void SetTableView(TableWeakPtr TableOwner);
 	TWeakPtr<FGraphDetailsViewItem> GetParent() const { return this->Parent; }
 	virtual void Select() {}
 	virtual void InitView() {}
+	virtual void Delete(bool DeferRefresh=false) {}
 };
 
 class FHeaderItem : public FGraphDetailsViewItem
@@ -125,6 +126,8 @@ private:
 	void OnNodeDeleted();
 
 	void Select() override { this->NodeRef->Inspect(); }
+
+	virtual void Delete(bool DeferRefresh = false) override;
 };
 
 class FStateMachineItem : public FGraphDetailsViewItem
@@ -155,7 +158,7 @@ private:
 	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 	void OnNameChanged(FName Name);
-	void OnNodeDeleted();
+	void OnGraphDeleted();
 	void OnEventCreated(UEdEventObject* Event, bool DeferRefresh);
 	void OnGraphChanged(const FEdGraphEditAction& Action);
 
@@ -165,6 +168,8 @@ private:
 		this->GraphRef.Get()->Inspect();
 		this->GraphRef->Select();
 	}
+
+	virtual void Delete(bool DeferRefresh = false) override;
 };
 
 class FEventItem : public FGraphDetailsViewItem
@@ -190,6 +195,8 @@ private:
 	void OnEventRenamed(FName To);
 
 	void Select() { this->EventReference->Inspect(); }
+
+	virtual void Delete(bool DeferRefresh = false) override;
 };
 
 class FTransitionItem : public FGraphDetailsViewItem
@@ -261,6 +268,8 @@ private:
 
 	void OnStateAdded(UEdStateNode* State);
 	void OnEventAdded(UEdEventObject* Event);
+
+	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& KeyEvent) override;
 };
 
 /**

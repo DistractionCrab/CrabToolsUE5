@@ -17,6 +17,8 @@ class UUtilsLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	
+
 	UFUNCTION(BlueprintCallable, Category="Utility")
 	static void ActivateTimeGatedBool(UPARAM(ref) FTimeGatedBool& input);
 
@@ -49,3 +51,41 @@ public:
 		meta = (ExpandEnumAsExecs = "Result"))
 	void DeactivateNAryGate(UPARAM(ref) FNAryGate& Gate, ETriggerBranch& Result);
 };
+
+namespace UtilsFunctions
+{
+	template<class T> T* GetOuterAs(const UObject* Obj)
+	{
+		UObject* Outer = Obj->GetOuter();
+
+		while (Outer)
+		{
+			if (auto Casted = Cast<T>(Outer))
+			{
+				return Casted;
+			}
+			else
+			{
+				Outer = Outer->GetOuter();
+			}
+		}
+
+		return nullptr;
+	}
+
+	template<class T> bool SetEquals(TSet<T>& A, TSet<T>& B)
+	{
+		
+		for (auto V1 : A)
+		{
+			if (!B.Contains(V1)) { return false; }
+		}
+
+		for (auto V1 : B)
+		{
+			if (!A.Contains(V1)) { return false; }
+		}
+
+		return true;
+	}
+}

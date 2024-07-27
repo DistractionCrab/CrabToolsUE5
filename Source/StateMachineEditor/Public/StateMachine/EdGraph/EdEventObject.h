@@ -37,4 +37,5 @@ public:
 	FName RenameEvent(FName NewName);
 
 	void Inspect();
+	void Delete();
 };

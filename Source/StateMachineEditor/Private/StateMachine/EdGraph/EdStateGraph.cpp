@@ -346,14 +346,22 @@ TArray<FString> UEdStateGraph::GetMachineOptions() const
 void UEdStateGraph::PostEditUndo()
 {
 	Super::PostEditUndo();
-	UE_LOG(LogTemp, Warning, TEXT("Called PostEditUndo"));
 }
 
 void UEdStateGraph::PostEditChangeProperty(
 	FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	UE_LOG(LogTemp, Warning, TEXT("Called PostEditChanged"));
+}
+
+void UEdStateGraph::Delete()
+{
+
+}
+
+void UEdStateGraph::RenameGraph(FName NewName)
+{
+	this->GetBlueprintOwner()->RenameGraph(this, NewName);
 }
 
 #undef LOCTEXT_NAMESPACE

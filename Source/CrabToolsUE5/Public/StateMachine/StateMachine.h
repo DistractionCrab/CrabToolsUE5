@@ -74,6 +74,18 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FEventSlot
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, Category="StateMachine|Events",
+		meta=(GetOptions="GetEventOptions"))
+	FName EventName;
+};
+
+USTRUCT(BlueprintType)
 struct FAliasData
 {
 	GENERATED_USTRUCT_BODY()
@@ -84,14 +96,12 @@ public:
 	// Mapping of EventName -> TransitionData.
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetValueOptions = "StateOptions"))
 	TMap<FName, FTransitionData> Transitions;
-
 };
 
 /**
  *
  */
-UCLASS(Abstract, Blueprintable, EditInlineNew, CollapseCategories, DisplayName="EmptyNode", 
-	Category = "StateMachine")
+UCLASS(Abstract, Blueprintable, EditInlineNew, CollapseCategories, Category = "StateMachine")
 class CRABTOOLSUE5_API UStateNode : public UObject
 {
 	GENERATED_BODY()
@@ -102,8 +112,15 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	TObjectPtr<UStateMachine> Owner;
 	bool bActive = false;
 
+	#if WITH_EDITORONLY_DATA
+		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="StateMachine|Events",
+			meta=(AllowPrivateAccess=true))
+		TSet<FName> EmittedEvents;
+		TSet<FName> PreEditEmittedEvents;
+	#endif
+
 public:
-	
+	UStateNode();
 
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
@@ -172,11 +189,31 @@ public:
 
 	FORCEINLINE bool Active() { return this->bActive; }
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
-	void GetEmittedEvents(TArray<FName>& EventsList);
-	virtual void GetEmittedEvents_Implementation(TArray<FName>& EventsList) {}
+	virtual void GetEmittedEvents(TSet<FName>& Events) const { Events.Append(this->EmittedEvents); }
 
-	void GetEvents(TSet<FName>& List);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
+	void RenameEvent(FName Old, FName New);
+	virtual void RenameEvent_Implementation(FName Old, FName New);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
+	void DeleteEvent(FName Event);
+	virtual void DeleteEvent_Implementation(FName Event);
+
+	#if WITH_EDITORONLY_DATA
+		UFUNCTION()
+		TArray<FString> GetEventOptions() const;
+	#endif
+
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+		virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override { UE_LOG(LogTemp, Warning, TEXT("StateNode::PostCDOCompiled Called %s"), *this->GetOuter()->GetName()); Super::PostCDOCompiled(Context); }
+		virtual void PostLinkerChange() override { UE_LOG(LogTemp, Warning, TEXT("StateNode::PostLinkerChange Called %s"), *this->GetOuter()->GetName()); Super::PostLinkerChange(); }
+		virtual void PostReinitProperties() override { UE_LOG(LogTemp, Warning, TEXT("StateNode::PostReinitProperties Called %s"), *this->GetOuter()->GetName()); Super::PostReinitProperties(); }
+	#endif
+
+protected:
+	void AddEmittedEvent(FName Event) { this->EmittedEvents.Add(Event); }
 };
 
 
@@ -292,9 +329,7 @@ public:
 	 */
 	void UpdateState(FName Name);
 	void UpdateStateWithData(FName Name, UObject* Data);
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
-	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+	
 	
 	FStateData* GetCurrentState();
 	FStateData* GetStateData(FName Name);
@@ -397,11 +432,17 @@ public:
 		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
 	}
 
-	private:
-		void RebindConditions();
-		void ValidateEventProps();
-		void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
-		bool HasEventVariable(FName VName);
-		FName GetEventVarName(FName EName);
-		void InitFromArchetype();
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
+		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+	#endif
+
+private:
+	void RebindConditions();
+	void ValidateEventProps();
+	void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
+	bool HasEventVariable(FName VName);
+	FName GetEventVarName(FName EName);
+	void InitFromArchetype();
 };

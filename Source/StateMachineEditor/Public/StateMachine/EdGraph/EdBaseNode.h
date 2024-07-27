@@ -28,6 +28,7 @@ public:
 	FEdNodeEvents Events;
 
 	virtual void ClearEvents();
+	UEdStateGraph* GetStateGraph() const { return Cast<UEdStateGraph>(this->GetGraph()); }
 
 	void Inspect();
 };

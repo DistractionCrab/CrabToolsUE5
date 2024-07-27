@@ -9,7 +9,7 @@
 
 
 UCLASS(config=Game)
-class ASMPawn : public APawn
+class ASMPawn : public APawn, public IEventListenerInterface
 {
 	GENERATED_BODY()
 
@@ -19,5 +19,11 @@ class ASMPawn : public APawn
 public:
 	ASMPawn();
 
+
+	void Event_Implementation(FName EName) override { this->StateMachineComponent->Event(EName); }
+	void EventWithData_Implementation(FName EName, UObject* Data) override
+	{
+		this->StateMachineComponent->EventWithData(EName, Data);
+	}
 };
 

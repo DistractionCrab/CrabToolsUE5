@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "StateMachine/IStateMachineLike.h"
 #include "SGraphNode.h"
 #include "EdGraph/EdGraphNode.h"
 #include "SGraphPin.h"
@@ -9,10 +10,8 @@
 #include "EdStateNode.generated.h"
 
 
-
-
 UCLASS(MinimalAPI)
-class UEdStateNode : public UEdBaseStateNode
+class UEdStateNode : public UEdBaseStateNode, public IStateLike
 {
 	GENERATED_BODY()
 
@@ -46,4 +45,14 @@ public:
 
 	UStateNode* GetCompiledNode();
 
+	virtual TArray<FString> GetEventOptions() const override;
+
+	void Delete();
+
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override { UE_LOG(LogTemp, Warning, TEXT("EdState::PostCDOCompiled Called")); Super::PostCDOCompiled(Context); }
+		virtual void PostLinkerChange() override { UE_LOG(LogTemp, Warning, TEXT("EdState::PostLinkerChange Called")); Super::PostLinkerChange(); }
+		virtual void PostReinitProperties() override { UE_LOG(LogTemp, Warning, TEXT("EdState::PostReinitProperties Called")); Super::PostReinitProperties(); }
+	#endif
 };

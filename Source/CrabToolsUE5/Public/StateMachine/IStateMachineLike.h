@@ -20,3 +20,21 @@ public:
     virtual TArray<FString> GetStateOptions() const { return {}; };
     virtual TArray<FString> GetSubMachineStateOptions(FName SMName) const { return {}; };
 };
+
+/* Interface for objects that act like states within a state machine. */
+UINTERFACE(MinimalAPI)
+class UStateLike : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class IStateLike
+{
+    GENERATED_BODY()
+
+public:
+
+    virtual TArray<FString> GetEventOptions() const { return {}; };
+    virtual void RenameEvent(FName From, FName To) {}
+    virtual void DeleteEvent(FName EventName) {}
+};

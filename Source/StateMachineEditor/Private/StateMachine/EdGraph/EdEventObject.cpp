@@ -34,3 +34,8 @@ UEdStateGraph* UEdEventObject::GetGraph() const
 	}
 	return Graph;
 }
+
+void UEdEventObject::Delete()
+{
+
+}

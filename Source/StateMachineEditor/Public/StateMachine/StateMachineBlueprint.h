@@ -30,6 +30,9 @@ private:
 	UPROPERTY()
 	TArray<class UEdStateGraph*> SubGraphs;
 
+
+	UPROPERTY(EditAnywhere, Category="Testing")
+	int TestValue;
 public:
 
 	FStateMachineBlueprintEditorEvents Events;
