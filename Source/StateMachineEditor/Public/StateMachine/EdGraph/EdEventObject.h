@@ -9,8 +9,11 @@ class FEventObjectActionEvents
 {
 public:
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FEventRenamed, FName)
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FEventRenamed, FName, FName)
 	FEventRenamed OnEventRenamed;
+
+	DECLARE_MULTICAST_DELEGATE(FEventRemoved)
+	FEventRemoved OnEventRemoved;
 
 };
 
@@ -33,9 +36,9 @@ public:
 	UEdStateGraph* GetGraph() const;
 	void SetName(FName Name);
 	FName GetName() { return this->EventName; }
-
 	FName RenameEvent(FName NewName);
-
 	void Inspect();
 	void Delete();
+
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 };

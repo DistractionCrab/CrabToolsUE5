@@ -2,6 +2,8 @@
 #include "STateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/StateMachineBlueprint.h"
 
+#define LOCTEXT_NAMESPACE "UEdEventObject"
+
 void UEdEventObject::Inspect()
 {
 	if (auto Graph = this->GetGraph())
@@ -17,8 +19,12 @@ FName UEdEventObject::RenameEvent(FName NewName)
 
 void UEdEventObject::SetName(FName Name)
 {
+	const FScopedTransaction Transaction(LOCTEXT("SetEventName", "Set Event Name"));
+	this->Modify();
+
+	FName OldName = this->EventName;
 	this->EventName = Name;
-	this->Events.OnEventRenamed.Broadcast(Name);
+	this->Events.OnEventRenamed.Broadcast(OldName, Name);
 }
 
 UEdStateGraph* UEdEventObject::GetGraph() const
@@ -39,3 +45,12 @@ void UEdEventObject::Delete()
 {
 
 }
+
+bool UEdEventObject::Modify(bool bAlwaysMarkDirty)
+{
+	Super::Modify(bAlwaysMarkDirty);
+
+	this->GetGraph()->Modify(bAlwaysMarkDirty);
+}
+
+#undef LOCTEXT_NAMESPACE

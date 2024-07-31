@@ -25,7 +25,7 @@ class STATEMACHINEEDITOR_API SGraphView : public SCompoundWidget, public FGCObje
 {
 
 private:
-
+	TSharedPtr<FUICommandList> GraphEditorCommands;
 	TWeakObjectPtr<UStateMachineBlueprint> BlueprintRef;
 	TSharedPtr<SGraphEditor> GraphEditor;
 	TSharedPtr<SWidgetSwitcher> TabsWidget;
@@ -52,6 +52,8 @@ public:
 private:
 	void OnSelectionChanged(const TSet<class UObject*>& NewSelection);
 	void OnGraphSelected(UEdStateGraph* Graph);
+	void OnDeleteNodes();
+	bool CanDeleteNodes() { return true; }
 	void BindEvents(UStateMachineBlueprint* Blueprint);
 
 	void AddGraphToEditor(UEdGraph* Graph);

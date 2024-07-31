@@ -1,8 +1,10 @@
 #include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/StateMachineBlueprint.h"
 
 #include "StateMachine/ArrayNode.h"
 
+#define LOCTEXT_NAMESPACE "EdStateNode"
 
 UEdStateNode::UEdStateNode() {
 	this->bCanRenameNode = true;
@@ -22,8 +24,12 @@ FName UEdStateNode::SetStateName(FName NewName)
 	{
 		if (Graph->IsStateNameAvilable(NewName))
 		{
+			const FScopedTransaction Transaction(LOCTEXT("SetStateName", "Set State Name"));
+			this->Modify();
+
+			FName OldName = this->StateName;
 			this->StateName = NewName;
-			this->Events.OnNameChanged.Broadcast(this->StateName);
+			this->Events.OnNameChanged.Broadcast(OldName, this->StateName);
 		}
 	}
 
@@ -55,22 +61,7 @@ UStateNode* UEdStateNode::GetCompiledNode()
 
 void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-	UE_LOG(LogTemp, Warning, TEXT("PostEdit"));
 
-	if (PropertyChangedEvent.Property)
-	{
-		if (PropertyChangedEvent.MemberProperty)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("PostEdit: Member Property was not null."));
-			UE_LOG(LogTemp, Warning, TEXT("PostEdit: Found a class: %s"),
-				*PropertyChangedEvent.MemberProperty->GetName());
-		}		
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PostEdit: Property was null."));
-	}
 }
 
 TArray<FString> UEdStateNode::GetEventOptions() const
@@ -91,5 +82,22 @@ TArray<FString> UEdStateNode::GetEventOptions() const
 
 void UEdStateNode::Delete()
 {
+	this->Modify();
 
+	const UEdGraphSchema* Schema = this->GetSchema();
+	if (Schema != nullptr)
+	{
+		Schema->BreakNodeLinks(*this);
+	}
+
+	this->DestroyNode();
 }
+
+bool UEdStateNode::Modify(bool bAlwaysMarkDirty)
+{
+	Super::Modify(bAlwaysMarkDirty);
+
+	this->GetGraph()->Modify(bAlwaysMarkDirty);
+}
+
+#undef LOCTEXT_NAMESPACE

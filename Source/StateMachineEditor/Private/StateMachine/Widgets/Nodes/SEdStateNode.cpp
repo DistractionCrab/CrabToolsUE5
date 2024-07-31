@@ -182,7 +182,7 @@ FName SEdStateNode::GetStateName() const
 	return NAME_None;
 }
 
-void SEdStateNode::OnNodeNameChanged(FName Name)
+void SEdStateNode::OnNodeNameChanged(FName OldName, FName Name)
 {
 	this->InlineEditableText->SetText(FText::FromName(Name));
 }

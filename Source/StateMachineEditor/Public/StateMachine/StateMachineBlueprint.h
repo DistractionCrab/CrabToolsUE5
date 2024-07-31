@@ -47,6 +47,7 @@ public:
 
 	bool IsMainGraph(UEdStateGraph* Graph);
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
+	void DeleteGraph(UEdStateGraph* Graph);
 	const TArray<class UEdStateGraph*>& GetSubgraphs() { return this->SubGraphs; }
 
 	// IStateMachineLike Interface

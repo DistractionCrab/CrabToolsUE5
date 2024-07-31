@@ -18,7 +18,6 @@ UEdStateGraph::UEdStateGraph()
 
 void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
-
 	Super::NotifyGraphChanged(Action);
 
 	if (Action.Action & EEdGraphActionType::GRAPHACTION_AddNode)
@@ -33,8 +32,20 @@ void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 			}			
 		}
 	}
+	else if (Action.Action & EEdGraphActionType::GRAPHACTION_RemoveNode)
+	{
+		for (auto Node : Action.Nodes)
+		{
+			UEdStateNode* CastNode = Cast<UEdStateNode>(const_cast<UEdGraphNode*>(Node));
 
-	this->GetBlueprintOwner()->Modify();
+			if (CastNode)
+			{
+				CastNode->Events.OnNodeDeleted.Broadcast();
+			}
+		}
+	}
+
+	this->Modify();
 }
 
 FName UEdStateGraph::GetNewStateName()
@@ -186,9 +197,7 @@ UEdEventObject* UEdStateGraph::CreateEvent()
 	NewEventObject->SetName(NewName);
 
 	this->EventObjects.Add(NewEventObject);
-	this->Events.OnEventCreated.Broadcast(NewEventObject);
-
-	
+	this->Events.OnEventCreated.Broadcast(NewEventObject);	
 
 	return NewEventObject;
 }
@@ -267,6 +276,7 @@ UStateMachineBlueprint* UEdStateGraph::GetBlueprintOwner() const
 void UEdStateGraph::Select()
 {
 	this->GetBlueprintOwner()->SelectGraph(this);
+	this->GetBlueprintOwner()->Events.OnObjectInspected.Broadcast(this);
 }
 
 void UEdStateGraph::Inspect()
@@ -345,7 +355,9 @@ TArray<FString> UEdStateGraph::GetMachineOptions() const
 
 void UEdStateGraph::PostEditUndo()
 {
-	Super::PostEditUndo();
+	Super::PostEditUndo();	
+	UEdGraph::NotifyGraphChanged();
+	this->Events.OnGraphDataReverted.Broadcast();
 }
 
 void UEdStateGraph::PostEditChangeProperty(
@@ -362,6 +374,22 @@ void UEdStateGraph::Delete()
 void UEdStateGraph::RenameGraph(FName NewName)
 {
 	this->GetBlueprintOwner()->RenameGraph(this, NewName);
+}
+
+void UEdStateGraph::RemoveEvent(UEdEventObject* EventObj)
+{
+	if (this->EventObjects.Contains(EventObj))
+	{
+		this->EventObjects.Remove(EventObj);
+		EventObj->Events.OnEventRemoved.Broadcast();
+	}
+}
+
+bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
+{
+	Super::Modify(bAlwaysMarkDirty);
+
+	this->GetBlueprintOwner()->Modify(bAlwaysMarkDirty);
 }
 
 #undef LOCTEXT_NAMESPACE

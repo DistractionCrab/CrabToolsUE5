@@ -10,6 +10,7 @@
 #include "Widgets/Views/STableRow.h"
 #include "Widgets/Views/STreeView.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #include "StateMachine/Editor.h"
 
@@ -35,6 +36,7 @@ public:
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly);
 
+	void Clear() { this->Children.Empty(); }
 	void GetChildren(TArray<TSharedPtr<FGraphDetailsViewItem>>& OutChildren) const;
 	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
 	void RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
@@ -43,6 +45,7 @@ public:
 	virtual void Select() {}
 	virtual void InitView() {}
 	virtual void Delete(bool DeferRefresh=false) {}
+	virtual void EnterRenameMode() {}
 };
 
 class FHeaderItem : public FGraphDetailsViewItem
@@ -103,12 +106,19 @@ public:
 	virtual FReply OnAddImplementation() override;
 };
 
-class FStateItem : public FGraphDetailsViewItem
+class FBaseEditableTextItem : public FGraphDetailsViewItem
+{
+protected:
+	TSharedPtr<SInlineEditableTextBlock> InlineText;
+
+public:
+	virtual void EnterRenameMode() override { this->InlineText->EnterEditingMode(); }
+};
+
+class FStateItem : public FBaseEditableTextItem
 {
 private:
 	TWeakObjectPtr<UEdStateNode> NodeRef;
-
-	TSharedPtr<SInlineEditableTextBlock> InlineText;
 
 public:
 	virtual ~FStateItem();
@@ -122,7 +132,7 @@ private:
 	
 	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
-	void OnNameChanged(FName Name);
+	void OnNameChanged(FName Old, FName Name);
 	void OnNodeDeleted();
 
 	void Select() override { this->NodeRef->Inspect(); }
@@ -130,17 +140,11 @@ private:
 	virtual void Delete(bool DeferRefresh = false) override;
 };
 
-class FStateMachineItem : public FGraphDetailsViewItem
+class FStateMachineItem : public FBaseEditableTextItem
 {
 private:
+
 	TWeakObjectPtr<UEdStateGraph> GraphRef;
-
-	TSharedPtr<FGraphDetailsViewItem> StateRoot;
-	TSharedPtr<FGraphDetailsViewItem> EventRoot;
-	TSharedPtr<FGraphDetailsViewItem> AliasRoot;
-	TSharedPtr<FGraphDetailsViewItem> StaticsRoot;
-
-	TSharedPtr<SInlineEditableTextBlock> InlineText;
 
 public:
 	virtual ~FStateMachineItem();
@@ -157,27 +161,24 @@ private:
 
 	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
-	void OnNameChanged(FName Name);
+	void OnNameChanged(FName OldName, FName Name);
 	void OnGraphDeleted();
 	void OnEventCreated(UEdEventObject* Event, bool DeferRefresh);
 	void OnGraphChanged(const FEdGraphEditAction& Action);
 
 	void Select() override 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Selecting a Graph."));
-		this->GraphRef.Get()->Inspect();
 		this->GraphRef->Select();
 	}
 
 	virtual void Delete(bool DeferRefresh = false) override;
 };
 
-class FEventItem : public FGraphDetailsViewItem
+class FEventItem : public FBaseEditableTextItem
 {
-private:
-	TSharedPtr<SInlineEditableTextBlock> InlineText;
 
 protected:
+
 	TWeakObjectPtr<UEdEventObject> EventReference;
 
 public:
@@ -192,7 +193,7 @@ private:
 	bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 
-	void OnEventRenamed(FName To);
+	void OnEventRenamed(FName From, FName To);
 
 	void Select() { this->EventReference->Inspect(); }
 
@@ -247,9 +248,10 @@ public:
 
 	void AddState(UEdStateNode* Node, bool DeferRefresh);
 	void AddEvent(UEdEventObject* Node, bool DeferRefresh);
-	void Refresh() { this->TreeView->RequestListRefresh(); }
+	void Refresh();
 
 private:
+	void OnGraphDataReverted();
 	void OnItemSelected(TSharedPtr< FGraphDetailsViewItem > InSelectedItem, ESelectInfo::Type SelectInfo) {}
 	void OnItemDoubleClicked(TSharedPtr< FGraphDetailsViewItem > InClickedItem) {}
 	void OnGetChildrenForCategory(TSharedPtr<FGraphDetailsViewItem> InItem, TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren);
@@ -299,7 +301,8 @@ public:
 	}
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
-	
+	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& KeyEvent) override;
+
 private:
 	FReply OnAddStateMachine();
 	void BindEvents(TSharedPtr<class FEditor> InEditor);

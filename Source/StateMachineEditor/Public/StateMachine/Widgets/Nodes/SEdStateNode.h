@@ -31,6 +31,6 @@ public:
 private:
 	//bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
-	void OnNodeNameChanged(FName Name);
+	void OnNodeNameChanged(FName OldName, FName Name);
 };
 

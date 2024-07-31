@@ -34,25 +34,18 @@ public:
 	virtual ~UEdStateNode();
 
 	virtual TSubclassOf<UStateNode> GetNodeClass() const;
-
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
-
 	virtual FName GetStateName() const override { return this->StateName; }
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
-
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
-
 	UStateNode* GetCompiledNode();
+	void Delete();
 
 	virtual TArray<FString> GetEventOptions() const override;
-
-	void Delete();
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;	
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-		virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override { UE_LOG(LogTemp, Warning, TEXT("EdState::PostCDOCompiled Called")); Super::PostCDOCompiled(Context); }
-		virtual void PostLinkerChange() override { UE_LOG(LogTemp, Warning, TEXT("EdState::PostLinkerChange Called")); Super::PostLinkerChange(); }
-		virtual void PostReinitProperties() override { UE_LOG(LogTemp, Warning, TEXT("EdState::PostReinitProperties Called")); Super::PostReinitProperties(); }
 	#endif
 };

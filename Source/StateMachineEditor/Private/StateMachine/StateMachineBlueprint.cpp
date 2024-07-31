@@ -4,7 +4,7 @@
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/StateMachineSchema.h"
 
-
+#define LOCTEXT_NAMESPACE "UStateMachineBlueprint"
 #include "EdGraph/EdGraph.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 
@@ -100,10 +100,15 @@ void UStateMachineBlueprint::RenameGraph(UEdStateGraph* Graph, FName Name)
 {
 	auto Renamed = this->SubGraphs.Find(Graph);
 
-	if (Renamed)
+	if (Renamed >= 0)
 	{
+		const FScopedTransaction Transaction(LOCTEXT("RenameGraph", "Rename Graph"));
+		this->Modify();
+		Graph->Modify();
+
+		FName OldName = Graph->GetFName();
 		Graph->Rename(*Name.ToString(), this);
-		Graph->Events.OnNameChanged.Broadcast(Name);
+		Graph->Events.OnNameChanged.Broadcast(OldName, Name);
 	}
 }
 
@@ -149,3 +154,16 @@ TArray<FString> UStateMachineBlueprint::GetSubMachineStateOptions(FName MachineN
 
 	return TArray<FString>();
 }
+
+void UStateMachineBlueprint::DeleteGraph(UEdStateGraph* Graph)
+{
+	if (this->SubGraphs.Contains(Graph))
+	{
+		const FScopedTransaction Transaction(LOCTEXT("DeleteStateMachine", "Delete State Machine"));
+		this->Modify();
+		this->SubGraphs.Remove(Graph);
+		Graph->Events.OnGraphDeleted.Broadcast();
+	}
+}
+
+#undef LOCTEXT_NAMESPACE

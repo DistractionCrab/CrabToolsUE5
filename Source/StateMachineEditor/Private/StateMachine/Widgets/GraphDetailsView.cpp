@@ -6,7 +6,6 @@
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SScrollBorder.h"
 #include "Widgets/Text/SRichTextBlock.h"
-#include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
@@ -398,7 +397,7 @@ void FStateItem::OnNameTextCommited(const FText& InText, ETextCommit::Type Commi
 	this->NodeRef->SetStateName(NewName);
 }
 
-void FStateItem::OnNameChanged(FName Name)
+void FStateItem::OnNameChanged(FName Old, FName Name)
 {
 	this->InlineText->SetText(FText::FromName(Name));
 }
@@ -451,7 +450,7 @@ TSharedRef<ITableRow> FStateMachineItem::GetEntryWidget(
 			+ SHorizontalBox::Slot()
 			.AutoWidth()
 			.FillWidth(1.0)
-			.Padding(0, 2)
+			.Padding(2, 2)
 			[
 				SAssignNew(InlineText, SInlineEditableTextBlock)
 					//.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
@@ -472,8 +471,8 @@ TSharedRef<ITableRow> FStateMachineItem::GetEntryWidget(
 
 void FStateMachineItem::OnEventCreated(UEdEventObject* EventObject, bool DeferRefresh)
 {
-	this->EventRoot->AddChild(
-		MakeShareable(new FEventItem(EventObject)), DeferRefresh);
+	/*this->EventRoot->AddChild(
+		MakeShareable(new FEventItem(EventObject)), DeferRefresh);*/
 }
 
 void FStateMachineItem::OnGraphChanged(const FEdGraphEditAction& Action)
@@ -498,8 +497,7 @@ void FStateMachineItem::OnGraphChanged(const FEdGraphEditAction& Action)
 
 void FStateMachineItem::AddState(UEdStateNode* State, bool DeferRefresh)
 {
-	//auto Child = MakeShareable(new FStateItem(State));
-	//this->AddChild(Child, DeferRefresh);
+
 }
 
 bool FStateMachineItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)
@@ -535,7 +533,7 @@ void FStateMachineItem::OnNameTextCommited(const FText& InText, ETextCommit::Typ
 	this->GraphRef->RenameGraph(NewName);
 }
 
-void FStateMachineItem::OnNameChanged(FName Name)
+void FStateMachineItem::OnNameChanged(FName OldName, FName Name)
 {
 	this->InlineText->SetText(FText::FromName(Name));
 }
@@ -673,7 +671,7 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 	return TableRow;
 }
 
-void FEventItem::OnEventRenamed(FName To)
+void FEventItem::OnEventRenamed(FName From, FName To)
 {
 	this->InlineText->SetText(FText::FromName(To));
 }
@@ -768,6 +766,12 @@ void SSubGraphDetails::BindEvents()
 {
 	this->GraphRef->Events.OnStateAdded.AddSP(this, &SSubGraphDetails::OnStateAdded);
 	this->GraphRef->Events.OnEventCreated.AddSP(this, &SSubGraphDetails::OnEventAdded);
+	this->GraphRef->Events.OnGraphDataReverted.AddSP(this, &SSubGraphDetails::OnGraphDataReverted);
+}
+
+void SSubGraphDetails::OnGraphDataReverted()
+{
+	this->Refresh();
 }
 
 void SSubGraphDetails::OnStateAdded(UEdStateNode* State)
@@ -796,12 +800,76 @@ void SSubGraphDetails::AddEvent(UEdEventObject* Node, bool DeferRefresh)
 
 FReply SSubGraphDetails::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& KeyEvent)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Key Was Pressed"));
-	for (auto Item : this->TreeView->GetSelectedItems())
+	auto Selected = this->TreeView->GetSelectedItems();
+	if (KeyEvent.GetKey() == EKeys::Delete || KeyEvent.GetKey() == EKeys::BackSpace)
 	{
-		Item->Delete(true);
+		for (auto Item : Selected)
+		{
+			Item->Delete(true);
+		}
+
+		return FReply::Handled();
 	}
+	else if (KeyEvent.GetKey() == EKeys::F2 && Selected.Num() == 1)
+	{
+		auto Item = Selected[0];
+		this->TreeView->RequestScrollIntoView(Item);
+		Item->EnterRenameMode();
+
+		return FReply::Handled();
+	}
+
 	return FReply::Unhandled();
+}
+
+void SSubGraphDetails::OnGetChildrenForCategory(
+	TSharedPtr<FGraphDetailsViewItem> InItem,
+	TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren)
+{
+	InItem->GetChildren(OutChildren);
+}
+
+TSharedRef<ITableRow> SSubGraphDetails::OnGenerateRow(
+	TSharedPtr<FGraphDetailsViewItem> InItem,
+	const TSharedRef<STableViewBase>& OwnerTable,
+	bool bIsReadOnly)
+{
+	return InItem->GetEntryWidget(OwnerTable, bIsReadOnly);
+}
+
+void SSubGraphDetails::OnSelectionChanged(
+	TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+	ESelectInfo::Type SelectInfo)
+{
+	if (SelectedItem.IsValid())
+	{
+		SelectedItem->Select();
+	}
+}
+
+void SSubGraphDetails::AddReferencedObjects(FReferenceCollector& Collector)
+{
+
+}
+
+void SSubGraphDetails::Refresh()
+{
+	this->StateRoot->Clear();
+	this->EventRoot->Clear();
+	this->StaticsRoot->Clear();
+	this->AliasRoot->Clear();
+
+	for (auto Node : GraphRef->GetStates())
+	{
+		this->AddState(Node, true);
+	}
+
+	for (auto Ev : GraphRef->GetEventList())
+	{
+		this->AddEvent(Ev, true);
+	}
+
+	this->TreeView->RequestListRefresh();
 }
 
 void SGraphDetailsView::Construct(
@@ -926,16 +994,6 @@ void SGraphDetailsView::InitGraphDetailsView(UEdStateGraph* Graph)
 	this->DetailsTabs->AddSlot(this->DetailsTabs->GetNumWidgets())[Widget];
 	this->GraphToWidgetMap.Add(Graph, Widget);
 
-	for (auto Node : Graph->GetStates())
-	{
-		Widget->AddState(Node, true);
-	}
-
-	for (auto Ev : Graph->GetEventList())
-	{
-		Widget->AddEvent(Ev, true);
-	}
-
 	//Graph->Events.OnStateAdded.AddRaw(this, &SGraphDetailsView::OnStateAdded);
 
 	Widget->Refresh();
@@ -1021,34 +1079,28 @@ void FGraphDetailsViewItem::GetChildren(TArray< TSharedPtr<FGraphDetailsViewItem
 	}
 }
 
-void SSubGraphDetails::OnGetChildrenForCategory(
-	TSharedPtr<FGraphDetailsViewItem> InItem,
-	TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren)
+FReply SGraphDetailsView::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& KeyEvent)
 {
-	InItem->GetChildren(OutChildren);
-}
-
-TSharedRef<ITableRow> SSubGraphDetails::OnGenerateRow(
-	TSharedPtr<FGraphDetailsViewItem> InItem,
-	const TSharedRef<STableViewBase>& OwnerTable,
-	bool bIsReadOnly)
-{
-	return InItem->GetEntryWidget(OwnerTable, bIsReadOnly);
-}
-
-void SSubGraphDetails::OnSelectionChanged(
-	TSharedPtr<FGraphDetailsViewItem> SelectedItem,
-	ESelectInfo::Type SelectInfo)
-{
-	if (SelectedItem.IsValid())
+	auto Selected = this->TreeView->GetSelectedItems();
+	if (KeyEvent.GetKey() == EKeys::Delete || KeyEvent.GetKey() == EKeys::BackSpace)
 	{
-		SelectedItem->Select();
+		for (auto Item : Selected)
+		{
+			Item->Delete(true);
+		}
+
+		return FReply::Handled();
 	}
-}
+	else if (KeyEvent.GetKey() == EKeys::F2 && Selected.Num() == 1)
+	{
+		auto Item = Selected[0];
+		this->TreeView->RequestScrollIntoView(Item);
+		Item->EnterRenameMode();
 
-void SSubGraphDetails::AddReferencedObjects(FReferenceCollector& Collector)
-{
+		return FReply::Handled();
+	}
 
+	return FReply::Unhandled();
 }
 
 #undef LOCTEXT_NAMESPACE

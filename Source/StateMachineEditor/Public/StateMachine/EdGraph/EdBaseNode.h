@@ -10,7 +10,7 @@
 class FEdNodeEvents
 {
 public:
-	DECLARE_MULTICAST_DELEGATE_OneParam(FNameChanged, FName)
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FNameChanged, FName, FName)
 	FNameChanged OnNameChanged;
 
 	DECLARE_MULTICAST_DELEGATE(FNodeDeleted)

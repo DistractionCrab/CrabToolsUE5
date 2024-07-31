@@ -25,7 +25,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FEventCreated, UEdEventObject*)
 	FEventCreated OnEventCreated;
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FNameChanged, FName)
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FNameChanged, FName, FName)
 	FNameChanged OnNameChanged;
 
 	DECLARE_MULTICAST_DELEGATE(FGraphDeleted)
@@ -33,6 +33,9 @@ public:
 
 	DECLARE_MULTICAST_DELEGATE_OneParam(FStateAdded, UEdStateNode*)
 	FStateAdded OnStateAdded;
+
+	DECLARE_MULTICAST_DELEGATE(FGraphDataReverted)
+	FGraphDataReverted OnGraphDataReverted;
 };
 
 UCLASS(MinimalAPI)
@@ -66,6 +69,7 @@ public:
 	bool IsStateNameAvilable(FName Name) const;
 	bool IsEventNameAvilable(FName Name) const;
 	FName RenameEvent(UEdEventObject* EventObj, FName To);
+	void RemoveEvent(UEdEventObject* EventObj);
 	void ClearDelegates();
 	void Select();
 
@@ -87,6 +91,7 @@ public:
 	bool IsMainGraph();
 	class UStateMachineBlueprint* GetBlueprintOwner() const;
 
+	virtual bool Modify(bool bAlwaysMarkDirty=true) override;
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	virtual void PostEditUndo() override;
 	virtual void PostEditChangeProperty(
