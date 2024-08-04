@@ -6,6 +6,7 @@
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
+#include "KismetCompiler.h"
 
 #define LOCTEXT_NAMESPACE "EdStateGraph"
 #define DEFAULT_NODE_NAME "NewState"
@@ -131,6 +132,20 @@ FName UEdStateGraph::GetStartStateName()
 	return NAME_None;
 }
 
+bool UEdStateGraph::HasEvent(FName EName) const
+{
+	auto Ev = this->EventObjects.FindByPredicate([&](const UEdEventObject* Ev) { return Ev->GetFName() == EName; });
+
+	if (Ev)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}	
+}
+
 bool UEdStateGraph::IsStateNameAvilable(FName Name) const
 {
 	for (const auto& Node : this->Nodes)
@@ -228,29 +243,52 @@ FName UEdStateGraph::RenameEvent(UEdEventObject* EventObj, FName To)
 	}
 }
 
-TArray<TObjectPtr<UEdStateNode>> UEdStateGraph::GetStates()
+TArray<UEdStateNode*> UEdStateGraph::GetStates()
 {
-	TArray<TObjectPtr<UEdStateNode>> StateNodes;
-
-	for (auto Node : this->Nodes)
-	{
-		if (auto StateNode = Cast<UEdStateNode>(Node))
-		{
-			StateNodes.Add(StateNode);
-		}
-	}
+	TArray<UEdStateNode*> StateNodes;
+	this->GetNodesOfClass<UEdStateNode>(StateNodes);
 
 	return StateNodes;
 }
 
-UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(UObject* Outer)
+TArray<UEdTransition*> UEdStateGraph::GetTransitions()
 {
+	TArray<UEdTransition*> Transitions;
+	this->GetNodesOfClass<UEdTransition>(Transitions);
+
+	return Transitions;
+}
+
+TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start)
+{
+	TArray<UEdTransition*> Transitions;
+	this->GetNodesOfClass<UEdTransition>(Transitions);
+
+	auto Pred = [&](const UEdTransition* A) -> bool { return A->GetStartNode() == Start; };
+
+	return Transitions.FilterByPredicate(Pred);
+}
+
+UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerContext& Context)
+{
+	UObject* Outer = Context.TargetClass;
+
 	auto StateMachine = NewObject<UStateMachineArchetype>(Outer);
 
 	for (auto State : this->GetStates())
 	{
 		StateMachine->AddStateWithNode(State->GetStateName(), State->GetCompiledNode());
-	}
+
+		for (auto Transition : this->GetExitTransitions(State))
+		{
+			auto TData = Transition->GetTransitionData(Context);
+
+			for (auto Values : TData)
+			{
+				StateMachine->AddTransition(State->GetStateName(), Values.Key, Values.Value);
+			}
+		}
+	}	
 
 	StateMachine->StartState = this->GetStartStateName();
 	StateMachine->ArchetypeClass = this->SourceClass;
@@ -388,8 +426,9 @@ void UEdStateGraph::RemoveEvent(UEdEventObject* EventObj)
 bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
 {
 	Super::Modify(bAlwaysMarkDirty);
-
-	this->GetBlueprintOwner()->Modify(bAlwaysMarkDirty);
+	return this->GetBlueprintOwner()->Modify(bAlwaysMarkDirty);	
 }
+
+UClass* UEdStateGraph::GetStateMachineClass() { return this->GetBlueprintOwner()->GetStateMachineClass(); }
 
 #undef LOCTEXT_NAMESPACE

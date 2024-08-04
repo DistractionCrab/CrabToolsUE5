@@ -64,8 +64,6 @@ struct FStateData
 
 public:
 
-	//FStateData(): Node(nullptr) {}
-
 	UPROPERTY(EditAnywhere, Category = "StateMachine")
 	TObjectPtr<UStateNode> Node;
 	// Map from Event Name to StateName
@@ -84,6 +82,18 @@ public:
 		meta=(GetOptions="GetEventOptions"))
 	FName EventName;
 };
+
+USTRUCT(BlueprintType)
+struct FEmittedEvent
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|Events")
+	FName EventName;
+};
+
 
 USTRUCT(BlueprintType)
 struct FAliasData
@@ -113,7 +123,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	bool bActive = false;
 
 	#if WITH_EDITORONLY_DATA
-		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="StateMachine|Events",
+		UPROPERTY(BlueprintReadOnly, Category="StateMachine|Events",
 			meta=(AllowPrivateAccess=true))
 		TSet<FName> EmittedEvents;
 		TSet<FName> PreEditEmittedEvents;
@@ -189,8 +199,6 @@ public:
 
 	FORCEINLINE bool Active() { return this->bActive; }
 
-	virtual void GetEmittedEvents(TSet<FName>& Events) const { Events.Append(this->EmittedEvents); }
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void RenameEvent(FName Old, FName New);
 	virtual void RenameEvent_Implementation(FName Old, FName New);
@@ -199,21 +207,30 @@ public:
 	void DeleteEvent(FName Event);
 	virtual void DeleteEvent_Implementation(FName Event);
 
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void EmitEvent(FName EName);
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(DisplayName="EmitEvent"))
+	void EmitEventSlot(const FEventSlot& ESlot);
+
 	#if WITH_EDITORONLY_DATA
 		UFUNCTION()
 		TArray<FString> GetEventOptions() const;
+		virtual void GetEmittedEvents(TSet<FName>& Events) const;
 	#endif
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-		virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override { UE_LOG(LogTemp, Warning, TEXT("StateNode::PostCDOCompiled Called %s"), *this->GetOuter()->GetName()); Super::PostCDOCompiled(Context); }
-		virtual void PostLinkerChange() override { UE_LOG(LogTemp, Warning, TEXT("StateNode::PostLinkerChange Called %s"), *this->GetOuter()->GetName()); Super::PostLinkerChange(); }
-		virtual void PostReinitProperties() override { UE_LOG(LogTemp, Warning, TEXT("StateNode::PostReinitProperties Called %s"), *this->GetOuter()->GetName()); Super::PostReinitProperties(); }
 	#endif
 
 protected:
-	void AddEmittedEvent(FName Event) { this->EmittedEvents.Add(Event); }
+	void AddEmittedEvent(FName Event)
+	{
+		#if WITH_EDITORONLY_DATA
+			this->EmittedEvents.Add(Event); 
+		#endif
+	}
 };
 
 
@@ -382,6 +399,8 @@ public:
 
 	// Procedural constructions functions.
 	void AddState(FName StateName);
+	void AddTransition(FName State, FName Event, FName Destination, FName Condition, FName DataCondition);
+	void AddTransition(FName State, FName Event, FTransitionData Data);
 	void ClearStates() { this->Graph.Empty(); }
 
 	template <class T> T* AddStateWithNode(FName StateName)
@@ -400,36 +419,6 @@ public:
 		FStateData Data;
 		Data.Node = Cast<UStateNode>(DuplicateObject(Node, this));
 		this->Graph.Add(StateName, Data);
-	}
-
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
-	void PrintTestData()
-	{
-		size_t Ptr = reinterpret_cast<size_t>(this);
-		UE_LOG(LogTemp, Warning, TEXT("Printing for %s : %d"), *this->GetClass()->GetFName().ToString(), Ptr);
-		for (auto Data : this->Graph)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("State Found: %s"), *Data.Key.ToString());
-			if (Data.Value.Node)
-			{
-				Ptr = reinterpret_cast<size_t>(Data.Value.Node.Get());
-				UE_LOG(LogTemp, Warning, 
-					TEXT("-- Node ( %s ) Found: %d"), *Data.Value.Node->GetClass()->GetFName().ToString(), Ptr);
-
-				Ptr = reinterpret_cast<size_t>(Data.Value.Node.Get()->GetOuter());
-				UE_LOG(LogTemp, Warning,
-					TEXT("--Outer ( %s ) Found: %d"), *Data.Value.Node->GetOuter()->GetClass()->GetFName().ToString(), Ptr);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("-- Node was null."));
-			}
-
-			UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
-		UE_LOG(LogTemp, Warning, TEXT("-------------------------------"));
 	}
 
 	#if WITH_EDITOR

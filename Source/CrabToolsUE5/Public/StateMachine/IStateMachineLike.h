@@ -19,6 +19,7 @@ public:
     virtual TArray<FString> GetEventOptions() const { return {}; };
     virtual TArray<FString> GetStateOptions() const { return {}; };
     virtual TArray<FString> GetSubMachineStateOptions(FName SMName) const { return {}; };
+    virtual UClass* GetStateMachineClass() = 0;
 };
 
 /* Interface for objects that act like states within a state machine. */

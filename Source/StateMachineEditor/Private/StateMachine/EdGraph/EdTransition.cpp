@@ -106,5 +106,29 @@ TArray<FString> UEdTransition::GetConditionOptions() const
 	return Cast<UEdStateGraph>(this->GetGraph())->GetConditionOptions();
 }
 
+TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FKismetCompilerContext& Context)
+{
+	TMap<FName, FTransitionData> Data;
+
+	for (auto Values : this->EventToConditionMap)
+	{
+		FTransitionData DataValue
+		{
+			this->GetEndNode()->GetStateName(),
+			Values.Value.Condition,
+			Values.Value.DataCondition,
+		};
+
+		if (!this->GetStateGraph()->HasEvent(Values.Key))
+		{
+
+		}
+
+		Data.Add(Values.Key, DataValue);
+	}
+
+	return Data;
+}
+
 #undef LOCTEXT_NAMESPACE
 

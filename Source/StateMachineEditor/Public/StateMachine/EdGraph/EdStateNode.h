@@ -42,10 +42,12 @@ public:
 	UStateNode* GetCompiledNode();
 	void Delete();
 
+
 	virtual TArray<FString> GetEventOptions() const override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;	
 
 	#if WITH_EDITOR
-		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		//virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		//virtual void PostLinkerChange() override;
 	#endif
 };

@@ -31,17 +31,6 @@ bool UStateMachineBlueprintGeneratedClass::GetStateData(
 	{
 		auto ArchData = Machine->GetStateData(StateName);
 
-		if (!ArchData)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ArchData was null???"));
-		}
-		else
-		{
-			if (!ArchData->Node)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("ArchData->Node was null???"));
-			}
-		}
 		if (ArchData)
 		{
 			Output.Transitions.Append(ArchData->Transitions);

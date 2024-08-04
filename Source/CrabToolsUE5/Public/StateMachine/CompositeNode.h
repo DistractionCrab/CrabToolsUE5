@@ -25,4 +25,8 @@ public:
 	virtual void EnterWithData_Implementation(UObject* Data) override;
 	virtual void Exit_Implementation() override;	
 	virtual void ExitWithData_Implementation(UObject* Data) override;
+
+	#if WITH_EDITORONLY_DATA
+		virtual void GetEmittedEvents(TSet<FName>& Events) const override;
+	#endif
 };

@@ -27,4 +27,8 @@ public:
 	virtual void ExitWithData_Implementation(UObject* Data) override;
 
 	FORCEINLINE void AddNode(UStateNode* Node) { this->Nodes.Add(Node); }
+
+	#if WITH_EDITORONLY_DATA
+		virtual void GetEmittedEvents(TSet<FName>& Events) const override;
+	#endif
 };

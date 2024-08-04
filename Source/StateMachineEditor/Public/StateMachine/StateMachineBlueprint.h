@@ -4,7 +4,6 @@
 #include "UObject/ObjectMacros.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/IStateMachineLike.h"
-
 #include "StateMachineBlueprint.generated.h"
 
 class FStateMachineBlueprintEditorEvents
@@ -19,7 +18,9 @@ public:
 };
 
 UCLASS(BlueprintType)
-class STATEMACHINEEDITOR_API UStateMachineBlueprint : public UBlueprint, public IStateMachineLike
+class STATEMACHINEEDITOR_API UStateMachineBlueprint
+: public UBlueprint, 
+	public IStateMachineLike
 {
 	GENERATED_UCLASS_BODY()
 
@@ -52,6 +53,7 @@ public:
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
+	virtual UClass* GetStateMachineClass() override { return this->GeneratedClass; }
 
 private:
 

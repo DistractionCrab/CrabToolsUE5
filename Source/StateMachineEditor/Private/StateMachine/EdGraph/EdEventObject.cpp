@@ -49,8 +49,7 @@ void UEdEventObject::Delete()
 bool UEdEventObject::Modify(bool bAlwaysMarkDirty)
 {
 	Super::Modify(bAlwaysMarkDirty);
-
-	this->GetGraph()->Modify(bAlwaysMarkDirty);
+	return this->GetGraph()->Modify(bAlwaysMarkDirty);
 }
 
 #undef LOCTEXT_NAMESPACE

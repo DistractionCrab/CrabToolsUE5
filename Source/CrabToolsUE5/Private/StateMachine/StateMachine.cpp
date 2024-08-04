@@ -43,7 +43,7 @@ void UStateMachine::Initialize_Internal(AActor* POwner)
 		Node.Value->Initialize_Internal(this);
 	}
 
-	this->RebindConditions();
+	//this->RebindConditions();
 	this->UpdateState(this->StartState);	
 }
 
@@ -72,8 +72,29 @@ void UStateMachine::AddState(FName StateName)
 	this->Graph.Add(StateName, FStateData());
 }
 
+void UStateMachine::AddTransition(FName State, FName Event, FName Destination, FName Condition, FName DataCondition)
+{
+	if (auto StateData = this->Graph.Find(State))
+	{
+		FTransitionData Data =
+		{
+			Destination,
+			Condition,
+			DataCondition
+		};
+		StateData->Transitions.Add(Event, Data);
+	}
+}
+
+void UStateMachine::AddTransition(FName State, FName Event, FTransitionData Data)
+{
+	if (auto StateData = this->Graph.Find(State))
+	{
+		StateData->Transitions.Add(Event, Data);
+	}
+}
+
 void UStateMachine::UpdateState(FName Name) {
-	UE_LOG(LogTemp, Warning, TEXT("Updating State"));
 	if (Name != this->CurrentStateName) {
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
@@ -85,7 +106,6 @@ void UStateMachine::UpdateState(FName Name) {
 		if (CurrentState && CurrentState->Node) CurrentState->Node->Exit_Internal();
 
 		if (this->TRANSITION.Valid(TID)) {
-			UE_LOG(LogTemp, Warning, TEXT("Attemping to transition to the new state."));
 			this->CurrentStateName = Name;
 			CurrentState = this->GetCurrentState();
 			if (CurrentState && CurrentState->Node) CurrentState->Node->Enter_Internal();
@@ -208,7 +228,6 @@ void UStateMachine::EventWithData(FName EName, UObject* Data) {
 UStateNode* UStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
 	if (this->Graph.Contains(NodeName)) {		
 		auto Node = this->Graph[NodeName].Node;
-		UE_LOG(LogTemp, Warning, TEXT("Contains the state, but node????"));
 
 		if (Node) 
 		{
@@ -216,28 +235,7 @@ UStateNode* UStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
 		} 
 		else 
 		{
-			UE_LOG(LogTemp, Warning, TEXT("State found, but node was null...????"));
 			Branches = ESearchResult::NotFound;
-
-			auto DefObj = Cast<UStateMachine>(this->GetClass()->GetDefaultObject());
-
-			if (DefObj)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Looping through default Object"));
-				for (auto StateData : DefObj->Graph)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("-- StateName: %s"), *StateData.Key.ToString());
-					if (StateData.Value.Node)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("-- Default Object had a node."));
-					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("-- Default Object did not have a node."));
-					}
-					
-				}
-			}
 		}
 
 		return Node;
@@ -287,25 +285,27 @@ void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 
 FStateData* UStateMachine::GetStateData(FName Name)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Attemping to get state data for state: %s"), *Name.ToString());
 	return this->Graph.Find(Name);
 }
 
 void UStateMachine::InitFromArchetype()
 {	
-	UE_LOG(LogTemp, Warning, TEXT("Attempting InitFromArchetype."));
 	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass()))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Finding Blueprint Assets fine?"));
 		if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(BlueprintAsset->GeneratedClass))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Initializing data from generated class."));
 			this->ArchetypeClass = BMBPG;
 			this->MachineArchetype = BMBPG->StateMachineArchetype;
 			this->StartState = this->MachineArchetype->StartState;
 
 			for (auto& SubMachine : BMBPG->SubStateMachineArchetypes)
 			{
+				if (!SubMachine.Value->ArchetypeClass)
+				{
+					UE_LOG(LogTemp, Error, TEXT("Sub-StateMachine source class was null for: %s"),
+						*SubMachine.Key.ToString());
+				}
+
 				UStateMachine* DupMachine = NewObject<UStateMachine>(
 					this, 
 					SubMachine.Value->ArchetypeClass.Get());
@@ -458,7 +458,6 @@ bool UStateMachine::HasEventVariable(FName VName) {
 			return true;
 		}
 		else {
-			UE_LOG(LogTemp, Warning, TEXT("Found Conflicting variable. Cannot generate event property."));
 			return true;
 		}
 	}
@@ -516,23 +515,18 @@ UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESea
 
 FStateData* UStateMachine::GetCurrentState()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Getting Current State: %s"), *this->CurrentStateName.ToString());
-
 	auto FoundData = this->Graph.Find(this->CurrentStateName);
 
 	if (FoundData)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Found State Data already..."));
 		return FoundData;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Attempting GC copying."));
 		auto SourceMachine = this->MachineArchetype.Get() ? this->MachineArchetype.Get() : this;
 
 		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ArchetypeClass.Get()))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Acquiring data from BPGC"));
 			FStateData Data;
 			bool Found = BPGC->GetStateData(Data, this, NAME_None, this->CurrentStateName);			
 
@@ -553,12 +547,18 @@ FStateData* UStateMachine::GetCurrentState()
 
 						Data.Node = ANode;
 					}
+
+					
+				}
+
+				for (auto& tpairs : Data.Transitions)
+				{
+					tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
+					tpairs.Value.DataConditionCallback.BindUFunction(this, tpairs.Value.DataCondition);
 				}
 
 				this->Graph.Add(this->CurrentStateName, Data);
-
 				Data.Node->Initialize_Internal(this);
-
 				return this->Graph.Find(this->CurrentStateName);
 			}
 		}
@@ -712,7 +712,7 @@ void UStateNode::RenameEvent_Implementation(FName From, FName To)
 #if WITH_EDITOR
 void UStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-
+	/*
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UStateNode, EmittedEvents))
 	{
 		auto Removed = this->EmittedEvents.Difference(this->PreEditEmittedEvents);
@@ -737,6 +737,7 @@ void UStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 
 		this->PreEditEmittedEvents.Empty();
 	}
+	*/
 }
 
 void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
@@ -745,7 +746,6 @@ void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
 
 	if (PropertyAboutToChange->GetFName() == GET_MEMBER_NAME_CHECKED(UStateNode, EmittedEvents))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Prechange called and found."));
 		for (auto EventName : this->EmittedEvents)
 		{
 			this->PreEditEmittedEvents.Add(EventName);
@@ -753,6 +753,12 @@ void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
 	}
 }
 
+void UStateNode::EmitEvent(FName EName) { this->GetMachine()->Event(EName); }
+void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->Event(ESlot.EventName); }
+
+#endif
+
+#if WITH_EDITORONLY_DATA
 TArray<FString> UStateNode::GetEventOptions() const
 {
 	if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
@@ -761,6 +767,11 @@ TArray<FString> UStateNode::GetEventOptions() const
 	}
 
 	return { FName(NAME_None).ToString() };
+}
+
+void UStateNode::GetEmittedEvents(TSet<FName>& Events) const 
+{
+	Events.Append(this->EmittedEvents); 
 }
 #endif
 

@@ -10,7 +10,7 @@
 struct FStateData;
 class UStateMachine;
 
-UCLASS(NotBlueprintable)
+UCLASS(NotBlueprintable, HideDropdown, Hidden)
 class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
 {
 	GENERATED_BODY()

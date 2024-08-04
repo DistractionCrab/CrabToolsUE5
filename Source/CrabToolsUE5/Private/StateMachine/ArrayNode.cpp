@@ -90,3 +90,16 @@ void UArrayNode::ExitWithData_Implementation(UObject* Data) {
 		}
 	}
 }
+
+
+#if WITH_EDITORONLY_DATA
+void UArrayNode::GetEmittedEvents(TSet<FName>& Events) const
+{
+	Super::GetEmittedEvents(Events);
+
+	for (auto Child : this->Nodes)
+	{
+		Child->GetEmittedEvents(Events);
+	}
+}
+#endif

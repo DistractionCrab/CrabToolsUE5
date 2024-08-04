@@ -20,14 +20,6 @@ void UStateMachineComponent::BeginPlay()
 	Super::BeginPlay();
 	if (this->MachineClass.Get() != nullptr) {
 		if (this->Machine == nullptr) {
-			/*this->Machine = NewObject<UStateMachine>(
-				this,
-				this->MachineClass,
-				NAME_None,
-				RF_NoFlags,
-				this->MachineClass.GetDefaultObject(),
-				true);
-			*/
 			this->Machine = NewObject<UStateMachine>(this, this->MachineClass);
 		}		
 

@@ -93,3 +93,15 @@ void UCompositeNode::ExitWithData_Implementation(UObject* Data) {
 		}
 	}
 }
+
+#if WITH_EDITORONLY_DATA
+void UCompositeNode::GetEmittedEvents(TSet<FName>& Events) const
+{
+	Super::GetEmittedEvents(Events);
+	
+	for (auto Child : this->Nodes)
+	{
+		Child.Value->GetEmittedEvents(Events);
+	}
+}
+#endif

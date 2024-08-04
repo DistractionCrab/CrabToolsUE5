@@ -196,9 +196,10 @@ void FStateMachineBlueprintCompilerContext::CleanAndSanitizeClass(UBlueprintGene
 {
 	Super::CleanAndSanitizeClass(ClassToClean, InOutOldCDO);
 
-	if (auto StateMachine = Cast<UStateMachine>(InOutOldCDO))
+	if (auto BPGClass = Cast<UStateMachineBlueprintGeneratedClass>(ClassToClean))
 	{
-		StateMachine->ClearStates();
+		BPGClass->SubStateMachineArchetypes.Empty();
+		BPGClass->StateMachineArchetype = nullptr;
 	}
 }
 
@@ -269,16 +270,15 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 	{
 		if (auto SMBP = this->StateMachineBlueprint())
 		{			
-			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(BPGClass);
+			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(*this);
 
 			for (auto& SubGraph : SMBP->GetSubgraphs())
 			{
 				BPGClass->SubStateMachineArchetypes.Add(
 					SubGraph->GetFName(), 
-					SubGraph->GenerateStateMachine(BPGClass));
+					SubGraph->GenerateStateMachine(*this));
 			}
 		}
-		
 	}
 
 	Super::FinishCompilingClass(Class);

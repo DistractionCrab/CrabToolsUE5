@@ -14,6 +14,7 @@ class UEdBaseNode;
 class UEdStartStateNode;
 class UEdStateNode;
 class UStateMachineArchetype;
+class UStateMachineBlueprint;
 
 class FGraphActionEvents
 {
@@ -72,6 +73,7 @@ public:
 	void RemoveEvent(UEdEventObject* EventObj);
 	void ClearDelegates();
 	void Select();
+	UClass* GetSourceClass() { return this->SourceClass.Get(); }
 
 	UEdEventObject* CreateEvent();
 
@@ -80,16 +82,19 @@ public:
 		return this->EventObjects; 
 	}
 
-	TArray<TObjectPtr<class UEdStateNode>> GetStates();
-	UStateMachineArchetype* GenerateStateMachine(UObject* Outer);
+	TArray<class UEdStateNode*> GetStates();
+	TArray<class UEdTransition*> GetTransitions();
+	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start);
+	UStateMachineArchetype* GenerateStateMachine(FKismetCompilerContext& Context);
 	FName GetStartStateName();
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
 	UEdStartStateNode* GetStartNode() const;
+	bool HasEvent(FName EName) const;
 
 	void Inspect();
 
 	bool IsMainGraph();
-	class UStateMachineBlueprint* GetBlueprintOwner() const;
+	UStateMachineBlueprint* GetBlueprintOwner() const;
 
 	virtual bool Modify(bool bAlwaysMarkDirty=true) override;
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
@@ -105,4 +110,5 @@ public:
 	virtual TArray<FString> GetStateOptions() const override;
 	virtual TArray<FString> GetEventOptions() const override;
 	virtual TArray<FString> GetConditionOptions() const override;
+	virtual UClass* GetStateMachineClass() override;
 };

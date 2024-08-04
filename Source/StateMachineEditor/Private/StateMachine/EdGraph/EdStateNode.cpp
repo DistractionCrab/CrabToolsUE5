@@ -59,10 +59,7 @@ UStateNode* UEdStateNode::GetCompiledNode()
 	}
 }
 
-void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
 
-}
 
 TArray<FString> UEdStateNode::GetEventOptions() const
 {
@@ -96,8 +93,21 @@ void UEdStateNode::Delete()
 bool UEdStateNode::Modify(bool bAlwaysMarkDirty)
 {
 	Super::Modify(bAlwaysMarkDirty);
-
-	this->GetGraph()->Modify(bAlwaysMarkDirty);
+	return this->GetGraph()->Modify(bAlwaysMarkDirty);
 }
+
+#if WITH_EDITOR
+/*
+void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	UE_LOG(LogTemp, Warning, TEXT("UEdStateNode::PostEditChangeProperty"));
+}
+
+void UEdStateNode::PostLinkerChange()
+{
+	UE_LOG(LogTemp, Warning, TEXT("UEdStateNode::PostLinkerChange"));
+}
+*/
+#endif
 
 #undef LOCTEXT_NAMESPACE
