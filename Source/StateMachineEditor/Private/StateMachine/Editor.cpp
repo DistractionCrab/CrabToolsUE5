@@ -2,6 +2,7 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/EdGraph/StateMachineSchema.h"
 #include "WidgetModeManager.h"
+#include "BlueprintEditorTabs.h"
 #include "StateMachine/EditorToolbar.h"
 #include "StateMachine/BlueprintModes/GraphApplicationMode.h"
 #include "StateMachine/BlueprintModes/BlueprintApplicationMode.h"
@@ -46,6 +47,20 @@ void FEditor::PostRedo(bool bSuccessful) {}
 void FEditor::Compile()
 {
 	FBlueprintEditor::Compile();
+
+	// Check if we should create the compile tab
+	if (CachedNumErrors > 0 || CachedNumWarnings > 0)
+	{
+		GetToolkitHost()->GetTabManager()->TryInvokeTab(FBlueprintEditorTabs::CompilerResultsID);
+	} 
+	else if (CachedNumErrors == 0 && CachedNumWarnings == 0)
+	{
+		TSharedPtr<SDockTab> CompileResultsTab = GetToolkitHost()->GetTabManager()->FindExistingLiveTab(FBlueprintEditorTabs::CompilerResultsID);
+		if (CompileResultsTab)
+		{
+			CompileResultsTab->RequestCloseTab();
+		}
+	}
 }
 //~ End FBlueprintEditor interface
 
@@ -86,11 +101,11 @@ void FEditor::InitToolMenuContext(FToolMenuContext& MenuContext) {
 	FBlueprintEditor::InitToolMenuContext(MenuContext);
 }
 void FEditor::OnToolkitHostingStarted(const TSharedRef<IToolkit>& Toolkit) {
-	//FBlueprintEditor::OnToolkitHostingStarted(Toolkit);
+	FBlueprintEditor::OnToolkitHostingStarted(Toolkit);
 }
 
 void FEditor::OnToolkitHostingFinished(const TSharedRef<IToolkit>& Toolkit) {
-	//FBlueprintEditor::OnToolkitHostingFinished(Toolkit);
+	FBlueprintEditor::OnToolkitHostingFinished(Toolkit);
 }
 //~ End IToolkit interface
 
@@ -122,12 +137,6 @@ FGraphAppearanceInfo FEditor::GetGraphAppearance(class UEdGraph* InGraph) const 
 
 	return AppearanceInfo;
 }
-
-/*
-TSubclassOf<UEdGraphSchema> FEditor::GetDefaultSchemaClass() const {
-	return UStateMachineSchema::StaticClass();
-}
-*/
 
 void FEditor::CreateEditorModeManager()
 {

@@ -20,12 +20,8 @@ public:
 
 	// FApplicationMode interface
 	virtual void RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) override;
-	virtual void PreDeactivateMode() override;
 	virtual void PostActivateMode() override;
 	// End of FApplicationMode interface
 
 	static FText GetLocalizedMode(const FName InMode);
-
-protected:
-	virtual void SetupToolbar(TSharedPtr<FEditor> InEditor) override;
 };

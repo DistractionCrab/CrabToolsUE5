@@ -52,7 +52,7 @@ FBlueprintApplicationMode::FBlueprintApplicationMode(
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.80f)
-						->AddTab("Document", ETabState::OpenedTab)
+						->AddTab("Document", ETabState::ClosedTab)
 					)
 					->Split
 					(
@@ -74,6 +74,23 @@ FBlueprintApplicationMode::FBlueprintApplicationMode(
 				)
 			)
 		);
+
+	auto& Module = IStateMachineEditorModule::Get();
+	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
+
+	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
+	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
+
+	FName OutParentToolbarName;
+	FName ToolBarname = InEditor->GetToolMenuToolbarNameForMode(GetModeName(), OutParentToolbarName);
+
+	if (UToolMenu* Toolbar = UToolMenus::Get()->FindMenu(ToolBarname))
+	{
+		InEditor->GetToolbarBuilder()->AddCompileToolbar(Toolbar);
+		InEditor->GetToolbarBuilder()->AddScriptingToolbar(Toolbar);
+		InEditor->GetToolbarBuilder()->AddBlueprintGlobalOptionsToolbar(Toolbar);
+		InEditor->GetToolbarBuilder()->AddDebuggingToolbar(Toolbar);
+	}
 }
 
 void FBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
@@ -84,11 +101,6 @@ void FBlueprintApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InT
 	BP->PushTabFactories(CoreTabFactories);
 	BP->PushTabFactories(BlueprintEditorTabFactories);
 	BP->PushTabFactories(TabFactories);
-}
-
-void FBlueprintApplicationMode::PreDeactivateMode() 
-{
-
 }
 
 void FBlueprintApplicationMode::PostActivateMode() 
@@ -106,23 +118,4 @@ FText FBlueprintApplicationMode::GetLocalizedMode(const FName InMode)
 	}
 	
 	return FText::GetEmpty();
-}
-
-void FBlueprintApplicationMode::SetupToolbar(TSharedPtr<FEditor> InEditor)
-{
-	auto& Module = IStateMachineEditorModule::Get();
-	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
-
-	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
-	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
-
-	FName OutParentToolbarName;
-	FName ToolBarname = InEditor->GetToolMenuToolbarNameForMode(GetModeName(), OutParentToolbarName);
-	if (UToolMenu* Toolbar = UToolMenus::Get()->FindMenu(ToolBarname))
-	{
-		InEditor->GetToolbarBuilder()->AddCompileToolbar(Toolbar);
-		InEditor->GetToolbarBuilder()->AddScriptingToolbar(Toolbar);
-		InEditor->GetToolbarBuilder()->AddBlueprintGlobalOptionsToolbar(Toolbar);
-		InEditor->GetToolbarBuilder()->AddDebuggingToolbar(Toolbar);
-	}
 }

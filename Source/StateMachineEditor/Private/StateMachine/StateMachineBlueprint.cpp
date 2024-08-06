@@ -166,4 +166,10 @@ void UStateMachineBlueprint::DeleteGraph(UEdStateGraph* Graph)
 	}
 }
 
+void UStateMachineBlueprint::ClearDelegates()
+{
+	this->Events.OnGraphSelected.Clear();
+	this->Events.OnObjectInspected.Clear();
+}
+
 #undef LOCTEXT_NAMESPACE

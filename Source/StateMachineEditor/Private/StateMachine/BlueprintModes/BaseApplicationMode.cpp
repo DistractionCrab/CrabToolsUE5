@@ -25,25 +25,4 @@ FBaseApplicationMode::FBaseApplicationMode(
 	),
 	MyEditor(InEditor)
 {
-	this->SetupToolbar(InEditor);
-}
-
-
-void FBaseApplicationMode::SetupToolbar(TSharedPtr<FEditor> InEditor) {
-	auto& Module = IStateMachineEditorModule::Get();
-	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
-
-	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
-	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
-
-	FName OutParentToolbarName;
-	FName ToolBarname = InEditor->GetToolMenuToolbarNameForMode(GetModeName(), OutParentToolbarName);
-
-	if (UToolMenu* Toolbar = UToolMenus::Get()->FindMenu(ToolBarname))
-	{
-		//InWidgetEditor->GetWidgetToolbarBuilder()->AddWidgetReflector(Toolbar);
-		//InWidgetEditor->GetWidgetToolbarBuilder()->AddToolPalettes(Toolbar);
-		InEditor->GetToolbarBuilder()->AddCompileToolbar(Toolbar);
-		InEditor->GetToolbarBuilder()->AddDebuggingToolbar(Toolbar);
-	}
 }

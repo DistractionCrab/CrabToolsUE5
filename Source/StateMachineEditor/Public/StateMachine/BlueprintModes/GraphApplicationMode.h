@@ -27,7 +27,6 @@ public:
 
 	static FText GetLocalizedMode(const FName InMode);
 
-
 private:
 	// Init Functions.
 	void AddTabFactories(TSharedPtr<FEditor> InProcStateMachineEditor);

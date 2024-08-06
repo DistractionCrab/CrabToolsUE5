@@ -52,7 +52,7 @@ EAssetCommandResult UAssetDefinition_StateMachineBlueprint::OpenAssets(const FAs
 		}
 		else
 		{
-			FMessageDialog::Open( EAppMsgType::Ok, LOCTEXT("FailedToLoadStateMachineBlueprint", "Widget Blueprint could not be loaded because it derives from an invalid class.\nCheck to make sure the parent class for this blueprint hasn't been removed!"));
+			FMessageDialog::Open( EAppMsgType::Ok, LOCTEXT("FailedToLoadStateMachineBlueprint", "State Machine Blueprint could not be loaded because it derives from an invalid class.\nCheck to make sure the parent class for this blueprint hasn't been removed!"));
 		}
 
 		Result = EAssetCommandResult::Handled;

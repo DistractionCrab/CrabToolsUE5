@@ -43,10 +43,28 @@ FGraphApplicationMode::FGraphApplicationMode(
 			->AddTab(FGraphDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 		->Split(
+			/*
 			FTabManager::NewStack()
 			->SetHideTabWell(true)
 			->SetSizeCoefficient(0.9f)
-			->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)			
+			->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)
+			*/
+
+			FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
+			->SetSizeCoefficient(0.9f)
+			->Split
+			(
+				FTabManager::NewStack()
+				->SetSizeCoefficient(0.80f)
+				->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)
+			)
+			->Split
+			(
+				FTabManager::NewStack()
+				->SetSizeCoefficient(0.20f)
+				->AddTab(FBlueprintEditorTabs::CompilerResultsID, ETabState::ClosedTab)
+				->AddTab(FBlueprintEditorTabs::FindResultsID, ETabState::ClosedTab)
+			)
 		)
 		->Split(
 			FTabManager::NewStack()
@@ -56,13 +74,28 @@ FGraphApplicationMode::FGraphApplicationMode(
 		)
 	);
 
-	this->AddTabFactories(InEditor);
+	this->AddTabFactories(MyEditor.Pin());
 
 	TabLayout = FTabManager::NewLayout("Editor_Graph_Layout_v1.0")
 		->AddArea
 		(
 			MainArea
 		);
+
+	auto& Module = IStateMachineEditorModule::Get();
+	ToolbarExtender = Module.GetToolBarExtensibilityManager()->GetAllExtenders();
+
+	InEditor->GetWidgetToolbarBuilder()->AddEditorModesToolbar(ToolbarExtender);
+	InEditor->RegisterModeToolbarIfUnregistered(GetModeName());
+
+	FName OutParentToolbarName;
+	FName ToolBarname = InEditor->GetToolMenuToolbarNameForMode(GetModeName(), OutParentToolbarName);
+
+	if (UToolMenu* Toolbar = UToolMenus::Get()->FindMenu(ToolBarname))
+	{
+		InEditor->GetToolbarBuilder()->AddCompileToolbar(Toolbar);
+		InEditor->GetToolbarBuilder()->AddDebuggingToolbar(Toolbar);
+	}
 }
 
 #pragma region Initializers
@@ -83,8 +116,10 @@ void FGraphApplicationMode::AddTabFactories(
 void FGraphApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) {
 	TSharedPtr<FEditor> BP = this->MyEditor.Pin();
 
-	//BP->RegisterToolbarTab(InTabManager.ToSharedRef());
+	BP->RegisterToolbarTab(InTabManager.ToSharedRef());
 	BP->PushTabFactories(TabFactories);
+	BP->PushTabFactories(CoreTabFactories);
+	//BP->PushTabFactories(BlueprintEditorTabFactories);
 }
 
 void FGraphApplicationMode::PreDeactivateMode() {
@@ -92,6 +127,7 @@ void FGraphApplicationMode::PreDeactivateMode() {
 }
 
 void FGraphApplicationMode::PostActivateMode() {
+	// Do not do the following, otherwise an extra window will spawn.
 	//FBlueprintEditorApplicationMode::PostActivateMode();
 }
 

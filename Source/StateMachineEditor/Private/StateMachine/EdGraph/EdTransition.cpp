@@ -4,6 +4,7 @@
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/StateMachineBlueprint.h"
+#include "KismetCompiler.h"
 
 
 #define LOCTEXT_NAMESPACE "EdNode_GenericGraphEdge"
@@ -119,9 +120,18 @@ TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FKismetCompilerCon
 			Values.Value.DataCondition,
 		};
 
-		if (!this->GetStateGraph()->HasEvent(Values.Key))
+		if (!this->GetStartNode()->HasEvent(Values.Key))
 		{
+			auto StartName = this->GetStartNode()->GetStateName();
+			auto EndName = this->GetEndNode()->GetStateName();
+			auto Msg = FString::Printf(TEXT("Transition from %s to %s uses unknown event: %s"),
+				*StartName.ToString(),
+				*EndName.ToString(),
+				*Values.Key.ToString());
 
+			Context.MessageLog.Error(*Msg);
+
+			continue;
 		}
 
 		Data.Add(Values.Key, DataValue);

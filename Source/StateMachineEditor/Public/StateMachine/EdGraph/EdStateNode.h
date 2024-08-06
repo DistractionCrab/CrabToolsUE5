@@ -28,6 +28,8 @@ class UEdStateNode : public UEdBaseStateNode, public IStateLike
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
 	TArray<TObjectPtr<UStateNode>> Nodes;
 
+	UPROPERTY(VisibleAnywhere, Category="StateMachineGraph|Events")
+	TSet<FName> NodeEmittedEvents;
 
 public:
 	UEdStateNode();
@@ -41,13 +43,18 @@ public:
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
 	UStateNode* GetCompiledNode();
 	void Delete();
+	virtual bool HasEvent(FName EName) override;
+
 
 
 	virtual TArray<FString> GetEventOptions() const override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;	
 
 	#if WITH_EDITOR
-		//virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-		//virtual void PostLinkerChange() override;
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PostLinkerChange() override;
 	#endif
+
+private:
+	void UpdateEmittedEvents();
 };

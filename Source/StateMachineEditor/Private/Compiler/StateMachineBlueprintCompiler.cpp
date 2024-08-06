@@ -7,21 +7,11 @@
 #include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 
-#include "K2Node_FunctionEntry.h"
-#include "K2Node_FunctionResult.h"
-#include "K2Node_VariableGet.h"
-#include "Blueprint/WidgetTree.h"
-#include "Animation/WidgetAnimation.h"
-#include "MovieScene.h"
-
-#include "FieldNotificationHelpers.h"
 #include "Kismet2/Kismet2NameValidators.h"
 #include "Kismet2/KismetReinstanceUtilities.h"
 #include "Kismet2/BlueprintEditorUtils.h"
-#include "Components/NamedSlot.h"
 #include "Editor/WidgetCompilerLog.h"
-#include "Editor.h"
-#include "Algo/RemoveIf.h"
+
 
 #define LOCTEXT_NAMESPACE "StateMachineEditor"
 

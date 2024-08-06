@@ -22,20 +22,6 @@ void UStateMachine::Initialize_Internal(AActor* POwner)
 	this->InitFromArchetype();
 	this->Initialize();
 
-	/*
-	for (auto& Pair : this->SharedNodes) {
-		this->Substitute(Pair.Key, Pair.Value);
-	}
-	
-	for (auto& pair : this->Graph) {
-		auto& StateName = pair.Key;
-		auto& StateData = pair.Value;
-
-		if (StateData.Node) {
-			StateData.Node->Initialize_Internal(this);
-		}
-	}
-	*/
 
 	// Shared nodes always exist, and should be initialize from the beginning.
 	for (auto& Node : this->SharedNodes)
@@ -43,7 +29,6 @@ void UStateMachine::Initialize_Internal(AActor* POwner)
 		Node.Value->Initialize_Internal(this);
 	}
 
-	//this->RebindConditions();
 	this->UpdateState(this->StartState);	
 }
 
@@ -322,18 +307,6 @@ void UStateMachine::InitFromArchetype()
 	}
 }
 
-/* Simply iterates through the graph and rebinds condition callbacks. */
-void UStateMachine::RebindConditions() {
-	//UStateMachine* Callee = this->RootMachine.Get() ? this->RootMachine.Get() : this;
-	//TArray<FString> ValidFunctions = this->ConditionOptions();
-	
-	for (auto& pairs : this->Graph) {
-		for (auto& tpairs : pairs.Value.Transitions) {
-			tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
-			tpairs.Value.DataConditionCallback.BindUFunction(this, tpairs.Value.DataCondition);
-		}
-	}
-}
 
 void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e)
 {

@@ -17,9 +17,9 @@ void FStateMachineEditorModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	MenuExtensibilityManager = MakeShared<FExtensibilityManager>();
 	ToolBarExtensibilityManager = MakeShared<FExtensibilityManager>();
+
+	// Register Factors for graph nodes.
 	GraphNodeFactory = MakeShareable(new FEdStateNodeFactory());
-
-
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphNodeFactory);
 
 

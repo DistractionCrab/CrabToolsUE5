@@ -428,7 +428,6 @@ public:
 	#endif
 
 private:
-	void RebindConditions();
 	void ValidateEventProps();
 	void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
 	bool HasEventVariable(FName VName);

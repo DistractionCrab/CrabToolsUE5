@@ -23,11 +23,6 @@ public:
 	 * Builds the modes toolbar for the widget blueprint editor.
 	 */
 	void AddEditorModesToolbar(TSharedPtr<FExtender> Extender);
-
-	void AddWidgetReflector(UToolMenu* InMenu);
-
-	void AddToolPalettes(UToolMenu* InMenu);
-
 	void FillEditorModesToolbar(FToolBarBuilder& ToolbarBuilder);
 
 	TWeakPtr<FEditor> MyEditor;

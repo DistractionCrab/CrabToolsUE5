@@ -7,6 +7,8 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "KismetCompiler.h"
+#include "Engine/DataTable.h"
+#include "StateMachine/EventSet.h"
 
 #define LOCTEXT_NAMESPACE "EdStateGraph"
 #define DEFAULT_NODE_NAME "NewState"
@@ -142,6 +144,13 @@ bool UEdStateGraph::HasEvent(FName EName) const
 	}
 	else
 	{
+		for (auto DT : this->EventSets)
+		{
+			if (DT->FindRow<FEventSetRow>(EName, ""))
+			{
+				return true;
+			}
+		}
 		return false;
 	}	
 }
@@ -391,18 +400,7 @@ TArray<FString> UEdStateGraph::GetMachineOptions() const
 	return this->GetBlueprintOwner()->GetMachineOptions();
 }
 
-void UEdStateGraph::PostEditUndo()
-{
-	Super::PostEditUndo();	
-	UEdGraph::NotifyGraphChanged();
-	this->Events.OnGraphDataReverted.Broadcast();
-}
 
-void UEdStateGraph::PostEditChangeProperty(
-	FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
 
 void UEdStateGraph::Delete()
 {
@@ -430,5 +428,35 @@ bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
 }
 
 UClass* UEdStateGraph::GetStateMachineClass() { return this->GetBlueprintOwner()->GetStateMachineClass(); }
+
+#if WITH_EDITOR
+void UEdStateGraph::PostEditUndo()
+{
+	Super::PostEditUndo();
+	UEdGraph::NotifyGraphChanged();
+	this->Events.OnGraphDataReverted.Broadcast();
+}
+
+void UEdStateGraph::PostEditChangeProperty(
+	FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, EventSets))
+	{
+		TSet<TObjectPtr<UDataTable>> FilteredEventSets;
+
+		for (auto DT : this->EventSets)
+		{
+			if (DT->GetRowStruct() == FEventSetRow::StaticStruct())
+			{
+				FilteredEventSets.Add(DT);
+			}
+		}
+
+		this->EventSets = FilteredEventSets;
+	}
+}
+#endif
 
 #undef LOCTEXT_NAMESPACE

@@ -15,6 +15,7 @@ class UEdStartStateNode;
 class UEdStateNode;
 class UStateMachineArchetype;
 class UStateMachineBlueprint;
+class UDataTable;
 
 class FGraphActionEvents
 {
@@ -35,6 +36,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_OneParam(FStateAdded, UEdStateNode*)
 	FStateAdded OnStateAdded;
 
+	/* Called when undo and redos happen. */
 	DECLARE_MULTICAST_DELEGATE(FGraphDataReverted)
 	FGraphDataReverted OnGraphDataReverted;
 };
@@ -52,6 +54,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor",
 		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
 	TArray<TObjectPtr<UEdEventObject>> EventObjects;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Events")
+	TSet<TObjectPtr<UDataTable>> EventSets;
 
 public:
 
@@ -95,12 +100,14 @@ public:
 
 	bool IsMainGraph();
 	UStateMachineBlueprint* GetBlueprintOwner() const;
-
-	virtual bool Modify(bool bAlwaysMarkDirty=true) override;
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
-	virtual void PostEditUndo() override;
-	virtual void PostEditChangeProperty(
-		FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
+
+	#if WITH_EDITOR	
+		virtual void PostEditUndo() override;
+		virtual void PostEditChangeProperty(
+			FPropertyChangedEvent& PropertyChangedEvent) override;
+	#endif
 
 	void Delete();
 	void RenameGraph(FName NewName);

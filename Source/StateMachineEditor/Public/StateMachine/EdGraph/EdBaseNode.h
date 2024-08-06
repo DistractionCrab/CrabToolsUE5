@@ -49,4 +49,5 @@ public:
 	virtual UEdGraphPin* GetInputPin() const { return Pins[0]; }
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
 	virtual FName GetStateName() const { return NAME_None; }
+	virtual bool HasEvent(FName EName) { return false; }
 };

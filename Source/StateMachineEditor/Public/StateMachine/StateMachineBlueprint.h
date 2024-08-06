@@ -6,6 +6,8 @@
 #include "StateMachine/IStateMachineLike.h"
 #include "StateMachineBlueprint.generated.h"
 
+class UDataTable;
+
 class FStateMachineBlueprintEditorEvents
 {
 public:
@@ -31,9 +33,6 @@ private:
 	UPROPERTY()
 	TArray<class UEdStateGraph*> SubGraphs;
 
-
-	UPROPERTY(EditAnywhere, Category="Testing")
-	int TestValue;
 public:
 
 	FStateMachineBlueprintEditorEvents Events;
@@ -49,6 +48,7 @@ public:
 	bool IsMainGraph(UEdStateGraph* Graph);
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
 	void DeleteGraph(UEdStateGraph* Graph);
+	void ClearDelegates();
 	const TArray<class UEdStateGraph*>& GetSubgraphs() { return this->SubGraphs; }
 
 	// IStateMachineLike Interface

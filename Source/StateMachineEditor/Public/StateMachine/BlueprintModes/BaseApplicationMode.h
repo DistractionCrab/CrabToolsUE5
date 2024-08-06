@@ -19,7 +19,4 @@ public:
 		TSharedPtr<FEditor> InEditor,
 		FName ModeName,
 		FText(*GetLocalizedMode)(const FName));
-
-protected:
-	virtual void SetupToolbar(TSharedPtr<FEditor> InEditor);
 };

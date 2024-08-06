@@ -126,58 +126,6 @@ void FEditorToolbar::FillEditorModesToolbar(FToolBarBuilder& ToolbarBuilder)
 		
 		// Right side padding
 		BlueprintEditorPtr->AddToolbarWidget(SNew(SSpacer).Size(FVector2D(10.0f, 1.0f)));
-
-		/*
-		if (FProcStateMachineBlueprintApplicationModes::IsPreviewModeEnabled())
-		{
-			BlueprintEditorPtr->AddToolbarWidget(
-				SNew(SModeWidget, FProcStateMachineBlueprintApplicationModes::GetLocalizedMode(FProcStateMachineBlueprintApplicationModes::PreviewMode), FProcStateMachineBlueprintApplicationModes::PreviewMode)
-				.OnGetActiveMode(GetActiveMode)
-				.OnSetActiveMode(SetActiveMode)
-				.CanBeSelected(BlueprintEditorPtr.Get(), &FBlueprintEditor::IsEditingSingleBlueprint)
-				.ToolTip(IDocumentation::Get()->CreateToolTip(
-					LOCTEXT("PreviewModeButtonTooltip", "Switch to Preview Mode"),
-					nullptr,
-					TEXT("Shared/Editors/BlueprintEditor"),
-					TEXT("DebugMode")))
-				.IconImage(FAppStyle::GetBrush("BlueprintDebugger.TabIcon"))
-				.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("PreviewMode")))
-			);
-		
-			// Right side padding
-			BlueprintEditorPtr->AddToolbarWidget(SNew(SSpacer).Size(FVector2D(10.0f, 1.0f)));
-		}
-		*/
-	}
-}
-
-void FEditorToolbar::AddWidgetReflector(UToolMenu* InMenu)
-{
-	FToolMenuSection& Section = InMenu->AddSection("StateMachineTools");
-	Section.InsertPosition = FToolMenuInsert("SourceControl", EToolMenuInsertType::After);
-
-	Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-		"OpenStateMachineReflector",
-		FUIAction(
-			FExecuteAction::CreateLambda([=] { FGlobalTabmanager::Get()->TryInvokeTab(FTabId("WidgetReflector")); }),
-			FCanExecuteAction()
-		)
-		, LOCTEXT("OpenStateMachineReflector", "Widget Reflector")
-		, LOCTEXT("OpenWidgetStateMachineToolTip", "Opens the State Machine Reflector, a handy tool for diagnosing problems with live state machines.")
-		, FSlateIcon(FCoreStyle::Get().GetStyleSetName(), "WidgetReflector.Icon")
-	));
-}
-
-void FEditorToolbar::AddToolPalettes(UToolMenu* InMenu)
-{
-	// @TODO: For now we only support one tool palette, switch this to a dropdown when we support multiple tool palettes.
-	for (TSharedPtr<FUICommandInfo>& Command : MyEditor.Pin()->ToolPaletteCommands)
-	{
-		FToolMenuSection& Section = InMenu->FindOrAddSection("UMGToolPalette");
-		Section.AddDynamicEntry(Command->GetCommandName(), FNewToolMenuSectionDelegate::CreateLambda([this, Command](FToolMenuSection& InSection)
-			{
-				InSection.AddEntry(FToolMenuEntry::InitToolBarButton(Command));
-			}));
 	}
 }
 

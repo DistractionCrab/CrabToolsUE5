@@ -96,18 +96,38 @@ bool UEdStateNode::Modify(bool bAlwaysMarkDirty)
 	return this->GetGraph()->Modify(bAlwaysMarkDirty);
 }
 
+bool UEdStateNode::HasEvent(FName EName)
+{
+	return this->NodeEmittedEvents.Contains(EName) || this->GetStateGraph()->HasEvent(EName);
+}
+
+void UEdStateNode::UpdateEmittedEvents()
+{
+	this->NodeEmittedEvents.Empty();
+
+	for (auto Node : this->Nodes)
+	{
+		TSet<FName> PartEvents;
+
+		Node->GetEmittedEvents(PartEvents);
+
+		this->NodeEmittedEvents.Append(PartEvents);
+	}
+}
+
 #if WITH_EDITOR
-/*
+
 void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UEdStateNode::PostEditChangeProperty"));
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	this->UpdateEmittedEvents();
 }
 
 void UEdStateNode::PostLinkerChange()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UEdStateNode::PostLinkerChange"));
+	this->UpdateEmittedEvents();
 }
-*/
 #endif
 
 #undef LOCTEXT_NAMESPACE
