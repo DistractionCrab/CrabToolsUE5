@@ -23,9 +23,6 @@ class UEdEventObject : public UObject
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
-	bool bIsVariable = true;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
 	FName EventName;
 
 public:

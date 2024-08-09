@@ -74,13 +74,11 @@ void USimpleMoveTo::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult
 {
 	if (Result == EPathFollowingResult::Success)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Successful pathing"));
-		this->GetMachine()->Event(ARRIVE_EVENT);
+		this->EmitEvent(ARRIVE_EVENT);
 	}
 	else if (Result == EPathFollowingResult::Blocked)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed pathing"));
-		this->GetMachine()->Event(LOST_EVENT);
+		this->EmitEvent(LOST_EVENT);
 	}
 	
 }

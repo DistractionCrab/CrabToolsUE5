@@ -153,7 +153,7 @@ void UStateMachine::Reset() {
 	this->UpdateState(this->StartState);
 }
 
-void UStateMachine::Event(FName EName) {
+void UStateMachine::Event_Direct(FName EName) {
 	// Need to validate possible transitions.
 	auto TID = this->TRANSITION.CurrentID();
 	auto CurrentState = this->GetCurrentState();
@@ -182,7 +182,7 @@ void UStateMachine::Event(FName EName) {
 }
 
 
-void UStateMachine::EventWithData(FName EName, UObject* Data) {
+void UStateMachine::EventWithData_Direct(FName EName, UObject* Data) {
 	// Need to validate possible transitions.
 	auto TID = this->TRANSITION.CurrentID();
 	auto CurrentState = this->GetCurrentState();
@@ -726,8 +726,11 @@ void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
 	}
 }
 
-void UStateNode::EmitEvent(FName EName) { this->GetMachine()->Event(EName); }
-void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->Event(ESlot.EventName); }
+void UStateNode::EmitEvent(FName EName) { this->GetMachine()->Event_Direct(EName); }
+void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->Event_Direct(ESlot.EventName); }
+
+void UStateNode::EmitEventWithData(FName EName, UObject* Data) { this->GetMachine()->EventWithData_Direct(EName, Data); }
+void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) { this->GetMachine()->EventWithData_Direct(ESlot.EventName, Data); }
 
 #endif
 

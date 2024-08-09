@@ -2,6 +2,7 @@
 #include "EdGraphUtilities.h"
 #include "Compiler/StateMachineBlueprintCompiler.h"
 #include "StateMachine/StateMachineBlueprint.h"
+#include "Kismet/StateMachineGraphPanelPinFactory.h"
 
 #define LOCTEXT_NAMESPACE "FStateMachineEditorModule"
 
@@ -33,6 +34,9 @@ void FStateMachineEditorModule::StartupModule()
 	FKismetCompilerContext::RegisterCompilerForBP(
 		UStateMachineBlueprint::StaticClass(), 
 		&FStateMachineEditorModule::GetCompiler);
+
+	auto BlueprintGraphPanelPinFactory = MakeShareable(new FStateMachineGraphPanelPinFactory());
+	FEdGraphUtilities::RegisterVisualPinFactory(BlueprintGraphPanelPinFactory);
 }
 
 void FStateMachineEditorModule::ShutdownModule()

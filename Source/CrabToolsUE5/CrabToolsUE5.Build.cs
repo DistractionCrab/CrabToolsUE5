@@ -41,6 +41,9 @@ public class CrabToolsUE5 : ModuleRules
 				"Slate",
 				"BlueprintGraph",
 				"UnrealEd",
+				"Slate",
+				"SlateCore",
+				"KismetCompiler",
 				// ... add private dependencies that you statically link with here ...	
 			});
 		

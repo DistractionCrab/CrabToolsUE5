@@ -48,15 +48,15 @@ void UStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 }
 
 
-void UStateMachineComponent::Event(FName EName) {
+void UStateMachineComponent::Event_Direct(FName EName) {
 	if (this->HasMachine()) {
-		this->Machine->Event(EName);
+		this->Machine->Event_Direct(EName);
 	}
 }
 
-void UStateMachineComponent::EventWithData(FName EName, UObject* Data) {
+void UStateMachineComponent::EventWithData_Direct(FName EName, UObject* Data) {
 	if (this->HasMachine()) {
-		this->Machine->EventWithData(EName, Data);
+		this->Machine->EventWithData_Direct(EName, Data);
 	}
 }
 

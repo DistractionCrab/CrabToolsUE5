@@ -7,6 +7,7 @@
 #include "StateChangeListener.h"
 #include "Utils/Enums.h"
 #include "UObject/ObjectPtr.h"
+#include "StateMachine/EventListener.h"
 #include "StateMachine.generated.h"
 
 class UStateNode;
@@ -210,8 +211,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void EmitEvent(FName EName);
 
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void EmitEventWithData(FName EName, UObject* Data);
+
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(DisplayName="EmitEvent"))
 	void EmitEventSlot(const FEventSlot& ESlot);
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (DisplayName = "EmitEventWithData"))
+	void EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data);
 
 	#if WITH_EDITORONLY_DATA
 		UFUNCTION()
@@ -238,7 +245,7 @@ protected:
  *
  */
 UCLASS(Blueprintable, EditInlineNew, Category = "StateMachine")
-class CRABTOOLSUE5_API UStateMachine : public UObject
+class CRABTOOLSUE5_API UStateMachine : public UObject, public IEventListenerInterface
 {
 	GENERATED_BODY()
 
@@ -312,11 +319,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Reset();
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void Event(FName EName);
+	//UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	//void Event(FName EName);
+	virtual void Event_Implementation(FName EName) override final { this->Event_Direct(EName); }
+	void Event_Direct(FName);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void EventWithData(FName EName, UObject* Data);
+	//UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	//void EventWithData(FName EName, UObject* Data);
+	void EventWithData_Implementation(FName EName, UObject* Data) override final { this->EventWithData_Direct(EName, Data); }
+	void EventWithData_Direct(FName EName, UObject* Data);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
