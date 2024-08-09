@@ -30,9 +30,11 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "InstancedStaticMeshActor")
 	void RespawnInstances();
 
-	UFUNCTION(BlueprintCallable, Category = "InstancedStaticMeshActor")
-	void SetInstances(TArray<AStaticMeshActor*> MeshActors);
+	#if WITH_EDITOR
+		UFUNCTION(BlueprintCallable, Category = "InstancedStaticMeshActor")
+		void SetInstances(TArray<AStaticMeshActor*> MeshActors);
 
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "InstancedStaticMeshActor")
-	void BreakOutInstances();
+		UFUNCTION(BlueprintCallable, CallInEditor, Category = "InstancedStaticMeshActor")
+		void BreakOutInstances();
+	#endif
 };

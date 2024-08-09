@@ -26,7 +26,7 @@ class UScriptStruct;
 struct FLinearColor;
 
 UCLASS()
-class CRABTOOLSUE5_API UK2Node_EmitEventFromDataTable : public UK2Node
+class CRABNODES_API UK2Node_EmitEventFromDataTable : public UK2Node
 {
 	GENERATED_UCLASS_BODY()
 

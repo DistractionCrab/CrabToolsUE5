@@ -220,13 +220,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (DisplayName = "EmitEventWithData"))
 	void EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data);
 
-	#if WITH_EDITORONLY_DATA
+	#if WITH_EDITOR
 		UFUNCTION()
 		TArray<FString> GetEventOptions() const;
 		virtual void GetEmittedEvents(TSet<FName>& Events) const;
-	#endif
-
-	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 	#endif

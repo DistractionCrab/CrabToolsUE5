@@ -83,7 +83,7 @@ void USimpleMoveTo::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult
 	
 }
 
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 TArray<FString> USimpleMoveTo::GetPropertyOptions()
 {
 	TArray<FString> Props;

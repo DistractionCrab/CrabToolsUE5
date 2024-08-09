@@ -6,7 +6,7 @@
 
 class SGraphPin;
 
-class STATEMACHINEEDITOR_API FStateMachineGraphPanelPinFactory: public FGraphPanelPinFactory
+class CRABNODES_API FStateMachineGraphPanelPinFactory: public FGraphPanelPinFactory
 {
 	virtual TSharedPtr<class SGraphPin> CreatePin(class UEdGraphPin* InPin) const override;
 };

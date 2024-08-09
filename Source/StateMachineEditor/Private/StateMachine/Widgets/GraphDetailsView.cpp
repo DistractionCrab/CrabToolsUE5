@@ -434,6 +434,11 @@ FStateMachineItem::~FStateMachineItem()
 	}
 }
 
+void FStateMachineItem::Select()
+{
+	this->GraphRef->Select();
+}
+
 TSharedRef<ITableRow> FStateMachineItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
@@ -669,6 +674,11 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 	TableRow->SetRowContent(TextWidget.ToSharedRef());
 
 	return TableRow;
+}
+
+void FEventItem::Select()
+{
+	this->EventReference->Inspect(); 
 }
 
 void FEventItem::OnEventRenamed(FName From, FName To)

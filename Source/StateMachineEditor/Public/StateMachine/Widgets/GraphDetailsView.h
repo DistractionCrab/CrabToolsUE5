@@ -166,11 +166,7 @@ private:
 	void OnEventCreated(UEdEventObject* Event, bool DeferRefresh);
 	void OnGraphChanged(const FEdGraphEditAction& Action);
 
-	void Select() override 
-	{
-		this->GraphRef->Select();
-	}
-
+	void Select() override;
 	virtual void Delete(bool DeferRefresh = false) override;
 };
 
@@ -195,7 +191,7 @@ private:
 
 	void OnEventRenamed(FName From, FName To);
 
-	void Select() { this->EventReference->Inspect(); }
+	void Select() override;
 
 	virtual void Delete(bool DeferRefresh = false) override;
 };

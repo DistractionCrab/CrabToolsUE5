@@ -56,7 +56,7 @@ public:
 
 	void PerformExit();
 
-	#if WITH_EDITORONLY_DATA
+	#if WITH_EDITOR
 		UFUNCTION()
 		TArray<FString> GetMachineOptions() const;
 	#endif

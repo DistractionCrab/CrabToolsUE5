@@ -2,8 +2,7 @@
 
 #include "Logging/StructuredLog.h"
 #include "Algo/Reverse.h"
-#include "EdGraphSchema_K2.h"
-#include "Kismet2/BlueprintEditorUtils.h"
+//#include "Kismet2/BlueprintEditorUtils.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/ArrayNode.h"
 #include "Utils/UtilsLibrary.h"
@@ -258,6 +257,7 @@ void UStateMachine::StateChangeObject(UObject* Obj) {
 	}
 }
 
+#if WITH_EDITOR
 void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange)
 {
 	Super::PreEditChange(PropertyAboutToChange);
@@ -268,16 +268,23 @@ void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 	Super::PostEditChangeChainProperty(e);
 }
 
+void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e)
+{
+    Super::PostEditChangeProperty(e);
+}
+#endif
+
 FStateData* UStateMachine::GetStateData(FName Name)
 {
 	return this->Graph.Find(Name);
 }
 
+
 void UStateMachine::InitFromArchetype()
 {	
-	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass()))
-	{
-		if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(BlueprintAsset->GeneratedClass))
+	//if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass()))
+	//{
+		if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 		{
 			this->ArchetypeClass = BMBPG;
 			this->MachineArchetype = BMBPG->StateMachineArchetype;
@@ -304,14 +311,10 @@ void UStateMachine::InitFromArchetype()
 				DupMachine->Initialize_Internal(this->Owner);
 			}
 		}
-	}
+	//}
 }
 
 
-void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e)
-{
-    Super::PostEditChangeProperty(e);
-}
 
 FName UStateMachine::GetStateName(UStateNode* Node) {
 	FName Found = NAME_None;
@@ -408,6 +411,7 @@ TSet<FName> UStateMachine::GetEvents() const {
 }
 
 void UStateMachine::ValidateEventProps() {
+	/*
 	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass())) {
 		auto Events = this->GetEvents();
 
@@ -419,6 +423,7 @@ void UStateMachine::ValidateEventProps() {
 
 		//FBlueprintEditorUtils::RefreshVariables(BlueprintAsset);
 	}
+	*/
 }
 
 bool UStateMachine::HasEventVariable(FName VName) {
@@ -682,6 +687,12 @@ void UStateNode::RenameEvent_Implementation(FName From, FName To)
 	}
 }
 
+void UStateNode::EmitEvent(FName EName) { this->GetMachine()->Event_Direct(EName); }
+void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->Event_Direct(ESlot.EventName); }
+
+void UStateNode::EmitEventWithData(FName EName, UObject* Data) { this->GetMachine()->EventWithData_Direct(EName, Data); }
+void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) { this->GetMachine()->EventWithData_Direct(ESlot.EventName, Data); }
+
 #if WITH_EDITOR
 void UStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -725,12 +736,6 @@ void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
 		}
 	}
 }
-
-void UStateNode::EmitEvent(FName EName) { this->GetMachine()->Event_Direct(EName); }
-void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->Event_Direct(ESlot.EventName); }
-
-void UStateNode::EmitEventWithData(FName EName, UObject* Data) { this->GetMachine()->EventWithData_Direct(EName, Data); }
-void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) { this->GetMachine()->EventWithData_Direct(ESlot.EventName, Data); }
 
 #endif
 

@@ -6,6 +6,8 @@
 #include "Toolkits/AssetEditorToolkit.h"
 #include "UObject/TopLevelAssetPath.h"
 
+class FStateMachineBlueprintCompiler;
+
 extern const FName StateMachineEditorAppIdentifier;
 
 /** The public interface of the UMG editor module. */

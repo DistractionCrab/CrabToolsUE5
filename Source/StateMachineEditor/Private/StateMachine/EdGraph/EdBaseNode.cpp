@@ -36,3 +36,8 @@ void UEdBaseNode::ClearEvents()
 	this->Events.OnNameChanged.Clear();
 	this->Events.OnNodeDeleted.Clear();
 }
+
+UEdStateGraph* UEdBaseNode::GetStateGraph() const
+{ 
+	return Cast<UEdStateGraph>(this->GetGraph());
+}

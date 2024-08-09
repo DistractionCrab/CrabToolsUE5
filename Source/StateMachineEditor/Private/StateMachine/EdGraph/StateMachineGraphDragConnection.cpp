@@ -2,6 +2,8 @@
 
 
 #include "StateMachine/EdGraph/StateMachineGraphDragConnection.h"
+#include "StateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
 #include "Widgets/SBoxPanel.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Widgets/Images/SImage.h"

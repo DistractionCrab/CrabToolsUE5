@@ -1,8 +1,11 @@
 #pragma once
 
+#include "StateMachine/EdGraph/EdBaseNode.h"
 #include "EdTransition.generated.h"
 
 class UEdBaseNode;
+class UEdBaseStateNode;
+class UEdStateGraph;
 
 USTRUCT(BlueprintType)
 struct FEventTransitionData

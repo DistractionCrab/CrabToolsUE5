@@ -55,10 +55,12 @@ public:
 
 	#if WITH_EDITOR
 		virtual void PostLinkerChange() override;
+		
+		UFUNCTION()
+		TArray<FString> GetPropertyOptions();
 	#endif
 
 	#if WITH_EDITORONLY_DATA
-		UFUNCTION()
-		TArray<FString> GetPropertyOptions();
+		
 	#endif
 };

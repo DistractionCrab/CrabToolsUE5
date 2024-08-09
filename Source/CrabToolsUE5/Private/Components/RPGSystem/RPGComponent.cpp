@@ -87,10 +87,12 @@ TArray<FString> URPGComponent::GetFloatAttributeNames() const {
 	return Names;
 }
 
+#if WITH_EDITOR
 void URPGComponent::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
 	Super::PostEditChangeProperty(e);
 	this->Validate();
 }
+#endif
 
 void URPGComponent::PostLoad() {
 	Super::PostLoad();

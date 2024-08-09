@@ -36,6 +36,14 @@
 				"BlueprintGraph",
 			]
 		},
+		{
+			"Name": "CrabNodes",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "PostEngineInit",
+			"AdditionalDependencies": [
+				"BlueprintGraph",
+			]
+		},
 	],
 	"Plugins": [
 		{

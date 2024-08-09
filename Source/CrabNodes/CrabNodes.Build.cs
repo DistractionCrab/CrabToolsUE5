@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class CrabToolsUE5 : ModuleRules
+public class CrabNodes : ModuleRules
 {
-	public CrabToolsUE5(ReadOnlyTargetRules Target) : base(Target)
+	public CrabNodes(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -16,18 +16,17 @@ public class CrabToolsUE5 : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				// ... add other private include paths required here ...
+
 			});
 			
 		
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"CrabToolsUE5",
 				"Core",
-				"EnhancedInput",
-				"UMG",
-				"Slate",
-				"AIModule",
+				"UnrealEd",
+				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 			});
 			
@@ -38,14 +37,19 @@ public class CrabToolsUE5 : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
-				// ... add private dependencies that you statically link with here ...	
-			});
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
+				"Slate",
+				"KismetCompiler",
+				"EditorFramework",
+				"UnrealEd",
+                "GraphEditor",
+				"SlateCore",
+				"InputCore",
+                "Kismet",
+                "KismetWidgets",
+				"ToolMenus",
+				"AssetTools",
+				"EditorSubsystem",
+				"BlueprintGraph",
 			});
 	}
 }

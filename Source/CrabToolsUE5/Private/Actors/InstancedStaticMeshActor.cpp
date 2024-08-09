@@ -25,6 +25,7 @@ void AInstancedStaticMeshActor::RespawnInstances()
 		this->InstanceTransforms, false, this->bUseWorldTransforms, true);
 }
 
+#if WITH_EDITOR
 void AInstancedStaticMeshActor::SetInstances(TArray<AStaticMeshActor*> MeshActors)
 {
 	if (MeshActors.Num() == 0) { return; }
@@ -102,3 +103,5 @@ void AInstancedStaticMeshActor::BreakOutInstances()
 
 	this->Destroy();
 }
+
+#endif

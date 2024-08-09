@@ -7,6 +7,8 @@
 #include "StateMachine/StateMachine.h"
 #include "EdBaseNode.generated.h"
 
+class UEdStateGraph;
+
 class FEdNodeEvents
 {
 public:
@@ -28,7 +30,7 @@ public:
 	FEdNodeEvents Events;
 
 	virtual void ClearEvents();
-	UEdStateGraph* GetStateGraph() const { return Cast<UEdStateGraph>(this->GetGraph()); }
+	UEdStateGraph* GetStateGraph() const;
 
 	void Inspect();
 };
