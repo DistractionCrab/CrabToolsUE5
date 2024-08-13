@@ -119,7 +119,7 @@ void FGraphApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabMa
 	BP->RegisterToolbarTab(InTabManager.ToSharedRef());
 	BP->PushTabFactories(TabFactories);
 	BP->PushTabFactories(CoreTabFactories);
-	//BP->PushTabFactories(BlueprintEditorTabFactories);
+	BP->PushTabFactories(BlueprintEditorTabFactories);
 }
 
 void FGraphApplicationMode::PreDeactivateMode() {

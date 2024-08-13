@@ -38,6 +38,13 @@ public:
 	FStateMachineBlueprintEditorEvents Events;
 
 public:
+
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
+	void GetEventEntries(TMap<FName, FString>& Entries);
+
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
+	void AddEventsToDataTable(UDataTable* EventSet, bool bClearEvents=false);
+
 	void SelectGraph(UEdStateGraph* Graph);
 	UClass* GetBlueprintClass() const override;
 	virtual bool SupportsInputEvents() const override;

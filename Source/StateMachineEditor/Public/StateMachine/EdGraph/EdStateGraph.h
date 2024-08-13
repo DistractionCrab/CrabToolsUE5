@@ -112,6 +112,9 @@ public:
 	void Delete();
 	void RenameGraph(FName NewName);
 
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void GetEventEntries(TMap<FName, FString>& Entries);
+
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
 	virtual TArray<FString> GetStateOptions() const override;

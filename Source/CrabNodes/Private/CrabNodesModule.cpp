@@ -13,19 +13,6 @@ FCrabNodesModule::FCrabNodesModule()
 
 void FCrabNodesModule::StartupModule() 
 {
-	/*
-	// Register widget blueprint compiler we do this no matter what.
-	IKismetCompilerInterface& KismetCompilerModule 
-		= FModuleManager::LoadModuleChecked<IKismetCompilerInterface>("KismetCompiler");
-	KismetCompilerModule.GetCompilers().Add(&StateMachineBlueprintCompiler);
-	KismetCompilerModule.OverrideBPTypeForClass(
-		UStateMachine::StaticClass(), UStateMachineBlueprint::StaticClass());
-
-	FKismetCompilerContext::RegisterCompilerForBP(
-		UStateMachineBlueprint::StaticClass(), 
-		&FCrabNodesModule::GetCompiler);
-	*/
-
 	auto BlueprintGraphPanelPinFactory = MakeShareable(new FStateMachineGraphPanelPinFactory());
 	FEdGraphUtilities::RegisterVisualPinFactory(BlueprintGraphPanelPinFactory);
 }

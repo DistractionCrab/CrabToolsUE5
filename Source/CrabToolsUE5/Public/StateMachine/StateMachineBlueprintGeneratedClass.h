@@ -28,11 +28,14 @@ class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 	GENERATED_BODY()
 
 public:
+
 	UPROPERTY()
 	TObjectPtr<UStateMachineArchetype> StateMachineArchetype;
 
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UStateMachineArchetype>> SubStateMachineArchetypes;
+
+public:
 
 	bool GetStateData(FStateData& Output, UStateMachine* Outer, FName Machine, FName StateName);
 };

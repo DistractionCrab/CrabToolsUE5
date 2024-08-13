@@ -25,6 +25,9 @@ class UEdEventObject : public UObject
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
 	FName EventName;
 
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor", meta=(Multiline=true))
+	FString Description;
+
 public:
 
 	FEventObjectActionEvents Events;
@@ -32,7 +35,8 @@ public:
 public:
 	UEdStateGraph* GetGraph() const;
 	void SetName(FName Name);
-	FName GetName() { return this->EventName; }
+	FName GetName() const { return this->EventName; }
+	FString GetDescription() const { return this->Description; }
 	FName RenameEvent(FName NewName);
 	void Inspect();
 	void Delete();

@@ -1,7 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Actors/PatrolPath.h"
+#include "Components/BillboardComponent.h"
+#include "Interfaces/IPluginManager.h"
 
 // Sets default values
 APatrolPath::APatrolPath()
@@ -11,20 +10,18 @@ APatrolPath::APatrolPath()
 	this->Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	Root->SetMobility(EComponentMobility::Static);
 	SetRootComponent(this->Root);
-}
-
-// Called when the game starts or when spawned
-void APatrolPath::BeginPlay()
-{
-	Super::BeginPlay();
 	
-}
+	this->EditorSprite = CreateEditorOnlyDefaultSubobject<UBillboardComponent>(TEXT("EditorSprite"));
 
-// Called every frame
-void APatrolPath::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+	// Setup Icon Display in the Editor
+	#if WITH_EDITORONLY_DATA
+		ConstructorHelpers::FObjectFinderOptional<UTexture2D> Icon(TEXT("/CrabToolsUE5/Icons/PatrolPathIcon.PatrolPathIcon"));
 
+		this->EditorSprite->Sprite = Icon.Get();
+		this->EditorSprite->bHiddenInGame = true;
+		this->EditorSprite->SetupAttachment(this->Root);
+		this->EditorSprite->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+	#endif
 }
 
 AActor* APatrolPath::FindClosestPoint(AActor* Patroller) {

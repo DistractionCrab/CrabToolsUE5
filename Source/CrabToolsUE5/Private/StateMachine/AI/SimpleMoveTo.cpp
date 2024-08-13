@@ -3,17 +3,18 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
+#include "StateMachine/AI/Events.h"
 
-FName USimpleMoveTo::ARRIVE_EVENT = "AI_ON_ARRIVE";
-FName USimpleMoveTo::LOST_EVENT = "AI_ON_LOST";
+FName UAISimpleMoveToNode::ARRIVE_EVENT = AI_Events::AI_ARRIVE;
+FName UAISimpleMoveToNode::LOST_EVENT = AI_Events::AI_LOST;
 
-USimpleMoveTo::USimpleMoveTo(): DataPropRef(nullptr)
+UAISimpleMoveToNode::UAISimpleMoveToNode(): DataPropRef(nullptr)
 {
 	this->AddEmittedEvent(ARRIVE_EVENT);
 	this->AddEmittedEvent(LOST_EVENT);
 }
 
-void USimpleMoveTo::Initialize_Implementation()
+void UAISimpleMoveToNode::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
@@ -21,25 +22,31 @@ void USimpleMoveTo::Initialize_Implementation()
 
 	if (CtrlQ)
 	{
-		
 		FAIMoveCompletedSignature::FDelegate Callback;
 		Callback.BindUFunction(this, "OnMoveCompleted");
 		CtrlQ->ReceiveMoveCompleted.Add(Callback);
-
-		this->FollowComponent = CtrlQ->GetPathFollowingComponent();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("SimpleMoveToNode: AIController was null."));
+		UE_LOG(LogTemp, Error, TEXT("AISimpleMoveToNode: AIController was null."));
 	}
 	
 	if (auto Prop = this->GetMachine()->GetClass()->FindPropertyByName(this->DestinationData))
 	{
-		this->DataPropRef = (FStructProperty*) Prop;
+		if (Prop->GetClass() == FStructProperty::StaticClass())
+		{
+			//this->DataPropRef = Cast<FStructProperty>(Prop);
+			this->DataPropRef = (FStructProperty*) Prop;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Invalid property found for movement information. Found Type: %s"),
+				*Prop->GetClass()->GetName());
+		}
 	}
 }
 
-void USimpleMoveTo::EnterWithData_Implementation(UObject* Data)
+void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
 {
 	if (auto Actor = Cast<AActor>(Data))
 	{
@@ -50,7 +57,7 @@ void USimpleMoveTo::EnterWithData_Implementation(UObject* Data)
 	}
 }
 
-void USimpleMoveTo::Enter_Implementation()
+void UAISimpleMoveToNode::Enter_Implementation()
 {
 	if (this->DataPropRef)
 	{
@@ -70,7 +77,7 @@ void USimpleMoveTo::Enter_Implementation()
 	}
 }
 
-void USimpleMoveTo::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
+void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
 	if (Result == EPathFollowingResult::Success)
 	{
@@ -84,7 +91,7 @@ void USimpleMoveTo::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult
 }
 
 #if WITH_EDITOR
-TArray<FString> USimpleMoveTo::GetPropertyOptions()
+TArray<FString> UAISimpleMoveToNode::GetPropertyOptions() const
 {
 	TArray<FString> Props;
 
@@ -111,7 +118,7 @@ TArray<FString> USimpleMoveTo::GetPropertyOptions()
 #endif
 
 #if WITH_EDITOR
-void USimpleMoveTo::PostLinkerChange()
+void UAISimpleMoveToNode::PostLinkerChange()
 {
 	Super::PostLinkerChange();
 
@@ -133,9 +140,10 @@ void USimpleMoveTo::PostLinkerChange()
 				}
 			}
 		}
-	}
 
-	this->DestinationData = NAME_None;
-	UE_LOG(LogTemp, Warning, TEXT("SimpleMoveTo: Movement Property no longer exists."));
+		UE_LOG(LogTemp, Warning, TEXT("SimpleMoveTo: Movement Property no longer exists: %s"),
+			*this->DestinationData.ToString());
+		this->DestinationData = NAME_None;		
+	}	
 }
 #endif

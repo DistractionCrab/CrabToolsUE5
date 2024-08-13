@@ -107,11 +107,14 @@ void UEdStateNode::UpdateEmittedEvents()
 
 	for (auto Node : this->Nodes)
 	{
-		TSet<FName> PartEvents;
+		if (Node)
+		{
+			TSet<FName> PartEvents;
 
-		Node->GetEmittedEvents(PartEvents);
+			Node->GetEmittedEvents(PartEvents);
 
-		this->NodeEmittedEvents.Append(PartEvents);
+			this->NodeEmittedEvents.Append(PartEvents);
+		}
 	}
 }
 
@@ -122,6 +125,11 @@ void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	this->UpdateEmittedEvents();
+
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateNode, Nodes))
+	{
+		this->Modify();
+	}
 }
 
 void UEdStateNode::PostLinkerChange()

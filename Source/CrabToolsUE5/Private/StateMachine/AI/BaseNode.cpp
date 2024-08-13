@@ -1,4 +1,4 @@
-#include "StateMachine/AI/AIBaseNode.h"
+#include "StateMachine/AI/BaseNode.h"
 #include "AIController.h"
 
 void UAIBaseNode::Initialize_Implementation() {

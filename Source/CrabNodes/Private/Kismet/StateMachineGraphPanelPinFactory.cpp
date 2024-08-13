@@ -39,22 +39,6 @@ TSharedPtr<class SGraphPin> FStateMachineGraphPanelPinFactory::CreatePin(class U
 				{
 					return SNew(SGraphPinDataTableRowName, InPin, DataTable);
 				}
-				if (DataTablePin->DefaultObject->IsA(UCurveTable::StaticClass()))
-				{
-					UCurveTable* CurveTable = (UCurveTable*)DataTablePin->DefaultObject;
-					if (CurveTable)
-					{
-						TArray<TSharedPtr<FName>> RowNames;
-						/** Extract all the row names from the RowMap */
-						for (TMap<FName, FRealCurve*>::TConstIterator Iterator(CurveTable->GetRowMap()); Iterator; ++Iterator)
-						{
-							/** Create a simple array of the row names */
-							TSharedPtr<FName> RowNameItem = MakeShareable(new FName(Iterator.Key()));
-							RowNames.Add(RowNameItem);
-						}
-						return SNew(SGraphPinNameList, InPin, RowNames);
-					}
-				}
 			}
 		}
 	}

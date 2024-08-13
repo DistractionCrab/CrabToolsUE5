@@ -429,6 +429,14 @@ bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
 
 UClass* UEdStateGraph::GetStateMachineClass() { return this->GetBlueprintOwner()->GetStateMachineClass(); }
 
+void UEdStateGraph::GetEventEntries(TMap<FName, FString>& Entries)
+{
+	for (auto EventObj : this->EventObjects)
+	{
+		Entries.Add(EventObj->GetName(), EventObj->GetDescription());
+	}
+}
+
 #if WITH_EDITOR
 void UEdStateGraph::PostEditUndo()
 {

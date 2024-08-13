@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/StateMachine.h"
-#include "AIBaseNode.generated.h"
+#include "BaseNode.generated.h"
 
 class AAIController;
 

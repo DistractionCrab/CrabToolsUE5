@@ -3,6 +3,7 @@
 #include "StateMachine/EdGraph/EdStartStateNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/StateMachineSchema.h"
+#include "StateMachine/EventSet.h"
 
 #define LOCTEXT_NAMESPACE "UStateMachineBlueprint"
 #include "EdGraph/EdGraph.h"
@@ -170,6 +171,48 @@ void UStateMachineBlueprint::ClearDelegates()
 {
 	this->Events.OnGraphSelected.Clear();
 	this->Events.OnObjectInspected.Clear();
+}
+
+void UStateMachineBlueprint::GetEventEntries(TMap<FName, FString>& Entries)
+{
+	this->MainGraph->GetEventEntries(Entries);
+
+	for (auto Graph : this->SubGraphs)
+	{
+		Graph->GetEventEntries(Entries);
+	}
+}
+
+void UStateMachineBlueprint::AddEventsToDataTable(UDataTable* EventSet, bool bClearEvents)
+{
+	if (EventSet->RowStruct == FEventSetRow::StaticStruct())
+	{
+		const FScopedTransaction Transaction(LOCTEXT("EditEventSet", "Add To Event Set"));
+		EventSet->Modify();
+
+		if (bClearEvents)
+		{
+			EventSet->EmptyTable();
+		}
+
+		TMap<FName, FString> EntryMap;
+		this->GetEventEntries(EntryMap);
+
+		for (auto Entry : EntryMap)
+		{
+			FEventSetRow Value;
+			Value.Description = FText::FromString(Entry.Value);
+
+			if (!EventSet->FindRow<FEventSetRow>(Entry.Key, "", false))
+			{
+				EventSet->AddRow(Entry.Key, Value);
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Data Table has wrong type of row."));
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

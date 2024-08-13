@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateMachine/AI/AIBaseNode.h"
+#include "StateMachine/AI/BaseNode.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "SimpleMoveTo.generated.h"
 
@@ -24,7 +24,7 @@ public:
  * Simple node for making an entity move to a given actor.
  */
 UCLASS(Blueprintable, Category = "StateMachine|AI")
-class CRABTOOLSUE5_API USimpleMoveTo : public UAIBaseNode
+class CRABTOOLSUE5_API UAISimpleMoveToNode : public UAIBaseNode
 {
 	GENERATED_BODY()
 
@@ -32,7 +32,6 @@ private:
 
 	static FName ARRIVE_EVENT;
 	static FName LOST_EVENT;
-	TWeakObjectPtr<class UPathFollowingComponent> FollowComponent;
 
 private:
 
@@ -44,7 +43,7 @@ private:
 
 public:
 
-	USimpleMoveTo();
+	UAISimpleMoveToNode();
 
 	virtual void EnterWithData_Implementation(UObject* Data) override;
 	virtual void Enter_Implementation() override;
@@ -57,10 +56,6 @@ public:
 		virtual void PostLinkerChange() override;
 		
 		UFUNCTION()
-		TArray<FString> GetPropertyOptions();
-	#endif
-
-	#if WITH_EDITORONLY_DATA
-		
+		TArray<FString> GetPropertyOptions() const;
 	#endif
 };
