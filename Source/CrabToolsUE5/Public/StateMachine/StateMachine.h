@@ -8,6 +8,7 @@
 #include "Utils/Enums.h"
 #include "UObject/ObjectPtr.h"
 #include "StateMachine/EventListener.h"
+#include "Containers/List.h"
 #include "StateMachine.generated.h"
 
 class UStateNode;
@@ -189,9 +190,6 @@ public:
 	void ExitWithData_Internal(UObject* Data);
 	virtual void ExitWithData_Implementation(UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (HideSelfPin, DefaultToSelf))
-	void GoTo(FName State);
-
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	virtual void SetOwner(UStateMachine* Parent);
 
@@ -248,44 +246,54 @@ class CRABTOOLSUE5_API UStateMachine : public UObject, public IEventListenerInte
 
 private:
 	// Internal Structure used for keeping track of state transitions and maintain State ID.
-	struct Transition {
+	struct Transition
+	{
 	private:
 		int ID = 0;
 
 	public:
-		int EnterTransition() {
+		int EnterTransition()
+		{
 			this->ID += 1;
 			return ID;
 		}
 
-		bool Valid(int OID) {
+		bool Valid(int OID)
+		{
 			return OID == this->ID;
 		}
 
-		int CurrentID() {
+		int CurrentID()
+		{
 			return this->ID;
 		}
 	} TRANSITION;
 
 	/* The Graph of the state machine. */
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, FStateData> Graph;
 
 	/* Nodes to be substituted into the graph later. */
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", 
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, TObjectPtr<UStateNode>> SharedNodes;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine", 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true",
+			ClampMin = "0", ClampMax = "1000", UIMin = "0", UIMax = "1000"))
+	int MaxStackSize = 5;
 
 	UPROPERTY()
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine",
+		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 	/* Reference to the archetype for this SM from a Generated Class. */
@@ -296,7 +304,8 @@ private:
 	FName ParentKey;
 	/* Reference to the generated class for this machine. */
 	TSubclassOf<UStateMachine> ArchetypeClass;
-
+	/* Sequence of States that this machine has passed through*/
+	TDoubleLinkedList<FName> StateStack;
 
 public:
 
@@ -326,9 +335,6 @@ public:
 	void EventWithData_Implementation(FName EName, UObject* Data) override final { this->EventWithData_Direct(EName, Data); }
 	void EventWithData_Direct(FName EName, UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (ExpandEnumAsExecs = "Branches"))
-	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
-
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
 
@@ -343,26 +349,21 @@ public:
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
 
-	/* 
+	/*
 	* Tick function to be called regularly. This is managed by the owner object.
 	*/
 	void Tick(float DeltaTime);
 
-	/**
-	 * This function should not be called except by UStateNode Implementations or unless you
-	 * specifically require a state to be forced regardless of the context.
-	 */
-	void UpdateState(FName Name);
-	void UpdateStateWithData(FName Name, UObject* Data);
-	
-	
+
+
+
 	FStateData* GetCurrentState();
 	FStateData* GetStateData(FName Name);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetCurrentStateName();
 
-	UFUNCTION(BlueprintCallable, Category="StateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	TArray<FString> StateOptions();
 
 	UFUNCTION()
@@ -372,7 +373,7 @@ public:
 	TArray<FString> ConditionDataOptions();
 
 	/**
-	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a 	 
+	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a
 	 * state machine.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
@@ -383,6 +384,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	bool IsInState(int ID) { return this->TRANSITION.Valid(ID); }
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	FName GetPreviousState() const;
 
 	/* Condition function that always returns true. */
 	UFUNCTION()
@@ -429,16 +433,24 @@ public:
 		this->Graph.Add(StateName, Data);
 	}
 
-	#if WITH_EDITOR
-		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-		virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
-		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-	#endif
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
+	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+#endif
 
 private:
-	void ValidateEventProps();
-	void AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName);
+
 	bool HasEventVariable(FName VName);
 	FName GetEventVarName(FName EName);
 	void InitFromArchetype();
+	void PushStateToStack(FName EName);
+
+	/**
+	 * This function should not be called except by UStateNode Implementations or unless you
+	 * specifically require a state to be forced regardless of the context.
+	 */
+	void UpdateState(FName Name);
+	void UpdateStateWithData(FName Name, UObject* Data);
+
 };

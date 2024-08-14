@@ -3,7 +3,6 @@
 
 void UStateMachineHelperLibrary::EmitEvent(UObject* Obj, FName EName)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Emitting event through interface."));
 	IEventListenerInterface::Execute_Event(Obj, EName);
 }
 

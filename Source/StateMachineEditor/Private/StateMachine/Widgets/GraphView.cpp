@@ -4,6 +4,7 @@
 #include "GraphEditorActions.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 
 #define LOCTEXT_NAMESPACE "SGraphView"
 
@@ -147,6 +148,10 @@ void SGraphView::OnDeleteNodes()
 		if (auto Node = Cast<UEdStateNode>(*NodeIt))
 		{
 			Node->Delete();
+		}
+		else if (auto TransNode = Cast<UEdTransition>(*NodeIt))
+		{
+			TransNode->Delete();
 		}
 	}
 }

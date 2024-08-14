@@ -7,4 +7,6 @@ namespace AI_Events
 	constexpr char AI_ARRIVE[] = "AI_ON_ARRIVE";
 	// Event for when a path following entity cannot reach their desitnation for some reason.
 	constexpr char AI_LOST[] = "AI_ON_LOST";
+	// Event for when a wait has finished.
+	constexpr char AI_WAIT_FINISHED[] = "AI_ON_WAIT_FINISHED";
 }

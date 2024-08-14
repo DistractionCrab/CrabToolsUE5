@@ -18,11 +18,11 @@ class UEdStartStateNode : public UEdBaseStateNode
 	UPROPERTY(VisibleAnywhere)
 	FText Description;
 
-
 public:
 	UEdStartStateNode();
 	virtual ~UEdStartStateNode();
 
 	virtual FName GetStateName() const override { return FName("~Start~"); }
 	virtual bool CanUserDeleteNode() const override { return false; }
+	virtual bool CanDuplicateNode() const override { return false; }
 };

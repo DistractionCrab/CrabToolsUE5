@@ -38,4 +38,10 @@ public:
     virtual TArray<FString> GetEventOptions() const { return {}; };
     virtual void RenameEvent(FName From, FName To) {}
     virtual void DeleteEvent(FName EventName) {}
+
+    /* Returns the list of states that enter this state. */
+    virtual TArray<FString> GetEnterStates() const { return {}; }
+
+    /* Returns the list of states that this state can enter. */
+    virtual TArray<FString> GetExitStates() const { return {}; }
 };

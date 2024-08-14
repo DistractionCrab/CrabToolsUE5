@@ -38,6 +38,7 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
 	virtual void PrepareForCopying() override;
 
@@ -45,6 +46,7 @@ public:
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
 
 	void CreateConnections(UEdBaseStateNode* Start, UEdBaseStateNode* End);
+	void Delete();
 
 	UEdBaseStateNode* GetStartNode() const;
 	UEdBaseStateNode* GetEndNode() const;

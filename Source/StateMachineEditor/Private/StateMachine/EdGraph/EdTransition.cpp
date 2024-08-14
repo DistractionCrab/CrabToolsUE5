@@ -140,5 +140,24 @@ TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FKismetCompilerCon
 	return Data;
 }
 
+void UEdTransition::Delete()
+{
+	this->Modify();
+
+	const UEdGraphSchema* Schema = this->GetSchema();
+	if (Schema != nullptr)
+	{
+		Schema->BreakNodeLinks(*this);
+	}
+
+	this->DestroyNode();
+}
+
+bool UEdTransition::Modify(bool bAlwaysMarkDirty)
+{
+	Super::Modify(bAlwaysMarkDirty);
+	return this->GetGraph()->Modify(bAlwaysMarkDirty);
+}
+
 #undef LOCTEXT_NAMESPACE
 

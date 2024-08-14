@@ -7,6 +7,8 @@ APatrolPath::APatrolPath()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bStartWithTickEnabled = true;
+
 	this->Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	Root->SetMobility(EComponentMobility::Static);
 	SetRootComponent(this->Root);
@@ -15,7 +17,8 @@ APatrolPath::APatrolPath()
 
 	// Setup Icon Display in the Editor
 	#if WITH_EDITORONLY_DATA
-		ConstructorHelpers::FObjectFinderOptional<UTexture2D> Icon(TEXT("/CrabToolsUE5/Icons/PatrolPathIcon.PatrolPathIcon"));
+		ConstructorHelpers::FObjectFinderOptional<UTexture2D> Icon(
+			TEXT("/CrabToolsUE5/Icons/PatrolPathIcon.PatrolPathIcon"));
 
 		this->EditorSprite->Sprite = Icon.Get();
 		this->EditorSprite->bHiddenInGame = true;
@@ -64,18 +67,56 @@ int APatrolPath::FindClosestIndex(AActor* Patroller) {
 	return Goal;
 }
 
-AActor* FPatrolPathState::GetNextTarget(APatrolPath* Path) {
-	auto PointCount = Path->PatrolPoints.Num();
+AActor* FPatrolPathState::GetNextTarget(APatrolPath* Path)
+{
+	if (Path)
+	{
+		auto PointCount = Path->PatrolPoints.Num();
+		if (PointCount > 0)
+		{
+			this->Index += 1;
+			auto Next = Path->PatrolPoints[this->Index];
+			this->Index %= PointCount;
 
-	if (Path && PointCount > 0) {
-		auto Next = Path->PatrolPoints[this->Index];
-
-		this->Index %= PointCount;
-		return Next;
+			return Next;
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
-	else {
+	else
+	{
 		return nullptr;
 	}
+}
+
+AActor* FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
+{
+	if (Path)
+	{
+		auto PointCount = Path->PatrolPoints.Num();
+		if (PointCount > 0)
+		{
+			this->Index %= PointCount;
+			auto Next = Path->PatrolPoints[this->Index];
+
+			return Next;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+void FPatrolPathState::Skip()
+{
+	this->Index += 1;
 }
 
 AActor* UPatrolPathLibrary::GetNextTarget(FPatrolPathState& State, APatrolPath* Path) {

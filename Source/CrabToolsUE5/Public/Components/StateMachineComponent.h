@@ -51,9 +51,6 @@ public:
 	void EventWithData_Implementation(FName EName, UObject* Data) override final { this->EventWithData_Direct(EName, Data); }
 	void EventWithData_Direct(FName EName, UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(ExpandEnumAsExecs="Branches"))
-	UStateNode* FindNode(FName NodeName, ESearchResult& Branches);
-
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeListen(const FStateChangeDispatcher& Callback);
 

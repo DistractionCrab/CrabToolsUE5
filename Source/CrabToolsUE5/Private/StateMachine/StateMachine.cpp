@@ -8,11 +8,6 @@
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
 
-namespace Constants
-{
-
-}
-
 #pragma region StateMachine Code
 
 void UStateMachine::Initialize_Internal(AActor* POwner)
@@ -91,6 +86,7 @@ void UStateMachine::UpdateState(FName Name) {
 
 		if (this->TRANSITION.Valid(TID)) {
 			this->CurrentStateName = Name;
+			this->PushStateToStack(Name);
 			CurrentState = this->GetCurrentState();
 			if (CurrentState && CurrentState->Node) CurrentState->Node->Enter_Internal();
 
@@ -121,6 +117,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 
 		if (this->TRANSITION.Valid(TID)) {
 			this->CurrentStateName = Name;
+			this->PushStateToStack(Name);
 			CurrentState = this->GetCurrentState();
 			if (CurrentState->Node) CurrentState->Node->EnterWithData_Internal(Data);
 
@@ -209,29 +206,6 @@ void UStateMachine::EventWithData_Direct(FName EName, UObject* Data) {
 	}
 }
 
-UStateNode* UStateMachine::FindNode(FName NodeName, ESearchResult& Branches) {
-	if (this->Graph.Contains(NodeName)) {		
-		auto Node = this->Graph[NodeName].Node;
-
-		if (Node) 
-		{
-			Branches = ESearchResult::Found;
-		} 
-		else 
-		{
-			Branches = ESearchResult::NotFound;
-		}
-
-		return Node;
-	}
-	else 
-	{
-		Branches = ESearchResult::NotFound;
-		return nullptr;
-	}
-	
-}
-
 void UStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	this->StateChangeEvents.Add(Callback);
 
@@ -282,36 +256,33 @@ FStateData* UStateMachine::GetStateData(FName Name)
 
 void UStateMachine::InitFromArchetype()
 {	
-	//if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass()))
-	//{
-		if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
+	if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
+	{
+		this->ArchetypeClass = BMBPG;
+		this->MachineArchetype = BMBPG->StateMachineArchetype;
+		this->StartState = this->MachineArchetype->StartState;
+
+		for (auto& SubMachine : BMBPG->SubStateMachineArchetypes)
 		{
-			this->ArchetypeClass = BMBPG;
-			this->MachineArchetype = BMBPG->StateMachineArchetype;
-			this->StartState = this->MachineArchetype->StartState;
-
-			for (auto& SubMachine : BMBPG->SubStateMachineArchetypes)
+			if (!SubMachine.Value->ArchetypeClass)
 			{
-				if (!SubMachine.Value->ArchetypeClass)
-				{
-					UE_LOG(LogTemp, Error, TEXT("Sub-StateMachine source class was null for: %s"),
-						*SubMachine.Key.ToString());
-				}
-
-				UStateMachine* DupMachine = NewObject<UStateMachine>(
-					this, 
-					SubMachine.Value->ArchetypeClass.Get());
-
-				DupMachine->ParentMachine = this;
-				DupMachine->MachineArchetype = SubMachine.Value;
-				DupMachine->ParentKey = SubMachine.Key;
-
-				this->SubMachines.Add(SubMachine.Key, DupMachine);
-
-				DupMachine->Initialize_Internal(this->Owner);
+				UE_LOG(LogTemp, Error, TEXT("Sub-StateMachine source class was null for: %s"),
+					*SubMachine.Key.ToString());
 			}
+
+			UStateMachine* DupMachine = NewObject<UStateMachine>(
+				this,
+				SubMachine.Value->ArchetypeClass.Get());
+
+			DupMachine->ParentMachine = this;
+			DupMachine->MachineArchetype = SubMachine.Value;
+			DupMachine->ParentKey = SubMachine.Key;
+
+			this->SubMachines.Add(SubMachine.Key, DupMachine);
+
+			DupMachine->Initialize_Internal(this->Owner);
 		}
-	//}
+	}
 }
 
 
@@ -329,16 +300,19 @@ FName UStateMachine::GetStateName(UStateNode* Node) {
 	return Found;
 }
 
-FName UStateMachine::GetCurrentStateName() {
+FName UStateMachine::GetCurrentStateName()
+{
 	return this->CurrentStateName;
 }
 
-TArray<FString> UStateMachine::StateOptions() {
+TArray<FString> UStateMachine::StateOptions()
+{
 	TArray<FString> Names;
 
 	for (const auto& Nodes : this->Graph) {
 		Names.Add(Nodes.Key.ToString());
 	}
+
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
 
 	return Names;
@@ -410,22 +384,6 @@ TSet<FName> UStateMachine::GetEvents() const {
 	return List;
 }
 
-void UStateMachine::ValidateEventProps() {
-	/*
-	if (UBlueprint* BlueprintAsset = UBlueprint::GetBlueprintFromClass(this->GetClass())) {
-		auto Events = this->GetEvents();
-
-
-		for (const auto& EName : Events) {
-			auto VName = this->GetEventVarName(EName);
-			this->AddEventRefStruct(BlueprintAsset, VName, EName);
-		}
-
-		//FBlueprintEditorUtils::RefreshVariables(BlueprintAsset);
-	}
-	*/
-}
-
 bool UStateMachine::HasEventVariable(FName VName) {
 	auto Prop = this->GetClass()->FindPropertyByName(VName);
 
@@ -445,37 +403,6 @@ bool UStateMachine::HasEventVariable(FName VName) {
 
 FName UStateMachine::GetEventVarName(FName EName) {
 	return FName(EName.ToString() + FString("_SM_EVENT"));
-}
-
-void UStateMachine::AddEventRefStruct(UBlueprint* BlueprintAsset, FName VName, FName EName) {
-	/*
-
-	FEdGraphPinType PinType;
-	PinType.ContainerType = EPinContainerType::None;
-	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
-	PinType.PinSubCategoryObject = FStateMachineEventRef::StaticStruct();
-
-	if (FBlueprintEditorUtils::AddMemberVariable(BlueprintAsset, VName, PinType)) {
-		const int32 VarIndex =
-			FBlueprintEditorUtils::FindNewVariableIndex(BlueprintAsset, VName);
-
-		if (VarIndex != INDEX_NONE)
-		{
-
-			auto& Variable = BlueprintAsset->NewVariables[VarIndex];
-			Variable.PropertyFlags |= CPF_EditConst;
-			Variable.PropertyFlags &= ~CPF_Edit;
-			Variable.PropertyFlags |= CPF_BlueprintReadOnly;
-
-			Variable.Category = FText::FromString("Generated|Events");
-
-			//Variable.DefaultValue = FString("FStateMachineEventRef(\"") + EName.ToString() + FString("\")");
-
-
-			FBlueprintEditorUtils::SetVariableSaveGameFlag(BlueprintAsset, VName, false);
-		}
-	}
-	*/
 }
 
 UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
@@ -545,6 +472,27 @@ FStateData* UStateMachine::GetCurrentState()
 	return nullptr;
 }
 
+void UStateMachine::PushStateToStack(FName EName)
+{
+	if (this->StateStack.Num() >= this->MaxStackSize)
+	{
+		this->StateStack.RemoveNode(this->StateStack.GetHead());
+	}
+
+	this->StateStack.AddTail(EName);
+}
+
+FName UStateMachine::GetPreviousState() const
+{
+	if (this->StateStack.Num() <= 1)
+	{
+		return NAME_None;
+	}
+	else
+	{
+		return this->StateStack.GetTail()->GetPrevNode()->GetValue();
+	}
+}
 
 #pragma endregion
 
@@ -565,10 +513,6 @@ void UStateNode::Initialize_Implementation() {}
 
 UStateMachine* UStateNode::GetMachine() {
 	return this->Owner;
-}
-
-void UStateNode::GoTo(FName State) {
-	this->Owner->UpdateState(State);
 }
 
 AActor* UStateNode::GetOwner() {

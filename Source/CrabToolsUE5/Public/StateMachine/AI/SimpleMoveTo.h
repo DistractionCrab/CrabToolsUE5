@@ -30,11 +30,6 @@ class CRABTOOLSUE5_API UAISimpleMoveToNode : public UAIBaseNode
 
 private:
 
-	static FName ARRIVE_EVENT;
-	static FName LOST_EVENT;
-
-private:
-
 	UPROPERTY(EditAnywhere, Category = "StateMachine|AI",
 		meta = (AllowPrivateAccess = true, GetOptions = "GetPropertyOptions"))
 	FName DestinationData;

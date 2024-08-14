@@ -46,9 +46,14 @@ public:
 	virtual bool HasEvent(FName EName) override;
 
 
-
+	/* Begin IStateLike Interface */
 	virtual TArray<FString> GetEventOptions() const override;
+	virtual TArray<FString> GetEnterStates() const override;
+	virtual TArray<FString> GetExitStates() const override;
+	/* End IStateLike Interface */
+
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;	
+
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

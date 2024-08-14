@@ -10,13 +10,17 @@ USTRUCT(BlueprintType)
 struct FPatrolPathState {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	TWeakObjectPtr<APatrolPath> PatrolRef;
+private:
 
-	UPROPERTY()
-	int Index = 0;
+	int Index;
 
+public:
+
+	FPatrolPathState() : Index(0) {}
+
+	AActor* GetCurrentTarget(APatrolPath* Path);
 	AActor* GetNextTarget(APatrolPath* Path);
+	void Skip();
 
 	void Reset() { this->Index = 0; }
 };
@@ -56,7 +60,7 @@ public:
 	TArray<AActor*> PatrolPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI)
-	float LostDistance = 1000;
+	float LostDistance = 100000;
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	virtual AActor* FindClosestPoint(AActor* Patroller);
@@ -68,4 +72,7 @@ public:
 	AActor* Get(int i) {
 		return this->PatrolPoints[i];
 	}
+
+	UFUNCTION(BlueprintPure, Category = "AI")
+	FORCEINLINE int Num() const { return this->PatrolPoints.Num(); }
 };

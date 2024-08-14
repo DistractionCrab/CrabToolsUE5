@@ -3,25 +3,19 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
+#include "StateMachine/AI/Events.h"
 
 #define LOCTEXT_NAMESPACE "AISimplePatrolNode"
+
+UAISimplePatrolNode::UAISimplePatrolNode(): PatrolProperty(nullptr)
+{
+	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
+	this->AddEmittedEvent(AI_Events::AI_LOST);
+}
 
 void UAISimplePatrolNode::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
-
-	auto CtrlQ = this->GetAIController();
-
-	if (CtrlQ)
-	{
-		FAIMoveCompletedSignature::FDelegate Callback;
-		Callback.BindUFunction(this, "OnMoveCompleted");
-		CtrlQ->ReceiveMoveCompleted.Add(Callback);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("AISimplePatrolNode: AIController was null."));
-	}
 
 	if (auto Prop = this->GetMachine()->GetClass()->FindPropertyByName(this->PatrolPathProperty))
 	{
@@ -41,40 +35,90 @@ void UAISimplePatrolNode::Initialize_Implementation()
 
 void UAISimplePatrolNode::Enter_Implementation()
 {
+	if (!this->NonResetStates.Contains(this->GetMachine()->GetPreviousState()))
+	{
+		this->PatrolState.Reset();
+	}
+
+	this->BindCallback();	
 	this->MoveToNext();
+}
+
+void UAISimplePatrolNode::Exit_Implementation()
+{
+	this->UnbindCallback();
 }
 
 void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
+	this->PatrolState.Skip();
+
 	if (Result == EPathFollowingResult::Success)
 	{
-		this->MoveToNext();
+		this->EmitEvent(AI_Events::AI_ARRIVE);
+		if (this->Active())
+		{
+			this->MoveToNext();
+		}
 	}
 	else if (Result == EPathFollowingResult::Blocked)
 	{
-		
+		this->MoveToNext();
 	}
 }
 
 void UAISimplePatrolNode::MoveToNext()
 {
-	this->PatrolState.Reset();
-
 	if (this->PatrolProperty)
 	{
+		// TODO: This isn't safe. Null values for properties can be non-zero.
 		auto Value = this->PatrolProperty->ContainerPtrToValuePtr<APatrolPath*>(this->GetMachine());
+
+		if (Value == nullptr) { return; }
 
 		if (auto Ctrl = this->GetAIController())
 		{
-			if (auto Goal = this->PatrolState.GetNextTarget(*Value))
+			if (auto Goal = this->PatrolState.GetCurrentTarget(*Value))
 			{
+				this->RecurseGuard += 1;
+
+				if (this->RecurseGuard > (*Value)->Num())
+				{
+					// If we've recursed too many times, then remove the call back.
+					this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
+				}
+
 				Ctrl->MoveToActor(Goal);
+
+				this->RecurseGuard = 0;
 			}
 			else
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Found null actor while patrolling. Cannot proceed."));
 			}
 		}
+	}
+}
+
+void UAISimplePatrolNode::BindCallback()
+{
+	if (auto CtrlQ = this->GetAIController())
+	{
+		FAIMoveCompletedSignature::FDelegate Callback;
+		Callback.BindUFunction(this, "OnMoveCompleted");
+		CtrlQ->ReceiveMoveCompleted.Add(Callback);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("AISimplePatrolNode: AIController was null."));
+	}
+}
+
+void UAISimplePatrolNode::UnbindCallback()
+{
+	if (auto CtrlQ = this->GetAIController())
+	{
+		CtrlQ->ReceiveMoveCompleted.RemoveAll(this);
 	}
 }
 
@@ -103,6 +147,21 @@ TArray<FString> UAISimplePatrolNode::GetPatrolOptions() const
 
 	return Props;
 }
+
+TArray<FString> UAISimplePatrolNode::GetResetStateOptions() const
+{
+	auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this);
+
+	if (StateLike)
+	{
+		return StateLike->GetEnterStates();
+	}
+	else
+	{
+		return {};
+	}
+}
+
 #endif
 
 #undef LOCTEXT_NAMESPACE

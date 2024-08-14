@@ -5,13 +5,10 @@
 #include "StateMachine/IStateMachineLike.h"
 #include "StateMachine/AI/Events.h"
 
-FName UAISimpleMoveToNode::ARRIVE_EVENT = AI_Events::AI_ARRIVE;
-FName UAISimpleMoveToNode::LOST_EVENT = AI_Events::AI_LOST;
-
 UAISimpleMoveToNode::UAISimpleMoveToNode(): DataPropRef(nullptr)
 {
-	this->AddEmittedEvent(ARRIVE_EVENT);
-	this->AddEmittedEvent(LOST_EVENT);
+	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
+	this->AddEmittedEvent(AI_Events::AI_LOST);
 }
 
 void UAISimpleMoveToNode::Initialize_Implementation()
@@ -81,11 +78,11 @@ void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 {
 	if (Result == EPathFollowingResult::Success)
 	{
-		this->EmitEvent(ARRIVE_EVENT);
+		this->EmitEvent(AI_Events::AI_ARRIVE);
 	}
 	else if (Result == EPathFollowingResult::Blocked)
 	{
-		this->EmitEvent(LOST_EVENT);
+		this->EmitEvent(AI_Events::AI_LOST);
 	}
 	
 }

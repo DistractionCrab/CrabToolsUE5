@@ -60,16 +60,6 @@ void UStateMachineComponent::EventWithData_Direct(FName EName, UObject* Data) {
 	}
 }
 
-UStateNode* UStateMachineComponent::FindNode(FName NodeName, ESearchResult& Branches) {
-	if (this->HasMachine()) {
-		return this->Machine->FindNode(NodeName, Branches);
-	}
-	else {
-		Branches = ESearchResult::NotFound;
-		return nullptr;
-	}
-}
-
 void UStateMachineComponent::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	if (this->HasMachine()) {
 		this->Machine->StateChangeListen(Callback);
