@@ -34,7 +34,12 @@ bool UStateMachineBlueprintGeneratedClass::GetStateData(
 		if (ArchData)
 		{
 			Output.Transitions.Append(ArchData->Transitions);
-			Output.Node = DuplicateObject(ArchData->Node, Outer, GenerateStateName(Outer, StateName));
+
+			if (ArchData->Node)
+			{
+				Output.Node = DuplicateObject(ArchData->Node, Outer, GenerateStateName(Outer, StateName));
+			}
+
 			return true;
 		}		
 	}

@@ -136,7 +136,7 @@ FName UEdStateGraph::GetStartStateName()
 
 bool UEdStateGraph::HasEvent(FName EName) const
 {
-	auto Ev = this->EventObjects.FindByPredicate([&](const UEdEventObject* Ev) { return Ev->GetFName() == EName; });
+	auto Ev = this->EventObjects.FindByPredicate([&](const UEdEventObject* Ev) { return Ev->GetEventName() == EName; });
 
 	if (Ev)
 	{
@@ -193,7 +193,7 @@ UEdEventObject* UEdStateGraph::CreateEvent()
 
 	for (auto Event : this->EventObjects)
 	{
-		FString EventName = Event->GetName().ToString();
+		FString EventName = Event->GetEventName().ToString();
 
 		if (EventName.StartsWith(DEFAULT_EVENT_NAME))
 		{
@@ -230,7 +230,7 @@ bool UEdStateGraph::IsEventNameAvilable(FName Name) const
 {
 	for (auto EventObj : this->EventObjects)
 	{
-		if (EventObj->GetName() == Name)
+		if (EventObj->GetEventName() == Name)
 		{
 			return false;
 		}
@@ -248,7 +248,7 @@ FName UEdStateGraph::RenameEvent(UEdEventObject* EventObj, FName To)
 	}
 	else
 	{
-		return EventObj->GetName();
+		return EventObj->GetEventName();
 	}
 }
 
@@ -354,7 +354,7 @@ TArray<FString> UEdStateGraph::GetEventOptions() const
 
 	for (auto Ev : this->EventObjects)
 	{
-		Names.Add(Ev->GetName().ToString());
+		Names.Add(Ev->GetEventName().ToString());
 	}
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
@@ -387,6 +387,73 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 		if (f->IsSignatureCompatibleWith(FnArchetype))
 		{
 			Names.Add(f->GetName());
+		}
+	}
+
+	// If it's a submachine, allow binding to parent functions.
+	if (!this->bIsMainGraph)
+	{
+		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
+		FnArchetype = ClassBase->FindFunctionByName("TrueCondition");
+
+		for (TFieldIterator<UFunction> FIT(ClassBase, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+		{
+			UFunction* f = *FIT;
+
+			if (f->IsSignatureCompatibleWith(FnArchetype) && !f->HasMetaData("IsDefaultCondition"))
+			{
+				Names.Add("../" + f->GetName());
+			}
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UEdStateGraph::GetDataConditionOptions() const
+{
+	TArray<FString> Names;
+
+	UClass* ClassBase;
+
+	if (this->bIsMainGraph)
+	{
+		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
+	}
+	else
+	{
+		ClassBase = this->SourceClass.Get();
+	}
+
+	// Find the example function to check against to find others of the same signature.
+	auto FnArchetype = ClassBase->FindFunctionByName("TrueDataCondition");
+
+	for (TFieldIterator<UFunction> FIT(ClassBase, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
+		UFunction* f = *FIT;
+
+		if (f->IsSignatureCompatibleWith(FnArchetype))
+		{
+			Names.Add(f->GetName());
+		}
+	}
+
+	// If it's a submachine, allow binding to parent functions.
+	if (!this->bIsMainGraph)
+	{
+		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
+		FnArchetype = ClassBase->FindFunctionByName("TrueDataCondition");
+
+		for (TFieldIterator<UFunction> FIT(ClassBase, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+		{
+			UFunction* f = *FIT;
+
+			if (f->IsSignatureCompatibleWith(FnArchetype) && !f->HasMetaData("IsDefaultCondition"))
+			{
+				Names.Add("../" + f->GetName());
+			}
 		}
 	}
 
@@ -427,13 +494,23 @@ bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
 	return this->GetBlueprintOwner()->Modify(bAlwaysMarkDirty);	
 }
 
-UClass* UEdStateGraph::GetStateMachineClass() { return this->GetBlueprintOwner()->GetStateMachineClass(); }
+UClass* UEdStateGraph::GetStateMachineClass() 
+{ 
+	if (this->bIsMainGraph)
+	{
+		return this->GetBlueprintOwner()->GetStateMachineClass();
+	}
+	else
+	{
+		return this->SourceClass.Get();
+	}
+}
 
 void UEdStateGraph::GetEventEntries(TMap<FName, FString>& Entries)
 {
 	for (auto EventObj : this->EventObjects)
 	{
-		Entries.Add(EventObj->GetName(), EventObj->GetDescription());
+		Entries.Add(EventObj->GetEventName(), EventObj->GetDescription());
 	}
 }
 
@@ -449,6 +526,10 @@ void UEdStateGraph::PostEditChangeProperty(
 	FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	UE_LOG(LogTemp, Warning, TEXT("Updated EdStateGraphProperty, attempting modify."));
+
+	this->Modify();
 
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, EventSets))
 	{

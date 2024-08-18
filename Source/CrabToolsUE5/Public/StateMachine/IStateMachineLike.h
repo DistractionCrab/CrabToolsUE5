@@ -15,6 +15,7 @@ class IStateMachineLike
 
 public:
     virtual TArray<FString> GetConditionOptions() const { return {}; };
+    virtual TArray<FString> GetDataConditionOptions() const { return {}; };
     virtual TArray<FString> GetMachineOptions() const { return {}; };
     virtual TArray<FString> GetEventOptions() const { return {}; };
     virtual TArray<FString> GetStateOptions() const { return {}; };

@@ -42,6 +42,7 @@ public:
 
 	virtual void EnterWithData_Implementation(UObject* Data) override;
 	virtual void Enter_Implementation() override;
+	virtual void Exit_Implementation() override;
 	virtual void Initialize_Implementation() override;
 	
 	UFUNCTION()
@@ -53,4 +54,8 @@ public:
 		UFUNCTION()
 		TArray<FString> GetPropertyOptions() const;
 	#endif
+
+private:
+	void BindCallback();
+	void UnbindCallback();
 };

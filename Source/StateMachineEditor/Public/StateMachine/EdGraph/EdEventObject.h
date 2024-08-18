@@ -35,7 +35,7 @@ public:
 public:
 	UEdStateGraph* GetGraph() const;
 	void SetName(FName Name);
-	FName GetName() const { return this->EventName; }
+	FName GetEventName() const { return this->EventName; }
 	FString GetDescription() const { return this->Description; }
 	FName RenameEvent(FName NewName);
 	void Inspect();

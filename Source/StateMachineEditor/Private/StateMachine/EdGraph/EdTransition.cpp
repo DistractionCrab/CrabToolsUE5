@@ -107,6 +107,11 @@ TArray<FString> UEdTransition::GetConditionOptions() const
 	return Cast<UEdStateGraph>(this->GetGraph())->GetConditionOptions();
 }
 
+TArray<FString> UEdTransition::GetDataConditionOptions() const
+{
+	return Cast<UEdStateGraph>(this->GetGraph())->GetDataConditionOptions();
+}
+
 TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FKismetCompilerContext& Context)
 {
 	TMap<FName, FTransitionData> Data;

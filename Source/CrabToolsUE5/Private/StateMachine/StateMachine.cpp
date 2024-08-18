@@ -2,7 +2,6 @@
 
 #include "Logging/StructuredLog.h"
 #include "Algo/Reverse.h"
-//#include "Kismet2/BlueprintEditorUtils.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/ArrayNode.h"
 #include "Utils/UtilsLibrary.h"
@@ -10,12 +9,35 @@
 
 #pragma region StateMachine Code
 
+UStateMachine::UStateMachine(const FObjectInitializer& ObjectInitializer)
+{
+	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
+	{
+		for (auto SubMachine : BPGC->SubStateMachineArchetypes)
+		{
+			// Class can be null for default objects.
+			if (!SubMachine.Value->ArchetypeClass.Get()) { continue; }
+
+			auto NewMachine = NewObject<UStateMachine>(this, SubMachine.Value->ArchetypeClass.Get(), SubMachine.Key);
+			NewMachine->ParentMachine = this;
+			NewMachine->ParentKey = SubMachine.Key;
+			NewMachine->MachineArchetype = SubMachine.Value;
+
+			this->SubMachines.Add(SubMachine.Key, NewMachine);
+		}
+	}
+}
+
 void UStateMachine::Initialize_Internal(AActor* POwner)
 {
 	this->Owner = POwner;
 	this->InitFromArchetype();
 	this->Initialize();
 
+	for (auto SubMachine : this->SubMachines)
+	{
+		SubMachine.Value->Initialize_Internal(POwner);
+	}
 
 	// Shared nodes always exist, and should be initialize from the beginning.
 	for (auto& Node : this->SharedNodes)
@@ -270,6 +292,9 @@ void UStateMachine::InitFromArchetype()
 					*SubMachine.Key.ToString());
 			}
 
+			// If it's already been initialized from the constructor ignore this one.
+			if (this->SubMachines.Contains(SubMachine.Key)) { continue; }
+
 			UStateMachine* DupMachine = NewObject<UStateMachine>(
 				this,
 				SubMachine.Value->ArchetypeClass.Get());
@@ -280,7 +305,8 @@ void UStateMachine::InitFromArchetype()
 
 			this->SubMachines.Add(SubMachine.Key, DupMachine);
 
-			DupMachine->Initialize_Internal(this->Owner);
+			// Do not initialize here. This will be done elsewhere.
+			//DupMachine->Initialize_Internal(this->Owner);
 		}
 	}
 }
@@ -418,6 +444,11 @@ UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESea
 	return nullptr;
 }
 
+void SplitConditionPath(FName ConditionName, FString& OutParent, FString& ConditionString)
+{
+	ConditionName.ToString().Split("/", &OutParent, &ConditionString);
+}
+
 FStateData* UStateMachine::GetCurrentState()
 {
 	auto FoundData = this->Graph.Find(this->CurrentStateName);
@@ -451,25 +482,58 @@ FStateData* UStateMachine::GetCurrentState()
 						ANode->AddNode(SubData.Node);
 
 						Data.Node = ANode;
-					}
-
-					
+					}					
 				}
 
 				for (auto& tpairs : Data.Transitions)
 				{
-					tpairs.Value.ConditionCallback.BindUFunction(this, tpairs.Value.Condition);
-					tpairs.Value.DataConditionCallback.BindUFunction(this, tpairs.Value.DataCondition);
+					this->BindCondition(tpairs.Value);
 				}
 
 				this->Graph.Add(this->CurrentStateName, Data);
-				Data.Node->Initialize_Internal(this);
+
+				if (IsValid(Data.Node))
+				{
+					Data.Node->Initialize_Internal(this);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Null node for state: %s"), *this->CurrentStateName.ToString());
+				}
+
 				return this->Graph.Find(this->CurrentStateName);
 			}
 		}
 	}
 
 	return nullptr;
+}
+
+void UStateMachine::BindCondition(FTransitionData& Data)
+{
+	FString RootPath;
+	FString ConditionPath;
+	SplitConditionPath(Data.Condition, RootPath, ConditionPath);
+
+	if (RootPath == "..")
+	{
+		if (this->ParentMachine)
+		{
+			Data.ConditionCallback.BindUFunction(this->ParentMachine, FName(ConditionPath));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
+				*Data.Condition.ToString());
+		}
+	}
+	else
+	{
+		Data.ConditionCallback.BindUFunction(this, Data.Condition);
+	}
+
+
+	Data.DataConditionCallback.BindUFunction(this, Data.DataCondition);
 }
 
 void UStateMachine::PushStateToStack(FName EName)

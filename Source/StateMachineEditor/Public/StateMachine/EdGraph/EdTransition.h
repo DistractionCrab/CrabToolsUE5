@@ -16,7 +16,8 @@ struct FEventTransitionData
 		meta=(GetOptions="GetConditionOptions"))
 	FName Condition = FName("TrueCondition");
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor")
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
+		meta = (GetOptions = "GetDataConditionOptions"))
 	FName DataCondition = FName("TrueDataCondition");
 };
 
@@ -54,6 +55,9 @@ public:
 
 	UFUNCTION()
 	TArray<FString> GetConditionOptions() const;
+
+	UFUNCTION()
+	TArray<FString> GetDataConditionOptions() const;
 
 	UFUNCTION()
 	TArray<FString> GetEventOptions() const;

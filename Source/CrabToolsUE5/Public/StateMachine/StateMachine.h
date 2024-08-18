@@ -270,8 +270,7 @@ private:
 	} TRANSITION;
 
 	/* The Graph of the state machine. */
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	TMap<FName, FStateData> Graph;
 
 	/* Nodes to be substituted into the graph later. */
@@ -283,17 +282,18 @@ private:
 		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
 
+	/* How many previous states to remember. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true",
-			ClampMin = "0", ClampMax = "1000", UIMin = "0", UIMax = "1000"))
+			ClampMin = "2", ClampMax = "1000", UIMin = "2", UIMax = "1000"))
 	int MaxStackSize = 5;
 
 	UPROPERTY()
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	UPROPERTY(EditDefaultsOnly, Category="StateMachine",
-		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, Instanced, Category="StateMachine",
+		meta=(ShowInnerProperties, ShowOnlyInnerProperties, ReadOnlyKeys))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 	/* Reference to the archetype for this SM from a Generated Class. */
@@ -315,6 +315,8 @@ public:
 
 public:
 
+	UStateMachine(const FObjectInitializer& ObjectInitializer);
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void Initialize();
 	virtual void Initialize_Implementation();
@@ -325,13 +327,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Reset();
 
-	//UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	//void Event(FName EName);
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void SendEvent(FName EName) { this->Event_Direct(EName); }
 	virtual void Event_Implementation(FName EName) override final { this->Event_Direct(EName); }
 	void Event_Direct(FName);
 
-	//UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	//void EventWithData(FName EName, UObject* Data);
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void SendEventWithData(FName EName, UObject* Data) { this->EventWithData_Direct(EName, Data); }
 	void EventWithData_Implementation(FName EName, UObject* Data) override final { this->EventWithData_Direct(EName, Data); }
 	void EventWithData_Direct(FName EName, UObject* Data);
 
@@ -348,14 +350,12 @@ public:
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
+	UStateMachine* GetSubMachine(FName MachineKey) { return this->SubMachines.Find(MachineKey)->Get(); }
 
 	/*
 	* Tick function to be called regularly. This is managed by the owner object.
 	*/
 	void Tick(float DeltaTime);
-
-
-
 
 	FStateData* GetCurrentState();
 	FStateData* GetStateData(FName Name);
@@ -389,21 +389,21 @@ public:
 	FName GetPreviousState() const;
 
 	/* Condition function that always returns true. */
-	UFUNCTION()
+	UFUNCTION(meta = (IsDefaultCondition))
 	bool TrueCondition();
 
-	UFUNCTION()
+	UFUNCTION(meta = (IsDefaultCondition))
 	bool FalseCondition();
 
 	/* Condition function that always returns true. */
-	UFUNCTION()
+	UFUNCTION(meta = (IsDefaultCondition))
 	bool TrueDataCondition(UObject* Data);
 
-	UFUNCTION()
+	UFUNCTION(meta = (IsDefaultCondition))
 	bool FalseDataCondition(UObject* Data);
 
 	/* Condition function that returns true if Data is Valid. */
-	UFUNCTION()
+	UFUNCTION(meta = (IsDefaultCondition))
 	bool ValidDataCondition(UObject* Data);
 
 	TSet<FName> GetEvents() const;
@@ -446,11 +446,9 @@ private:
 	void InitFromArchetype();
 	void PushStateToStack(FName EName);
 
-	/**
-	 * This function should not be called except by UStateNode Implementations or unless you
-	 * specifically require a state to be forced regardless of the context.
-	 */
+
 	void UpdateState(FName Name);
 	void UpdateStateWithData(FName Name, UObject* Data);
+	void BindCondition(FTransitionData& Data);
 
 };

@@ -662,7 +662,7 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 			[
 				SAssignNew(InlineText, SInlineEditableTextBlock)
 				//.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-				.Text(FText::FromName(this->EventReference.Get()->GetName()))
+				.Text(FText::FromName(this->EventReference.Get()->GetEventName()))
 				.OnVerifyTextChanged(this, &FEventItem::OnVerifyNameTextChanged)
 				.OnTextCommitted(this, &FEventItem::OnNameTextCommited)
 				.IsSelected(
@@ -692,7 +692,7 @@ bool FEventItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMes
 
 	if (this->EventReference.IsValid())
 	{
-		if (NewName == this->EventReference.Get()->GetName()) { return true; }
+		if (NewName == this->EventReference.Get()->GetEventName()) { return true; }
 
 		if (this->EventReference.Get()->GetGraph()->IsEventNameAvilable(NewName))
 		{

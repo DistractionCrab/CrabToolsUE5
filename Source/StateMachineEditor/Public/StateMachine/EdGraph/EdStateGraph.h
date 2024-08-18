@@ -120,5 +120,6 @@ public:
 	virtual TArray<FString> GetStateOptions() const override;
 	virtual TArray<FString> GetEventOptions() const override;
 	virtual TArray<FString> GetConditionOptions() const override;
+	virtual TArray<FString> GetDataConditionOptions() const override;
 	virtual UClass* GetStateMachineClass() override;
 };

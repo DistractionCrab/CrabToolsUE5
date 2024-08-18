@@ -15,24 +15,10 @@ void UAISimpleMoveToNode::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	auto CtrlQ = this->GetAIController();
-
-	if (CtrlQ)
-	{
-		FAIMoveCompletedSignature::FDelegate Callback;
-		Callback.BindUFunction(this, "OnMoveCompleted");
-		CtrlQ->ReceiveMoveCompleted.Add(Callback);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("AISimpleMoveToNode: AIController was null."));
-	}
-	
-	if (auto Prop = this->GetMachine()->GetClass()->FindPropertyByName(this->DestinationData))
+		if (auto Prop = this->GetMachine()->GetClass()->FindPropertyByName(this->DestinationData))
 	{
 		if (Prop->GetClass() == FStructProperty::StaticClass())
 		{
-			//this->DataPropRef = Cast<FStructProperty>(Prop);
 			this->DataPropRef = (FStructProperty*) Prop;
 		}
 		else
@@ -43,8 +29,14 @@ void UAISimpleMoveToNode::Initialize_Implementation()
 	}
 }
 
+void UAISimpleMoveToNode::Exit_Implementation()
+{
+	this->UnbindCallback();
+}
+
 void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
 {
+	this->BindCallback();
 	if (auto Actor = Cast<AActor>(Data))
 	{
 		if (auto Ctrl = this->GetAIController())
@@ -56,6 +48,7 @@ void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
 
 void UAISimpleMoveToNode::Enter_Implementation()
 {
+	this->BindCallback();
 	if (this->DataPropRef)
 	{
 		auto Value = this->DataPropRef->ContainerPtrToValuePtr<FMoveToData>(this->GetMachine());
@@ -85,6 +78,28 @@ void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 		this->EmitEvent(AI_Events::AI_LOST);
 	}
 	
+}
+
+void UAISimpleMoveToNode::BindCallback()
+{
+	if (auto CtrlQ = this->GetAIController())
+	{
+		FAIMoveCompletedSignature::FDelegate Callback;
+		Callback.BindUFunction(this, "OnMoveCompleted");
+		CtrlQ->ReceiveMoveCompleted.Add(Callback);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("AISimplePatrolNode: AIController was null."));
+	}
+}
+
+void UAISimpleMoveToNode::UnbindCallback()
+{
+	if (auto CtrlQ = this->GetAIController())
+	{
+		CtrlQ->ReceiveMoveCompleted.RemoveAll(this);
+	}
 }
 
 #if WITH_EDITOR

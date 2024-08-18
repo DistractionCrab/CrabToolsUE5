@@ -43,13 +43,6 @@ FGraphApplicationMode::FGraphApplicationMode(
 			->AddTab(FGraphDetailsTabFactory::TabID, ETabState::OpenedTab)
 		)
 		->Split(
-			/*
-			FTabManager::NewStack()
-			->SetHideTabWell(true)
-			->SetSizeCoefficient(0.9f)
-			->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)
-			*/
-
 			FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
 			->SetSizeCoefficient(0.9f)
 			->Split
@@ -57,6 +50,7 @@ FGraphApplicationMode::FGraphApplicationMode(
 				FTabManager::NewStack()
 				->SetSizeCoefficient(0.80f)
 				->AddTab(FGraphTabFactory::TabID, ETabState::OpenedTab)
+				->SetHideTabWell(true)
 			)
 			->Split
 			(

@@ -71,18 +71,17 @@ void UAISimplePatrolNode::MoveToNext()
 {
 	if (this->PatrolProperty)
 	{
-		// TODO: This isn't safe. Null values for properties can be non-zero.
-		auto Value = this->PatrolProperty->ContainerPtrToValuePtr<APatrolPath*>(this->GetMachine());
+		auto PatrolPath = *this->PatrolProperty->ContainerPtrToValuePtr<APatrolPath*>(this->GetMachine());		
 
-		if (Value == nullptr) { return; }
+		if (PatrolPath == nullptr || !IsValid(PatrolPath)) { return; }
 
 		if (auto Ctrl = this->GetAIController())
 		{
-			if (auto Goal = this->PatrolState.GetCurrentTarget(*Value))
+			if (auto Goal = this->PatrolState.GetCurrentTarget(PatrolPath))
 			{
 				this->RecurseGuard += 1;
 
-				if (this->RecurseGuard > (*Value)->Num())
+				if (this->RecurseGuard > PatrolPath->Num())
 				{
 					// If we've recursed too many times, then remove the call back.
 					this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
@@ -94,7 +93,7 @@ void UAISimplePatrolNode::MoveToNext()
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Found null actor while patrolling. Cannot proceed."));
+				UE_LOG(LogTemp, Error, TEXT("Found null actor while patrolling. Cannot proceed."));
 			}
 		}
 	}

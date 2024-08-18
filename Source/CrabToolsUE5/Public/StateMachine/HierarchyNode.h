@@ -12,10 +12,10 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 {
 	GENERATED_BODY()
 	
-	//UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	//UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	//TSubclassOf<UStateMachine> MachineClass;
 
-	UPROPERTY(VisibleAnywhere, Category = "ProcStateMachine", 
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true", ShowInnerProperties, ShowOnlyInnerProperties))
 	TObjectPtr<UStateMachine> SubMachine;
 
@@ -25,7 +25,7 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	FName SlotName;
 
 	/* Map of SubMachine states and events to be emitted to the SM of this node. */
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", 
+	UPROPERTY(EditAnywhere, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true", 
 			GetKeyOptions="GetSubMachineStateOptions"))
 	TMap<FName, FName> ExitStates;
@@ -34,15 +34,12 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	bool ResetOnEnter = true;
 
-	//UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
-	//TMap<FName, UStateNode*> SubstituteNodes;
-
 	/*
 	 * The event to pass to the submachine when entering. Useful for when ResetOnEnter is false, but
 	 * work needs to be continued. Specifically, if ResetOnEnter is false, and nothing is done to transition 
 	 * the state, on the next tick or event the exist state will be detected again.
 	 */
-	UPROPERTY(EditAnywhere, Category = "ProcStateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	FName EnterEventName = "HIERARCHY_REENTER";
 
 public:
