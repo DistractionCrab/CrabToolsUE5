@@ -13,19 +13,29 @@ UStateMachine::UStateMachine(const FObjectInitializer& ObjectInitializer)
 {
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
-		for (auto SubMachine : BPGC->SubStateMachineArchetypes)
+		for (auto& SubMachine : BPGC->SubStateMachineArchetypes)
 		{
-			// Class can be null for default objects.
-			if (!SubMachine.Value->ArchetypeClass.Get()) { continue; }
+			if (auto Class = SubMachine.Value->ArchetypeClass.Get())
+			{
+				this->CreateDefaultSubMachine(SubMachine.Key, Class);
+			}			
+		}
 
-			auto NewMachine = NewObject<UStateMachine>(this, SubMachine.Value->ArchetypeClass.Get(), SubMachine.Key);
-			NewMachine->ParentMachine = this;
-			NewMachine->ParentKey = SubMachine.Key;
-			NewMachine->MachineArchetype = SubMachine.Value;
-
-			this->SubMachines.Add(SubMachine.Key, NewMachine);
+		// Default Objects won't have a valid archetype when compiling.
+		if (IsValid(BPGC->StateMachineArchetype))
+		{
+			this->StartState = BPGC->StateMachineArchetype->StartState;
 		}
 	}
+}
+
+void UStateMachine::CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class)
+{
+	auto NewMachine = NewObject<UStateMachine>(this, Class.Get(), Key);
+	NewMachine->ParentMachine = this;
+	NewMachine->ParentKey = Key;
+
+	this->SubMachines.Add(Key, NewMachine);
 }
 
 void UStateMachine::Initialize_Internal(AActor* POwner)
@@ -34,7 +44,7 @@ void UStateMachine::Initialize_Internal(AActor* POwner)
 	this->InitFromArchetype();
 	this->Initialize();
 
-	for (auto SubMachine : this->SubMachines)
+	for (auto& SubMachine : this->SubMachines)
 	{
 		SubMachine.Value->Initialize_Internal(POwner);
 	}
@@ -95,8 +105,10 @@ void UStateMachine::AddTransition(FName State, FName Event, FTransitionData Data
 	}
 }
 
-void UStateMachine::UpdateState(FName Name) {
-	if (Name != this->CurrentStateName) {
+void UStateMachine::UpdateState(FName Name)
+{
+	if (Name != this->CurrentStateName)
+	{
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
@@ -106,19 +118,23 @@ void UStateMachine::UpdateState(FName Name) {
 		// called already, and this function will have returned;
 		if (CurrentState && CurrentState->Node) CurrentState->Node->Exit_Internal();
 
-		if (this->TRANSITION.Valid(TID)) {
+		if (this->TRANSITION.Valid(TID))
+		{
 			this->CurrentStateName = Name;
 			this->PushStateToStack(Name);
 			CurrentState = this->GetCurrentState();
 			if (CurrentState && CurrentState->Node) CurrentState->Node->Enter_Internal();
 
 			
-			if (this->TRANSITION.Valid(TID)) {
+			if (this->TRANSITION.Valid(TID))
+			{
 				// Alert all listeners, and if one of them changes the state, return.
-				for (auto& Listener : this->StateChangeEvents) {
+				for (auto& Listener : this->StateChangeEvents)
+				{
 					Listener.ExecuteIfBound(OldState, Name);
-					if (!this->TRANSITION.Valid(TID)) {
-						return;
+					if (!this->TRANSITION.Valid(TID))
+					{
+						break;
 					}
 				}
 			}
@@ -127,7 +143,8 @@ void UStateMachine::UpdateState(FName Name) {
 }
 
 void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
-	if (this->Graph.Contains(Name) && Name != this->CurrentStateName) {
+	if (Name != this->CurrentStateName)
+	{
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
@@ -137,19 +154,23 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
 		// called already, and this function will have returned;
 		if (CurrentState && CurrentState->Node) CurrentState->Node->ExitWithData_Internal(Data);
 
-		if (this->TRANSITION.Valid(TID)) {
+		if (this->TRANSITION.Valid(TID))
+		{
 			this->CurrentStateName = Name;
 			this->PushStateToStack(Name);
 			CurrentState = this->GetCurrentState();
+
 			if (CurrentState->Node) CurrentState->Node->EnterWithData_Internal(Data);
 
-
-			if (this->TRANSITION.Valid(TID)) {
+			if (this->TRANSITION.Valid(TID))
+			{
 				// Alert all listeners, and if one of them changes the state, return.
-				for (auto& Listener : this->StateChangeEvents) {
+				for (auto& Listener : this->StateChangeEvents)
+				{
 					Listener.ExecuteIfBound(OldState, Name);
-					if (!this->TRANSITION.Valid(TID)) {
-						return;
+					if (!this->TRANSITION.Valid(TID))
+					{
+						break;
 					}
 				}
 			}
@@ -278,36 +299,20 @@ FStateData* UStateMachine::GetStateData(FName Name)
 
 void UStateMachine::InitFromArchetype()
 {	
-	if (auto BMBPG = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
+	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
-		this->ArchetypeClass = BMBPG;
-		this->MachineArchetype = BMBPG->StateMachineArchetype;
-		this->StartState = this->MachineArchetype->StartState;
+		
+	}
 
-		for (auto& SubMachine : BMBPG->SubStateMachineArchetypes)
+	if (IsValid(this->ParentMachine))
+	{
+		if (auto ParentBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->GetClass()))
 		{
-			if (!SubMachine.Value->ArchetypeClass)
+			if (auto Machine = ParentBPGC->SubStateMachineArchetypes[this->ParentKey])
 			{
-				UE_LOG(LogTemp, Error, TEXT("Sub-StateMachine source class was null for: %s"),
-					*SubMachine.Key.ToString());
+				this->StartState = Machine->StartState;
 			}
-
-			// If it's already been initialized from the constructor ignore this one.
-			if (this->SubMachines.Contains(SubMachine.Key)) { continue; }
-
-			UStateMachine* DupMachine = NewObject<UStateMachine>(
-				this,
-				SubMachine.Value->ArchetypeClass.Get());
-
-			DupMachine->ParentMachine = this;
-			DupMachine->MachineArchetype = SubMachine.Value;
-			DupMachine->ParentKey = SubMachine.Key;
-
-			this->SubMachines.Add(SubMachine.Key, DupMachine);
-
-			// Do not initialize here. This will be done elsewhere.
-			//DupMachine->Initialize_Internal(this->Owner);
-		}
+		}		
 	}
 }
 
@@ -386,16 +391,19 @@ bool UStateMachine::FalseCondition() {
 	return false;
 }
 
-bool UStateMachine::TrueDataCondition(UObject* Data) {
+bool UStateMachine::TrueDataCondition(UObject* Data)
+{
 	return true;
 }
 
-bool UStateMachine::FalseDataCondition(UObject* Data) {
+bool UStateMachine::FalseDataCondition(UObject* Data)
+{
 	return false;
 }
 
-bool UStateMachine::ValidDataCondition(UObject* Data) {
-	return Data != nullptr;
+bool UStateMachine::ValidDataCondition(UObject* Data)
+{
+	return IsValid(Data);
 }
 
 TSet<FName> UStateMachine::GetEvents() const {
@@ -459,50 +467,63 @@ FStateData* UStateMachine::GetCurrentState()
 	}
 	else
 	{
-		auto SourceMachine = this->MachineArchetype.Get() ? this->MachineArchetype.Get() : this;
+		FStateData Data;
+		bool Found = false;
 
-		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ArchetypeClass.Get()))
+		// First get the data for this state from the Generated class if it exists.
+		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 		{
-			FStateData Data;
-			bool Found = BPGC->GetStateData(Data, this, NAME_None, this->CurrentStateName);			
-
-			if (Found)
+			Found = BPGC->GetStateData(Data, this, NAME_None, this->CurrentStateName);
+		}
+		
+		// Then check to see if there's a parent machine to get extra state data from.
+		if (IsValid(this->ParentMachine))
+		{
+			if (auto ParentBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->GetClass()))
 			{
-				if (this->ParentMachine && this->ParentMachine->ArchetypeClass)
-				{
-					auto SupBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->ArchetypeClass.Get());
-					FStateData SubData;
-					bool SubFound = SupBPGC->GetStateData(SubData, this, this->ParentKey, this->CurrentStateName);
-					
+				FStateData SubData;
+				bool SubFound = ParentBPGC->GetStateData(SubData, this, this->ParentKey, this->CurrentStateName);
 
+				if (Found)
+				{
 					if (SubFound && SubData.Node && Data.Node)
 					{
-						auto ANode = NewObject<UArrayNode>(this);
-						ANode->AddNode(Data.Node);
-						ANode->AddNode(SubData.Node);
-
-						Data.Node = ANode;
-					}					
-				}
-
-				for (auto& tpairs : Data.Transitions)
-				{
-					this->BindCondition(tpairs.Value);
-				}
-
-				this->Graph.Add(this->CurrentStateName, Data);
-
-				if (IsValid(Data.Node))
-				{
-					Data.Node->Initialize_Internal(this);
+						if (IsValid(Data.Node) && IsValid(SubData.Node))
+						{
+							auto ANode = NewObject<UArrayNode>(this);
+							ANode->AddNode(Data.Node);
+							ANode->AddNode(SubData.Node);
+							Data.Node = ANode;							
+						}
+						else if (SubData.Node)
+						{
+							Data.Node = SubData.Node;
+						}						
+					}
 				}
 				else
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Null node for state: %s"), *this->CurrentStateName.ToString());
+					Data = SubData;
+					Found = SubFound;
 				}
-
-				return this->Graph.Find(this->CurrentStateName);
 			}
+		}
+
+		if (Found)
+		{
+			for (auto& tpairs : Data.Transitions)
+			{
+				this->BindCondition(tpairs.Value);
+			}
+
+			this->Graph.Add(this->CurrentStateName, Data);
+
+			if (IsValid(Data.Node))
+			{
+				Data.Node->Initialize_Internal(this);
+			}
+
+			return this->Graph.Find(this->CurrentStateName);
 		}
 	}
 

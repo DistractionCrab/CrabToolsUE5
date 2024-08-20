@@ -18,8 +18,8 @@ public:
 
 	FPatrolPathState() : Index(0) {}
 
-	AActor* GetCurrentTarget(APatrolPath* Path);
-	AActor* GetNextTarget(APatrolPath* Path);
+	FVector GetCurrentTarget(APatrolPath* Path);
+	FVector GetNextTarget(APatrolPath* Path);
 	void Skip();
 
 	void Reset() { this->Index = 0; }
@@ -34,7 +34,7 @@ class UPatrolPathLibrary : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, Category="PatrolPath")
-	static AActor* GetNextTarget(UPARAM(Ref) FPatrolPathState& State, APatrolPath* Path);
+	static FVector GetNextTarget(UPARAM(Ref) FPatrolPathState& State, APatrolPath* Path);
 };
 
 UCLASS()
@@ -45,6 +45,9 @@ class APatrolPath : public AActor
 	UPROPERTY()
 	TObjectPtr<USceneComponent> Root;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI, meta = (MakeEditWidget, AllowPrivateAccess=true))
+	TArray<FVector> PatrolPoints;
+
 protected:
 
 	UPROPERTY()
@@ -54,24 +57,19 @@ public:
 	// Sets default values for this actor's properties
 	APatrolPath();	
 
-public:	
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI)
-	TArray<AActor*> PatrolPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI)
 	float LostDistance = 100000;
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
-	virtual AActor* FindClosestPoint(AActor* Patroller);
+	virtual FVector FindClosestPoint(AActor* Patroller);
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	virtual int FindClosestIndex(AActor* Patroller);
 
+	/* Return the patrol point in World Space coordinates. */
 	UFUNCTION(BlueprintPure, Category = "AI")
-	AActor* Get(int i) {
-		return this->PatrolPoints[i];
-	}
+	FVector Get(int i);
 
 	UFUNCTION(BlueprintPure, Category = "AI")
 	FORCEINLINE int Num() const { return this->PatrolPoints.Num(); }

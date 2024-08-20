@@ -49,7 +49,6 @@ public:
 	virtual void Enter_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	virtual void Exit_Implementation() override;
-	//virtual UStateNode* Substitute(FName SlotName, UStateNode* Node) override;
 
 	void PerformExit();
 

@@ -297,19 +297,19 @@ private:
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 	/* Reference to the archetype for this SM from a Generated Class. */
-	TObjectPtr<UStateMachine> MachineArchetype;
+	//TObjectPtr<UStateMachine> MachineArchetype;
 	/* Reference to a parent which uses this state machine as a sub machine. */
 	TObjectPtr<UStateMachine> ParentMachine;
 	/* The key/name of this submachine in the parent. */
 	FName ParentKey;
 	/* Reference to the generated class for this machine. */
-	TSubclassOf<UStateMachine> ArchetypeClass;
+	//TSubclassOf<UStateMachine> GeneratedClass;
 	/* Sequence of States that this machine has passed through*/
 	TDoubleLinkedList<FName> StateStack;
 
 public:
 
-	UPROPERTY(BlueprintReadOnly, Category = "StateMachine",
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
 		meta = (GetOptions = "StateOptions"))
 	FName StartState;
 
@@ -438,6 +438,10 @@ public:
 	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 #endif
+
+protected:
+
+	void CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class);
 
 private:
 

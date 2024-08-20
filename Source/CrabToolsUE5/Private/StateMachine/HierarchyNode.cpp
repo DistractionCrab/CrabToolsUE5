@@ -2,19 +2,22 @@
 
 #include "StateMachine/IStateMachineLike.h"
 
-void UHierarchyNode::Initialize_Implementation() {
+void UHierarchyNode::Initialize_Implementation()
+{
 	UStateNode::Initialize_Implementation();
+	UE_LOG(LogTemp, Warning, TEXT("HierarchyNode::Init: %s"), *this->SlotName.ToString());
 
 	this->SubMachine = this->GetMachine()->GetSubMachine(this->SlotName);
-
+	
 	if (this->SubMachine)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("HierarchyNode::Init: Found SubMachine"));
 		this->SubMachine->Initialize_Internal(this->GetMachine()->GetOwner());
 	}
 }
 
-void UHierarchyNode::PerformExit() {
-
+void UHierarchyNode::PerformExit()
+{
 	if (this->SubMachine != nullptr) {
 		FName SubStateName = this->SubMachine->GetCurrentStateName();
 
@@ -40,11 +43,12 @@ void UHierarchyNode::EventWithData_Implementation(FName EName, UObject* Data) {
 }
 
 void UHierarchyNode::Enter_Implementation() {
+	UE_LOG(LogTemp, Warning, TEXT("Entering HierarchyNode"));
 	if (this->SubMachine) {
 		if (this->ResetOnEnter) {
 			this->SubMachine->Reset();
 		}
-		//this->SubMachine->Event_Direct(this->EnterEventName);
+		this->SubMachine->Event_Direct(this->EnterEventName);
 	}
 }
 

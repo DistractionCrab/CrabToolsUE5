@@ -32,6 +32,11 @@ void UAISimpleMoveToNode::Initialize_Implementation()
 void UAISimpleMoveToNode::Exit_Implementation()
 {
 	this->UnbindCallback();
+
+	if (auto Ctrl = this->GetAIController())
+	{
+		Ctrl->StopMovement();
+	}
 }
 
 void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
@@ -43,6 +48,14 @@ void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
 		{
 			Ctrl->MoveToActor(Actor);
 		}
+		else
+		{
+			this->EmitEvent(AI_Events::AI_LOST);
+		}
+	}
+	else
+	{
+		this->EmitEvent(AI_Events::AI_LOST);
 	}
 }
 

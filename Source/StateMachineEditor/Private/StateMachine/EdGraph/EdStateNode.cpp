@@ -41,7 +41,8 @@ UStateNode* UEdStateNode::GetCompiledNode()
 {
 	if (this->Nodes.Num() == 0)
 	{
-		return NewObject<UStateNode>(this);
+		//return NewObject<UStateNode>(this);
+		return nullptr;
 	} 
 	else if (this->Nodes.Num() == 1)
 	{
@@ -68,7 +69,10 @@ TArray<FString> UEdStateNode::GetEventOptions() const
 
 	for (auto Node : this->Nodes)
 	{
-		Node->GetEmittedEvents(EventsSet);
+		if (IsValid(Node))
+		{
+			Node->GetEmittedEvents(EventsSet);
+		}
 	}
 
 	TArray<FString> EventArray;

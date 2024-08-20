@@ -27,17 +27,20 @@ APatrolPath::APatrolPath()
 	#endif
 }
 
-AActor* APatrolPath::FindClosestPoint(AActor* Patroller) {
+FVector APatrolPath::FindClosestPoint(AActor* Patroller)
+{
 	if (Patroller == nullptr) {
-		return this;
+		return this->GetActorLocation();
 	}
 
-	AActor* Goal = Patroller;
+	FVector Goal = this->GetActorLocation();
 	float Dist = this->LostDistance * this->LostDistance;
 
-	for (AActor* p : this->PatrolPoints) {
-		float DSquared = FVector::DistSquared(p->GetActorLocation(), Patroller->GetActorLocation());
-		if (DSquared < Dist) {
+	for (auto& p : this->PatrolPoints)
+	{
+		float DSquared = FVector::DistSquared(p, Patroller->GetActorLocation());
+		if (DSquared < Dist)
+		{
 			Goal = p;
 			Dist = DSquared;
 		}
@@ -46,18 +49,23 @@ AActor* APatrolPath::FindClosestPoint(AActor* Patroller) {
 }
 
 int APatrolPath::FindClosestIndex(AActor* Patroller) {
-	if (Patroller == nullptr) {
+	if (Patroller == nullptr)
+	{
 		return -1;
-	} else if (this->PatrolPoints.Num() == 0) {
+	} 
+	else if (this->PatrolPoints.Num() == 0)
+	{
 		return -1;
 	}
 
 	int Goal = 0;
 	float Dist = this->LostDistance * this->LostDistance;
 
-	for (int i = 0; i < this->PatrolPoints.Num(); ++i) {
-		AActor* p = this->PatrolPoints[i];
-		float DSquared = FVector::DistSquared(p->GetActorLocation(), Patroller->GetActorLocation());
+	for (int i = 0; i < this->PatrolPoints.Num(); ++i)
+	{
+		auto p = this->Get(i);
+		float DSquared = FVector::DistSquared(p, Patroller->GetActorLocation());
+
 		if (DSquared < Dist) {
 			Goal = i;
 			Dist = DSquared;
@@ -67,50 +75,55 @@ int APatrolPath::FindClosestIndex(AActor* Patroller) {
 	return Goal;
 }
 
-AActor* FPatrolPathState::GetNextTarget(APatrolPath* Path)
+FVector APatrolPath::Get(int i)
+{
+	return this->PatrolPoints[i] + this->GetActorLocation();
+}
+
+FVector FPatrolPathState::GetNextTarget(APatrolPath* Path)
 {
 	if (Path)
 	{
-		auto PointCount = Path->PatrolPoints.Num();
+		auto PointCount = Path->Num();
 		if (PointCount > 0)
 		{
 			this->Index += 1;
-			auto Next = Path->PatrolPoints[this->Index];
+			auto Next = Path->Get(this->Index);
 			this->Index %= PointCount;
 
 			return Next;
 		}
 		else
 		{
-			return nullptr;
+			return Path->GetActorLocation();
 		}
 	}
 	else
 	{
-		return nullptr;
+		return FVector::Zero();
 	}
 }
 
-AActor* FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
+FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
 {
 	if (Path)
 	{
-		auto PointCount = Path->PatrolPoints.Num();
+		auto PointCount = Path->Num();
 		if (PointCount > 0)
 		{
 			this->Index %= PointCount;
-			auto Next = Path->PatrolPoints[this->Index];
+			auto Next = Path->Get(this->Index);
 
 			return Next;
 		}
 		else
 		{
-			return nullptr;
+			return Path->GetActorLocation();
 		}
 	}
 	else
 	{
-		return nullptr;
+		return FVector::Zero();
 	}
 }
 
@@ -119,6 +132,8 @@ void FPatrolPathState::Skip()
 	this->Index += 1;
 }
 
-AActor* UPatrolPathLibrary::GetNextTarget(FPatrolPathState& State, APatrolPath* Path) {
+FVector UPatrolPathLibrary::GetNextTarget(FPatrolPathState& State, APatrolPath* Path)
+{
 	return State.GetNextTarget(Path);
 }
+

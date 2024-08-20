@@ -3,7 +3,10 @@
 void UArrayNode::Initialize_Implementation() {
 	Super::Initialize_Implementation();
 	for (auto& Node : this->Nodes) {
-		Node->Initialize_Internal(this->GetMachine());
+		if (IsValid(Node))
+		{
+			Node->Initialize_Internal(this->GetMachine());
+		}
 	}
 }
 

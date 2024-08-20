@@ -11,7 +11,7 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/UObjectGlobals.h"
 
-#include "K2Node_EmitEventFromDataTable.generated.h"
+#include "K2Node_EmitEventWithDataFromDataTable.generated.h"
 
 class FBlueprintActionDatabaseRegistrar;
 class FString;
@@ -23,7 +23,7 @@ class UScriptStruct;
 struct FLinearColor;
 
 UCLASS()
-class CRABNODES_API UK2Node_EmitEventFromDataTable : public UK2Node
+class CRABNODES_API UK2Node_EmitEventWithDataFromDataTable : public UK2Node
 {
 	GENERATED_UCLASS_BODY()
 
@@ -48,6 +48,9 @@ class CRABNODES_API UK2Node_EmitEventFromDataTable : public UK2Node
 	virtual void NotifyPinConnectionListChanged(UEdGraphPin* Pin) override;
 	//~ End UK2Node Interface
 
+	/** Get the Data Pin. */
+	UEdGraphPin* GetDataPin() const;
+	/** Get the State Machine Pin. */
 	UEdGraphPin* GetStateMachinePin() const;
 	/** Get the then output pin */
 	UEdGraphPin* GetThenPin() const;

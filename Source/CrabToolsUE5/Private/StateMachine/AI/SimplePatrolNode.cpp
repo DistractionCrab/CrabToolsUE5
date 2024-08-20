@@ -47,6 +47,11 @@ void UAISimplePatrolNode::Enter_Implementation()
 void UAISimplePatrolNode::Exit_Implementation()
 {
 	this->UnbindCallback();
+
+	if (auto Ctrl = this->GetAIController())
+	{
+		Ctrl->StopMovement();
+	}
 }
 
 void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -77,24 +82,18 @@ void UAISimplePatrolNode::MoveToNext()
 
 		if (auto Ctrl = this->GetAIController())
 		{
-			if (auto Goal = this->PatrolState.GetCurrentTarget(PatrolPath))
+			FVector Goal = this->PatrolState.GetCurrentTarget(PatrolPath);
+			this->RecurseGuard += 1;
+
+			if (this->RecurseGuard > PatrolPath->Num())
 			{
-				this->RecurseGuard += 1;
-
-				if (this->RecurseGuard > PatrolPath->Num())
-				{
-					// If we've recursed too many times, then remove the call back.
-					this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
-				}
-
-				Ctrl->MoveToActor(Goal);
-
-				this->RecurseGuard = 0;
+				// If we've recursed too many times, then remove the call back.
+				this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
 			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Found null actor while patrolling. Cannot proceed."));
-			}
+
+			Ctrl->MoveToLocation(Goal);
+
+			this->RecurseGuard = 0;
 		}
 	}
 }

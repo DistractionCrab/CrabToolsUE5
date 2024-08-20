@@ -1,5 +1,6 @@
 #include "Kismet/StateMachineGraphPanelPinFactory.h"
 #include "Kismet/K2Node_EmitEventFromDataTable.h"
+#include "Kismet/K2Node_EmitEventWithDataFromDataTable.h"
 #include "K2Node_CallFunction.h"
 #include "SGraphPinDataTableRowName.h"
 #include "SGraphPinNameList.h"
@@ -28,6 +29,11 @@ TSharedPtr<class SGraphPin> FStateMachineGraphPanelPinFactory::CreatePin(class U
 		else if (Outer->IsA(UK2Node_EmitEventFromDataTable::StaticClass()))
 		{
 			const UK2Node_EmitEventFromDataTable* GetDataTableRowNode = CastChecked<UK2Node_EmitEventFromDataTable>(Outer);
+			DataTablePin = GetDataTableRowNode->GetDataTablePin();
+		}
+		else if (Outer->IsA(UK2Node_EmitEventWithDataFromDataTable::StaticClass()))
+		{
+			const UK2Node_EmitEventWithDataFromDataTable* GetDataTableRowNode = CastChecked<UK2Node_EmitEventWithDataFromDataTable>(Outer);
 			DataTablePin = GetDataTableRowNode->GetDataTablePin();
 		}
 
