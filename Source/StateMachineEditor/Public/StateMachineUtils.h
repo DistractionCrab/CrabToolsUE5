@@ -21,5 +21,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="StateMachine|Utility")
 	static void AddEventsToEventSet(UStateMachineBlueprint* BP, UDataTable* EventSet, bool bClearEntries=false);
 
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine|Utility")
+	static void AddStateClassesToSet(UStateMachineBlueprint* BP, UDataTable* EventSet, bool bClearEntries = false);
 };
 

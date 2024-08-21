@@ -190,6 +190,7 @@ void FStateMachineBlueprintCompilerContext::CleanAndSanitizeClass(UBlueprintGene
 	{
 		BPGClass->SubStateMachineArchetypes.Empty();
 		BPGClass->StateMachineArchetype = nullptr;
+		BPGClass->EventSet.Empty();
 	}
 }
 
@@ -268,6 +269,8 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 					SubGraph->GetFName(), 
 					SubGraph->GenerateStateMachine(*this));
 			}
+
+			BPGClass->EventSet.Append(SMBP->GetEventSet());
 		}
 	}
 
@@ -313,15 +316,6 @@ void FStateMachineBlueprintCompilerContext::OnNewClassSet(UBlueprintGeneratedCla
 {
 	NewStateMachineBlueprintClass = CastChecked<UStateMachineBlueprintGeneratedClass>(ClassToUse);
 }
-
-/*
-void FStateMachineBlueprintCompilerContext::AddExtension(UWidgetBlueprintGeneratedClass* Class, UWidgetBlueprintGeneratedClassExtension* Extension)
-{
-	check(Class);
-	check(Extension);
-	Class->Extensions.Add(Extension);
-}
-*/
 
 bool FStateMachineBlueprintCompilerContext::ValidateGeneratedClass(UBlueprintGeneratedClass* Class)
 {

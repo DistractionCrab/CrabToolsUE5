@@ -457,6 +457,21 @@ void SplitConditionPath(FName ConditionName, FString& OutParent, FString& Condit
 	ConditionName.ToString().Split("/", &OutParent, &ConditionString);
 }
 
+void UStateMachine::AddStateWithNode(FName StateName, UStateNode* Node)
+{
+	FStateData Data;
+	Data.Node = Cast<UStateNode>(DuplicateObject(Node, this));
+	this->Graph.Add(StateName, Data);
+}
+
+void UStateMachine::AddStateClass(FName StateName, FName StateClass)
+{
+	if (auto State = this->Graph.Find(StateName))
+	{
+		State->StateClasses.Add(StateClass);
+	}
+}
+
 FStateData* UStateMachine::GetCurrentState()
 {
 	auto FoundData = this->Graph.Find(this->CurrentStateName);

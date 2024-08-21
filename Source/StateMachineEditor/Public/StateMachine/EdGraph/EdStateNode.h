@@ -31,6 +31,10 @@ class UEdStateNode : public UEdBaseStateNode, public IStateLike
 	UPROPERTY(VisibleAnywhere, Category="StateMachineGraph|Events")
 	TSet<FName> NodeEmittedEvents;
 
+	UPROPERTY(EditDefaultsOnly, Category="StateMachineGraph",
+		meta=(GetOptions="GetStateClassesOptions"))
+	TSet<FName> StateClasses;
+
 public:
 	UEdStateNode();
 	virtual ~UEdStateNode();
@@ -44,6 +48,7 @@ public:
 	UStateNode* GetCompiledNode();
 	void Delete();
 	virtual bool HasEvent(FName EName) override;
+	const TSet<FName>& GetStateClasses() { return this->StateClasses; }
 
 
 	/* Begin IStateLike Interface */
@@ -62,4 +67,7 @@ public:
 
 private:
 	void UpdateEmittedEvents();
+
+	UFUNCTION()
+	TArray<FString> GetStateClassesOptions() const;
 };

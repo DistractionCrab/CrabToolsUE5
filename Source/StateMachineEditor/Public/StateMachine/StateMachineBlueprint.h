@@ -4,6 +4,7 @@
 #include "UObject/ObjectMacros.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/IStateMachineLike.h"
+#include "StateMachine/DataStructures.h"
 #include "StateMachineBlueprint.generated.h"
 
 class UDataTable;
@@ -27,23 +28,41 @@ class STATEMACHINEEDITOR_API UStateMachineBlueprint
 	GENERATED_UCLASS_BODY()
 
 private:
+
 	UPROPERTY()
-	class UEdStateGraph* MainGraph;
+	TObjectPtr<class UEdStateGraph> MainGraph;
 	
 	UPROPERTY()
-	TArray<class UEdStateGraph*> SubGraphs;
+	TArray<TObjectPtr<class UEdStateGraph>> SubGraphs;
+
+	UPROPERTY(EditDefaultsOnly, Category="StateMachineGraph",
+		meta=(AllowPrivateAccess=true))
+	TMap<FName, FStateClassSetRow> StateClasses;
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineGraph",
+		meta = (AllowPrivateAccess = true))
+	TSet<TObjectPtr<class UDataTable>> StateClassSets;
 
 public:
 
+	/* Editor Events when this object is changed. */
 	FStateMachineBlueprintEditorEvents Events;
 
 public:
 
+	/* Stores event names mapped to their descriptions from this SMBP. */
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
-	void GetEventEntries(TMap<FName, FString>& Entries);
+	void GetEventEntries(TMap<FName, FEventSetRow>& Entries);
+
+	/* Stores state class names mapped to their descriptions from this SMBP. */
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
+	void GetStateClassEntries(TMap<FName, FStateClassSetRow>& Entries);
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
 	void AddEventsToDataTable(UDataTable* EventSet, bool bClearEvents=false);
+
+	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
+	void AddStateClassesToDataTable(UDataTable* EventSet, bool bClearEvents = false);
 
 	void SelectGraph(UEdStateGraph* Graph);
 	UClass* GetBlueprintClass() const override;
@@ -57,10 +76,14 @@ public:
 	void DeleteGraph(UEdStateGraph* Graph);
 	void ClearDelegates();
 	const TArray<class UEdStateGraph*>& GetSubgraphs() { return this->SubGraphs; }
+	/* Returns the set of events defined by this SMBP. */
+	TSet<FName> GetEventSet() const;
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
 	virtual UClass* GetStateMachineClass() override { return this->GeneratedClass; }
+
+	TArray<FString> GetStateClassesOptions() const;
 
 private:
 

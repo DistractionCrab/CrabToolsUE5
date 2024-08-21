@@ -35,6 +35,9 @@ public:
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UStateMachineArchetype>> SubStateMachineArchetypes;
 
+	UPROPERTY()
+	TSet<FName> EventSet;
+
 public:
 
 	bool GetStateData(FStateData& Output, UStateMachine* Outer, FName Machine, FName StateName);

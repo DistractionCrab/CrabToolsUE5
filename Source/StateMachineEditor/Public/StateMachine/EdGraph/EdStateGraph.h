@@ -113,7 +113,7 @@ public:
 	void RenameGraph(FName NewName);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void GetEventEntries(TMap<FName, FString>& Entries);
+	void GetEventEntries(TMap<FName, FEventSetRow>& Entries);
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UObject/WeakObjectPtrTemplates.h"
+#include "StateMachine/DataStructures.h"
 #include "EdEventObject.generated.h"
 
 class UEdStateGraph;
@@ -26,17 +27,18 @@ class UEdEventObject : public UObject
 	FName EventName;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor", meta=(Multiline=true))
-	FString Description;
+	FEventSetRow Data;
 
 public:
 
 	FEventObjectActionEvents Events;
 
 public:
+
 	UEdStateGraph* GetGraph() const;
 	void SetName(FName Name);
 	FName GetEventName() const { return this->EventName; }
-	FString GetDescription() const { return this->Description; }
+	FEventSetRow GetDescription() const { return this->Data; }
 	FName RenameEvent(FName NewName);
 	void Inspect();
 	void Delete();

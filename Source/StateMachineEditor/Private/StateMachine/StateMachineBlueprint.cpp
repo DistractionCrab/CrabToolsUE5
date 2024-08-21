@@ -2,8 +2,10 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/EdGraph/StateMachineSchema.h"
-#include "StateMachine/EventSet.h"
+#include "StateMachine/DataStructures.h"
+#include "Engine/DataTable.h"
 
 #define LOCTEXT_NAMESPACE "UStateMachineBlueprint"
 #include "EdGraph/EdGraph.h"
@@ -144,6 +146,48 @@ TArray<FString> UStateMachineBlueprint::GetMachineOptions() const
 	return Names;
 }
 
+TSet<FName> UStateMachineBlueprint::GetEventSet() const
+{
+	TSet<FName> EventNames;
+
+	for (auto& Ev : this->MainGraph->GetEventList())
+	{
+		EventNames.Add(Ev->GetEventName());
+	}
+
+	for (auto& SubGraph : this->SubGraphs)
+	{
+		for (auto& Ev : SubGraph->GetEventList())
+		{
+			EventNames.Add(Ev->GetEventName());
+		}
+	}
+
+	return EventNames;
+}
+
+TArray<FString> UStateMachineBlueprint::GetStateClassesOptions() const
+{
+	TArray<FString> Names;
+
+	for (auto SClass : this->StateClasses)
+	{
+		Names.Add(SClass.Key.ToString());
+	}
+
+	for (auto SClassSet : this->StateClassSets)
+	{
+		for (auto SClass : SClassSet->GetRowMap())
+		{
+			Names.Add(SClass.Key.ToString());
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
 TArray<FString> UStateMachineBlueprint::GetSubMachineStateOptions(FName MachineName) const
 {
 	auto Found = this->SubGraphs.FindByPredicate([&](UEdStateGraph* A) { return MachineName == A->GetName(); });
@@ -153,7 +197,7 @@ TArray<FString> UStateMachineBlueprint::GetSubMachineStateOptions(FName MachineN
 		return (*Found)->GetStateOptions();
 	}
 
-	return TArray<FString>();
+	return {};
 }
 
 void UStateMachineBlueprint::DeleteGraph(UEdStateGraph* Graph)
@@ -173,7 +217,7 @@ void UStateMachineBlueprint::ClearDelegates()
 	this->Events.OnObjectInspected.Clear();
 }
 
-void UStateMachineBlueprint::GetEventEntries(TMap<FName, FString>& Entries)
+void UStateMachineBlueprint::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 {
 	this->MainGraph->GetEventEntries(Entries);
 
@@ -195,17 +239,48 @@ void UStateMachineBlueprint::AddEventsToDataTable(UDataTable* EventSet, bool bCl
 			EventSet->EmptyTable();
 		}
 
-		TMap<FName, FString> EntryMap;
+		TMap<FName, FEventSetRow> EntryMap;
 		this->GetEventEntries(EntryMap);
 
 		for (auto Entry : EntryMap)
 		{
-			FEventSetRow Value;
-			Value.Description = FText::FromString(Entry.Value);
-
 			if (!EventSet->FindRow<FEventSetRow>(Entry.Key, "", false))
 			{
-				EventSet->AddRow(Entry.Key, Value);
+				EventSet->AddRow(Entry.Key, Entry.Value);
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Data Table has wrong type of row."));
+	}
+}
+
+void UStateMachineBlueprint::GetStateClassEntries(TMap<FName, FStateClassSetRow>& Entries)
+{
+	Entries.Append(this->StateClasses);
+}
+
+void UStateMachineBlueprint::AddStateClassesToDataTable(UDataTable* EventSet, bool bClearEvents)
+{
+	if (EventSet->RowStruct == FStateClassSetRow::StaticStruct())
+	{
+		const FScopedTransaction Transaction(LOCTEXT("EditStateClassSet", "Add To State Class Set"));
+		EventSet->Modify();
+
+		if (bClearEvents)
+		{
+			EventSet->EmptyTable();
+		}
+
+		TMap<FName, FStateClassSetRow> EntryMap;
+		this->GetStateClassEntries(EntryMap);
+
+		for (auto Entry : EntryMap)
+		{
+			if (!EventSet->FindRow<FStateClassSetRow>(Entry.Key, "", false))
+			{
+				EventSet->AddRow(Entry.Key, Entry.Value);
 			}
 		}
 	}

@@ -8,7 +8,7 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "KismetCompiler.h"
 #include "Engine/DataTable.h"
-#include "StateMachine/EventSet.h"
+#include "StateMachine/DataStructures.h"
 
 #define LOCTEXT_NAMESPACE "EdStateGraph"
 #define DEFAULT_NODE_NAME "NewState"
@@ -288,6 +288,11 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 	{
 		StateMachine->AddStateWithNode(State->GetStateName(), State->GetCompiledNode());
 
+		for (auto StateClass : State->GetStateClasses())
+		{
+			StateMachine->AddStateClass(State->GetStateName(), StateClass);
+		}
+
 		for (auto Transition : this->GetExitTransitions(State))
 		{
 			auto TData = Transition->GetTransitionData(Context);
@@ -506,7 +511,7 @@ UClass* UEdStateGraph::GetStateMachineClass()
 	}
 }
 
-void UEdStateGraph::GetEventEntries(TMap<FName, FString>& Entries)
+void UEdStateGraph::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 {
 	for (auto EventObj : this->EventObjects)
 	{

@@ -181,6 +181,11 @@ TArray<FString> UEdStateNode::GetExitStates() const
 	return Names;
 }
 
+TArray<FString> UEdStateNode::GetStateClassesOptions() const
+{
+	return this->GetStateGraph()->GetBlueprintOwner()->GetStateClassesOptions();
+}
+
 #if WITH_EDITOR
 
 void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

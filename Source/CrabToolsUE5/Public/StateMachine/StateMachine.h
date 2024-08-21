@@ -66,13 +66,17 @@ struct FStateData
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine")
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine")
 	TObjectPtr<UStateNode> Node;
 	// Map from Event Name to StateName
-	UPROPERTY(EditAnywhere, Category = "StateMachine")
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine")
 	TMap<FName, FTransitionData> Transitions;
+
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine")
+	TSet<FName> StateClasses;
 };
 
+/* Structure used to store an event to be used by a node. */
 USTRUCT(BlueprintType)
 struct FEventSlot
 {
@@ -415,23 +419,8 @@ public:
 	void AddTransition(FName State, FName Event, FTransitionData Data);
 	void ClearStates() { this->Graph.Empty(); }
 
-	template <class T> T* AddStateWithNode(FName StateName)
-	{
-		auto Node = NewObject<T>(this);
-		FStateData SData;
-
-		SData.Node = Node;
-		this->Graph.Add(StateName, SData);
-
-		return Node;
-	}
-
-	void AddStateWithNode(FName StateName, UStateNode* Node)
-	{
-		FStateData Data;
-		Data.Node = Cast<UStateNode>(DuplicateObject(Node, this));
-		this->Graph.Add(StateName, Data);
-	}
+	void AddStateWithNode(FName StateName, UStateNode* Node);
+	void AddStateClass(FName StateName, FName StateClass);
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
