@@ -18,6 +18,8 @@ class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
 public:
 	UPROPERTY()
 	TSubclassOf<UStateMachine> ArchetypeClass;
+
+	UStateMachine* CreateStateMachine(UStateMachine* Parent, FName ParentKey);
 };
 
 
@@ -41,4 +43,5 @@ public:
 public:
 
 	bool GetStateData(FStateData& Output, UStateMachine* Outer, FName Machine, FName StateName);
+	FName GetStartState() const;
 };

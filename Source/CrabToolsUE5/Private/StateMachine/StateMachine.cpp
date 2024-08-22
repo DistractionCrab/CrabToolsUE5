@@ -5,6 +5,7 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/ArrayNode.h"
 #include "Utils/UtilsLibrary.h"
+#include "StateMachine/Utils.h"
 #include "StateMachine/IStateMachineLike.h"
 
 #pragma region StateMachine Code
@@ -15,34 +16,40 @@ UStateMachine::UStateMachine(const FObjectInitializer& ObjectInitializer)
 	{
 		for (auto& SubMachine : BPGC->SubStateMachineArchetypes)
 		{
-			if (auto Class = SubMachine.Value->ArchetypeClass.Get())
-			{
-				this->CreateDefaultSubMachine(SubMachine.Key, Class);
-			}			
-		}
-
-		// Default Objects won't have a valid archetype when compiling.
-		if (IsValid(BPGC->StateMachineArchetype))
-		{
-			this->StartState = BPGC->StateMachineArchetype->StartState;
+			this->SubMachines.Add(
+				SubMachine.Key,
+				SubMachine.Value->CreateStateMachine(this, SubMachine.Key));
 		}
 	}
 }
 
-void UStateMachine::CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class)
+UStateMachine* UStateMachine::CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class)
 {
+	check(!this->SubMachines.Contains(Key));
+
 	auto NewMachine = NewObject<UStateMachine>(this, Class.Get(), Key);
 	NewMachine->ParentMachine = this;
 	NewMachine->ParentKey = Key;
 
 	this->SubMachines.Add(Key, NewMachine);
+
+	return NewMachine;
 }
 
 void UStateMachine::Initialize_Internal(AActor* POwner)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%s->%s->Initialize: Found Start Start: %s"),
+		*POwner->GetFName().ToString(),
+		*this->GetFName().ToString(),
+		*this->StartState.ToString());
 	this->Owner = POwner;
 	this->InitFromArchetype();
 	this->Initialize();
+
+	UE_LOG(LogTemp, Warning, TEXT("%s->%s->Initialize: Updated Start Start: %s"),
+		*POwner->GetFName().ToString(),
+		*this->GetFName().ToString(),
+		*this->StartState.ToString());
 
 	for (auto& SubMachine : this->SubMachines)
 	{
@@ -299,36 +306,28 @@ FStateData* UStateMachine::GetStateData(FName Name)
 
 void UStateMachine::InitFromArchetype()
 {	
+	FName StartStateDefault = NAME_None;
+
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
-		
+		StartStateDefault = BPGC->StateMachineArchetype->StartState;
 	}
 
 	if (IsValid(this->ParentMachine))
 	{
 		if (auto ParentBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->GetClass()))
 		{
-			if (auto Machine = ParentBPGC->SubStateMachineArchetypes[this->ParentKey])
+			// If these two states aren't equal, then an override for the StartState happened in the editor.
+			if (StartStateDefault == this->StartState)
 			{
-				this->StartState = Machine->StartState;
+				UE_LOG(LogTemp, Warning, TEXT("InitFromARchetype"));
+				if (auto Machine = ParentBPGC->SubStateMachineArchetypes[this->ParentKey])
+				{
+					this->StartState = Machine->StartState;
+				}
 			}
-		}		
-	}
-}
-
-
-
-FName UStateMachine::GetStateName(UStateNode* Node) {
-	FName Found = NAME_None;
-
-	for (const auto& Nodes : this->Graph) {
-		if (Nodes.Value.Node == Node) {
-			Found = Nodes.Key;
-			break;
 		}
 	}
-
-	return Found;
 }
 
 FName UStateMachine::GetCurrentStateName()
@@ -342,6 +341,11 @@ TArray<FString> UStateMachine::StateOptions()
 
 	for (const auto& Nodes : this->Graph) {
 		Names.Add(Nodes.Key.ToString());
+	}
+
+	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
+	{
+		Names.Append(BPGC->StateMachineArchetype->StateOptions());
 	}
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
@@ -501,20 +505,7 @@ FStateData* UStateMachine::GetCurrentState()
 
 				if (Found)
 				{
-					if (SubFound && SubData.Node && Data.Node)
-					{
-						if (IsValid(Data.Node) && IsValid(SubData.Node))
-						{
-							auto ANode = NewObject<UArrayNode>(this);
-							ANode->AddNode(Data.Node);
-							ANode->AddNode(SubData.Node);
-							Data.Node = ANode;							
-						}
-						else if (SubData.Node)
-						{
-							Data.Node = SubData.Node;
-						}						
-					}
+					Data.Append(SubData, this);
 				}
 				else
 				{
@@ -643,17 +634,6 @@ void UStateNode::SetOwner(UStateMachine* Parent) {
 	this->Owner = Parent;
 }
 
-FName UStateNode::GetStateName() {
-	FName Found = NAME_None;
-
-	if (this->Owner) {
-		return this->Owner->GetStateName(this);
-	}
-	else {
-		return NAME_None;
-	}
-	
-}
 
 void UStateNode::Tick_Internal(float DeltaTime) {
 	if (this->bActive) {
@@ -812,5 +792,54 @@ void FStateMachineEventRef::Activate() {
 void FStateMachineEventRef::ActivateWithData(UObject* Data) {
 	if (this->Owner.IsValid()) {
 		this->Owner->EventWithData(this->EventName, Data);
+	}
+}
+
+
+void FStateData::Append(FStateData& Data, UStateMachine* Outer)
+{
+	this->AppendNode(Data.Node, Outer);
+	this->StateClasses.Append(Data.StateClasses);
+	this->Transitions.Append(Data.Transitions);
+}
+
+void FStateData::AppendCopy(FStateData& Data, UStateMachine* Outer)
+{
+	this->AppendNodeCopy(Data.Node, Outer);
+	this->StateClasses.Append(Data.StateClasses);
+	this->Transitions.Append(Data.Transitions);
+}
+
+void FStateData::AppendNode(UStateNode* ANode, UStateMachine* Outer)
+{
+	if (auto ArrayNode = Cast<UArrayNode>(this->Node))
+	{
+		if (IsValid(ANode))
+		{
+			ArrayNode->AddNode(ANode);
+		}
+	}
+	else
+	{
+		if (IsValid(this->Node) && IsValid(ANode))
+		{
+			auto NewNode = NewObject<UArrayNode>(Outer);
+			NewNode->AddNode(this->Node);
+			NewNode->AddNode(ANode);
+			this->Node = NewNode;
+		}
+		else if (IsValid(ANode))
+		{
+			this->Node = ANode;
+		}
+	}
+}
+
+void FStateData::AppendNodeCopy(UStateNode* ANode, UStateMachine* Outer)
+{
+	if (IsValid(ANode))
+	{
+		auto NewNode = DuplicateObject(ANode, Outer, Naming::GenerateStateNodeName(Outer, ANode->GetFName()));
+		this->AppendNode(NewNode, Outer);
 	}
 }

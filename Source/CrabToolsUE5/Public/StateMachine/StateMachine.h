@@ -74,6 +74,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "StateMachine")
 	TSet<FName> StateClasses;
+
+	void Append(FStateData& Data, UStateMachine* Outer);
+	void AppendCopy(FStateData& Data, UStateMachine* Outer);
+	void AppendNode(UStateNode* Node, UStateMachine* Outer);
+	void AppendNodeCopy(UStateNode* Node, UStateMachine* Outer);
 };
 
 /* Structure used to store an event to be used by a node. */
@@ -197,9 +202,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	virtual void SetOwner(UStateMachine* Parent);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
-	FName GetStateName();
-
 	FORCEINLINE bool Active() { return this->bActive; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
@@ -300,20 +302,16 @@ private:
 		meta=(ShowInnerProperties, ShowOnlyInnerProperties, ReadOnlyKeys))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
-	/* Reference to the archetype for this SM from a Generated Class. */
-	//TObjectPtr<UStateMachine> MachineArchetype;
 	/* Reference to a parent which uses this state machine as a sub machine. */
 	TObjectPtr<UStateMachine> ParentMachine;
 	/* The key/name of this submachine in the parent. */
 	FName ParentKey;
-	/* Reference to the generated class for this machine. */
-	//TSubclassOf<UStateMachine> GeneratedClass;
 	/* Sequence of States that this machine has passed through*/
 	TDoubleLinkedList<FName> StateStack;
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "StateMachine",
 		meta = (GetOptions = "StateOptions"))
 	FName StartState;
 
@@ -346,9 +344,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void StateChangeObject(UObject* Obj);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
-	FName GetStateName(UStateNode* Node);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
 		meta = (ExpandEnumAsExecs = "Branches"))
@@ -430,7 +425,7 @@ public:
 
 protected:
 
-	void CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class);
+	UStateMachine* CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class);
 
 private:
 

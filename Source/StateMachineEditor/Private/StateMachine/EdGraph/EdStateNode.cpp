@@ -2,6 +2,7 @@
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
+#include "StateMachine/Utils.h"
 
 #include "StateMachine/ArrayNode.h"
 
@@ -41,7 +42,6 @@ UStateNode* UEdStateNode::GetCompiledNode()
 {
 	if (this->Nodes.Num() == 0)
 	{
-		//return NewObject<UStateNode>(this);
 		return nullptr;
 	} 
 	else if (this->Nodes.Num() == 1)
@@ -54,7 +54,10 @@ UStateNode* UEdStateNode::GetCompiledNode()
 
 		for (auto Node : this->Nodes)
 		{
-			ArrayNode->AddNode(DuplicateObject(Node, ArrayNode));
+			ArrayNode->AddNode(DuplicateObject(
+				Node, 
+				ArrayNode, 
+				Naming::GenerateStateNodeName(Node, this->GetStateName())));
 		}
 
 		return ArrayNode;

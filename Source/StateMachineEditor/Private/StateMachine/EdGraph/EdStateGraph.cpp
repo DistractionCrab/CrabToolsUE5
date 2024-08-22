@@ -120,13 +120,14 @@ FName UEdStateGraph::GetStartStateName()
 	{
 		if (auto Start = Cast<UEdStartStateNode>(Trans->GetStartNode()))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("GetStartStateName: Did this happen?"));
 			if (auto Dest = Cast<UEdStateNode>(Trans->GetEndNode()))
 			{
 				return Dest->GetStateName();
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Destination from Start node was not a state node."));
+				return NAME_None;
 			}
 		}
 	}
@@ -282,7 +283,7 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 {
 	UObject* Outer = Context.TargetClass;
 
-	auto StateMachine = NewObject<UStateMachineArchetype>(Outer);
+	auto StateMachine = NewObject<UStateMachineArchetype>(Outer, this->GetFName());
 
 	for (auto State : this->GetStates())
 	{
@@ -304,8 +305,11 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 		}
 	}	
 
+	
 	StateMachine->StartState = this->GetStartStateName();
 	StateMachine->ArchetypeClass = this->SourceClass;
+
+	UE_LOG(LogTemp, Warning, TEXT("Found Start State: %s"), *StateMachine->StartState.ToString());
 
 	return StateMachine;
 }

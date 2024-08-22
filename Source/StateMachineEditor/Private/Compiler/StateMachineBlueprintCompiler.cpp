@@ -192,6 +192,11 @@ void FStateMachineBlueprintCompilerContext::CleanAndSanitizeClass(UBlueprintGene
 		BPGClass->StateMachineArchetype = nullptr;
 		BPGClass->EventSet.Empty();
 	}
+
+	if (auto SMObj = Cast<UStateMachine>(InOutOldCDO))
+	{
+		SMObj->StartState = NAME_None;
+	}
 }
 
 void FStateMachineBlueprintCompilerContext::SaveSubObjectsFromCleanAndSanitizeClass(FSubobjectCollection& SubObjectsToSave, UBlueprintGeneratedClass* ClassToClean)
@@ -230,6 +235,12 @@ void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObj
 		if (auto StateMachine = Cast<UStateMachine>(DefaultObject))
 		{
 			StateMachine->ClearStates();
+
+			if (auto SMBP = this->StateMachineBlueprint())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Compiled Start State: %s"), *SMBP->GetMainGraph()->GetStartStateName().ToString());
+				StateMachine->StartState = SMBP->GetMainGraph()->GetStartStateName();
+			}
 		}
 	}
 }

@@ -17,7 +17,7 @@ UStateMachineBlueprint::UStateMachineBlueprint(const FObjectInitializer& ObjectI
 : Super(ObjectInitializer),
 	MainGraph(nullptr)
 {
-	//this->StateMachineGraph();
+
 }
 
 UClass* UStateMachineBlueprint::GetBlueprintClass() const
