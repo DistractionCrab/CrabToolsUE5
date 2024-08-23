@@ -16,6 +16,18 @@ class UStateMachine;
 class UNodeTransition;
 class UStateMachineBlueprintGeneratedClass;
 
+UENUM(BlueprintType)
+enum class ESubMachineAccessibility : uint8
+{
+	/* All access available. */
+	PUBLIC          UMETA(DisplayName = "Public"),
+	/* For State Machines, Children can use them in Hierarchy Nodes. For Nodes, they can be transitioned to and from.  */
+	PROTECTED       UMETA(DisplayName = "Protected"),
+	/* Can only be seen/used in the machine that defines them. */
+	PRIVATE         UMETA(DisplayName = "Private"),
+	/* For State Machines, new nodes can be added. For Nodes, they can have their*/
+	OVERRIDEABLE    UMETA(DisplayName = "Overrideable"),
+};
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
@@ -57,9 +69,7 @@ public:
 	void ActivateWithData(UObject* Data);
 };
 
-
-
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FStateData
 {
 	GENERATED_USTRUCT_BODY()
@@ -243,7 +253,8 @@ protected:
 
 
 /**
- *
+ * State Machine class. This is the base class for any State Machine, and manages all
+ * appropriate state machine behaviour.
  */
 UCLASS(Blueprintable, EditInlineNew, Category = "StateMachine")
 class CRABTOOLSUE5_API UStateMachine : public UObject, public IEventListenerInterface
@@ -284,6 +295,11 @@ private:
 		meta = (AllowPrivateAccess = "true"))
 	TMap<FName, TObjectPtr<UStateNode>> SharedNodes;
 
+	/* State Machines to be substituted into the graph later. */
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true"))
+	TMap<FName, TObjectPtr<UStateNode>> SharedMachines;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true"))
 	FName CurrentStateName;
@@ -298,8 +314,8 @@ private:
 	TObjectPtr<AActor> Owner;
 	TArray<FStateChangeDispatcher> StateChangeEvents;
 
-	UPROPERTY(EditAnywhere, Instanced, Category="StateMachine",
-		meta=(ShowInnerProperties, ShowOnlyInnerProperties, ReadOnlyKeys))
+	/* Map of SubMachines. Do not change the root value of the SM, only its subproperties. */
+	UPROPERTY()
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 	/* Reference to a parent which uses this state machine as a sub machine. */
@@ -310,9 +326,7 @@ private:
 	TDoubleLinkedList<FName> StateStack;
 
 public:
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "StateMachine",
-		meta = (GetOptions = "StateOptions"))
+	UPROPERTY()
 	FName StartState;
 
 public:
@@ -349,7 +363,7 @@ public:
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
-	UStateMachine* GetSubMachine(FName MachineKey) { return this->SubMachines.Find(MachineKey)->Get(); }
+	UStateMachine* GetSubMachine(FName MachineKey);
 
 	/*
 	* Tick function to be called regularly. This is managed by the owner object.
@@ -416,16 +430,15 @@ public:
 
 	void AddStateWithNode(FName StateName, UStateNode* Node);
 	void AddStateClass(FName StateName, FName StateClass);
+	void SetParentData(UStateMachine* Parent, FName NewParentKey);
 
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
-	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
-#endif
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
+		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
+		virtual void PostLinkerChange() override;
+	#endif
 
-protected:
-
-	UStateMachine* CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class);
 
 private:
 
@@ -438,5 +451,7 @@ private:
 	void UpdateState(FName Name);
 	void UpdateStateWithData(FName Name, UObject* Data);
 	void BindCondition(FTransitionData& Data);
+
+	void InitSubMachines();
 
 };

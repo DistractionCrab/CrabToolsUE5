@@ -190,6 +190,7 @@ private:
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 
 	void OnEventRenamed(FName From, FName To);
+	void OnEventDeleted();
 
 	void Select() override;
 

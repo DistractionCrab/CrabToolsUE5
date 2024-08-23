@@ -77,13 +77,9 @@ protected:
 	virtual void OnPostCDOCompiled(const UObject::FPostCDOCompiledContext& Context) override;
 	//~ End FKismetCompilerContext
 
-	//void VerifyEventReplysAreNotEmpty(FKismetFunctionContext& Context);
-	//void VerifyFieldNotifyFunction(FKismetFunctionContext& Context);
-
 public:
-	UStateMachineBlueprint* StateMachineBlueprint() const { return Cast<UStateMachineBlueprint>(Blueprint); }
 
-	//void AddExtension(UStateMachineBlueprintGeneratedClass* Class, UStateMachineBlueprintGeneratedClassExtension* Extension);
+	UStateMachineBlueprint* StateMachineBlueprint() const { return Cast<UStateMachineBlueprint>(Blueprint); }
 
 	struct STATEMACHINEEDITOR_API FCreateVariableContext
 	{
@@ -92,8 +88,6 @@ public:
 		void AddGeneratedFunctionGraph(UEdGraph* Graph) const;
 		UStateMachineBlueprint* GetStateMachineBlueprint() const;
 
-		//UE_DEPRECATED(5.4, "GetSkeletonGeneratedClass renamed to GetGeneratedClass")
-		//UStateMachineBlueprintGeneratedClass* GetSkeletonGeneratedClass() const;
 		UStateMachineBlueprintGeneratedClass* GetGeneratedClass() const;
 		EKismetCompileType::Type GetCompileType() const;
 

@@ -17,7 +17,10 @@ class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
 
 public:
 	UPROPERTY()
-	TSubclassOf<UStateMachine> ArchetypeClass;
+	TObjectPtr<UStateMachine> ArchetypeObject;
+
+	UPROPERTY()
+	ESubMachineAccessibility Accessibility = ESubMachineAccessibility::PRIVATE;
 
 	UStateMachine* CreateStateMachine(UStateMachine* Parent, FName ParentKey);
 };

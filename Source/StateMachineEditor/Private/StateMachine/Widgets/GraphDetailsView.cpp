@@ -634,6 +634,7 @@ FEventItem::FEventItem(TWeakObjectPtr<UEdEventObject> EventObject)
 	: EventReference(EventObject)
 {
 	EventObject->Events.OnEventRenamed.AddRaw(this, &FEventItem::OnEventRenamed);
+	EventObject->Events.OnEventRemoved.AddRaw(this, &FEventItem::OnEventDeleted);
 }
 
 TSharedRef<ITableRow> FEventItem::GetEntryWidget(
@@ -684,6 +685,11 @@ void FEventItem::Select()
 void FEventItem::OnEventRenamed(FName From, FName To)
 {
 	this->InlineText->SetText(FText::FromName(To));
+}
+
+void FEventItem::OnEventDeleted()
+{
+	this->GetParent().Pin()->RemoveChild(this->AsShared());
 }
 
 bool FEventItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)

@@ -12,49 +12,36 @@
 
 UStateMachine::UStateMachine(const FObjectInitializer& ObjectInitializer)
 {
+	
+}
+
+void UStateMachine::InitSubMachines()
+{
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
 		for (auto& SubMachine : BPGC->SubStateMachineArchetypes)
 		{
-			this->SubMachines.Add(
-				SubMachine.Key,
-				SubMachine.Value->CreateStateMachine(this, SubMachine.Key));
+			auto Machine = SubMachine.Value->CreateStateMachine(this, SubMachine.Key);
+
+			this->SubMachines.Add(SubMachine.Key, Machine);
+		}
+	}
+
+	for (auto& SubMachine : this->SubMachines)
+	{
+		if (SubMachine.Value)
+		{
+			SubMachine.Value->Initialize_Internal(this->Owner);
 		}
 	}
 }
 
-UStateMachine* UStateMachine::CreateDefaultSubMachine(FName Key, TSubclassOf<UStateMachine> Class)
-{
-	check(!this->SubMachines.Contains(Key));
-
-	auto NewMachine = NewObject<UStateMachine>(this, Class.Get(), Key);
-	NewMachine->ParentMachine = this;
-	NewMachine->ParentKey = Key;
-
-	this->SubMachines.Add(Key, NewMachine);
-
-	return NewMachine;
-}
-
 void UStateMachine::Initialize_Internal(AActor* POwner)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s->%s->Initialize: Found Start Start: %s"),
-		*POwner->GetFName().ToString(),
-		*this->GetFName().ToString(),
-		*this->StartState.ToString());
-	this->Owner = POwner;
-	this->InitFromArchetype();
+	this->Owner = POwner;	
+	this->InitFromArchetype();	
 	this->Initialize();
-
-	UE_LOG(LogTemp, Warning, TEXT("%s->%s->Initialize: Updated Start Start: %s"),
-		*POwner->GetFName().ToString(),
-		*this->GetFName().ToString(),
-		*this->StartState.ToString());
-
-	for (auto& SubMachine : this->SubMachines)
-	{
-		SubMachine.Value->Initialize_Internal(POwner);
-	}
+	this->InitSubMachines();	
 
 	// Shared nodes always exist, and should be initialize from the beginning.
 	for (auto& Node : this->SharedNodes)
@@ -264,6 +251,20 @@ void UStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	}
 }
 
+UStateMachine* UStateMachine::GetSubMachine(FName MachineKey)
+{
+	if (this->SubMachines.Contains(MachineKey))
+	{
+		return this->SubMachines.Find(MachineKey)->Get();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to find submachine key: \"%s\""), *MachineKey.ToString());
+		return nullptr;
+	}
+	
+}
+
 void UStateMachine::StateChangeObject(UObject* Obj) {
 	if (Obj->GetClass()->ImplementsInterface(UStateChangeListenerInterface::StaticClass())) {
 		auto UFn = Obj->FindFunction("Listen");
@@ -281,6 +282,7 @@ void UStateMachine::StateChangeObject(UObject* Obj) {
 	}
 }
 
+
 #if WITH_EDITOR
 void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange)
 {
@@ -295,6 +297,11 @@ void UStateMachine::PostEditChangeChainProperty(struct FPropertyChangedChainEven
 void UStateMachine::PostEditChangeProperty(struct FPropertyChangedEvent& e)
 {
     Super::PostEditChangeProperty(e);
+}
+
+void UStateMachine::PostLinkerChange()
+{
+	Super::PostLinkerChange();
 }
 #endif
 
@@ -320,7 +327,6 @@ void UStateMachine::InitFromArchetype()
 			// If these two states aren't equal, then an override for the StartState happened in the editor.
 			if (StartStateDefault == this->StartState)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("InitFromARchetype"));
 				if (auto Machine = ParentBPGC->SubStateMachineArchetypes[this->ParentKey])
 				{
 					this->StartState = Machine->StartState;
@@ -445,6 +451,7 @@ FName UStateMachine::GetEventVarName(FName EName) {
 
 UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
 	auto Node = this->GetCurrentState();
+
 	if (Class.Get() && Node) {		
 		if (Node->Node && Node->Node->IsA(Class.Get()->StaticClass())) {
 			Branches = ESearchResult::Found;
@@ -452,6 +459,7 @@ UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESea
 			return Node->Node;
 		}
 	}
+
 	Branches = ESearchResult::NotFound;
 	return nullptr;
 }
@@ -491,7 +499,7 @@ FStateData* UStateMachine::GetCurrentState()
 
 		// First get the data for this state from the Generated class if it exists.
 		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
-		{
+		{			
 			Found = BPGC->GetStateData(Data, this, NAME_None, this->CurrentStateName);
 		}
 		
@@ -583,6 +591,12 @@ FName UStateMachine::GetPreviousState() const
 	{
 		return this->StateStack.GetTail()->GetPrevNode()->GetValue();
 	}
+}
+
+void UStateMachine::SetParentData(UStateMachine* Parent, FName NewParentKey)
+{
+	this->ParentMachine = Parent;
+	this->ParentKey = NewParentKey;
 }
 
 #pragma endregion

@@ -14,9 +14,9 @@
 #define DEFAULT_NODE_NAME "NewState"
 #define DEFAULT_EVENT_NAME "NewEvent"
 
-UEdStateGraph::UEdStateGraph()
+UEdStateGraph::UEdStateGraph(): Accessibility(ESubMachineAccessibility::PRIVATE)
 {
-	this->SourceClass = UStateMachine::StaticClass();
+	this->MachineArchetype = this->CreateDefaultSubobject<UStateMachine>(TEXT("Default Machine"));
 }
 
 void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
@@ -111,7 +111,7 @@ TArray<UEdBaseNode*> UEdStateGraph::GetDestinations(UEdBaseNode* Node) const
 	return Destinations;
 }
 
-FName UEdStateGraph::GetStartStateName()
+FName UEdStateGraph::GetStartStateName() const
 {
 	TArray<UEdTransition*> Transitions;
 	this->GetNodesOfClass<UEdTransition>(Transitions);
@@ -120,7 +120,6 @@ FName UEdStateGraph::GetStartStateName()
 	{
 		if (auto Start = Cast<UEdStartStateNode>(Trans->GetStartNode()))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("GetStartStateName: Did this happen?"));
 			if (auto Dest = Cast<UEdStateNode>(Trans->GetEndNode()))
 			{
 				return Dest->GetStateName();
@@ -283,7 +282,12 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 {
 	UObject* Outer = Context.TargetClass;
 
-	auto StateMachine = NewObject<UStateMachineArchetype>(Outer, this->GetFName());
+	UStateMachineArchetype* StateMachine = NewObject<UStateMachineArchetype>(Outer);
+
+	if (!this->bIsMainGraph)
+	{
+		StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, Outer);
+	}	
 
 	for (auto State : this->GetStates())
 	{
@@ -307,9 +311,6 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 
 	
 	StateMachine->StartState = this->GetStartStateName();
-	StateMachine->ArchetypeClass = this->SourceClass;
-
-	UE_LOG(LogTemp, Warning, TEXT("Found Start State: %s"), *StateMachine->StartState.ToString());
 
 	return StateMachine;
 }
@@ -375,7 +376,7 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 {
 	TArray<FString> Names;
 
-	UClass* ClassBase;
+	UClass* ClassBase = nullptr;
 
 	if (this->bIsMainGraph)
 	{
@@ -383,7 +384,14 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 	}
 	else
 	{
-		ClassBase = this->SourceClass.Get();
+		if (this->MachineArchetype)
+		{
+			ClassBase = this->MachineArchetype->GetClass();
+		}
+		else
+		{
+			return Names;
+		}
 	}
 
 	// Find the example function to check against to find others of the same signature.
@@ -425,7 +433,7 @@ TArray<FString> UEdStateGraph::GetDataConditionOptions() const
 {
 	TArray<FString> Names;
 
-	UClass* ClassBase;
+	UClass* ClassBase = nullptr;
 
 	if (this->bIsMainGraph)
 	{
@@ -433,7 +441,14 @@ TArray<FString> UEdStateGraph::GetDataConditionOptions() const
 	}
 	else
 	{
-		ClassBase = this->SourceClass.Get();
+		if (this->MachineArchetype)
+		{
+			ClassBase = this->MachineArchetype->GetClass();
+		}
+		else
+		{
+			return Names;
+		}
 	}
 
 	// Find the example function to check against to find others of the same signature.
@@ -511,7 +526,14 @@ UClass* UEdStateGraph::GetStateMachineClass()
 	}
 	else
 	{
-		return this->SourceClass.Get();
+		if (this->MachineArchetype)
+		{
+			return this->MachineArchetype->GetClass();
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
 }
 
@@ -522,6 +544,7 @@ void UEdStateGraph::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 		Entries.Add(EventObj->GetEventName(), EventObj->GetDescription());
 	}
 }
+
 
 #if WITH_EDITOR
 void UEdStateGraph::PostEditUndo()

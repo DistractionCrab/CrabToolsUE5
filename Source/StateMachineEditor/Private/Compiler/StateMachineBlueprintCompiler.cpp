@@ -108,11 +108,8 @@ void FStateMachineBlueprintCompiler::PostCompile(UBlueprint* Blueprint, const FK
 {
 	CompileCount--;
 
-	if (CompileCount == 0)// && ReRegister)
+	if (CompileCount == 0)
 	{
-		//delete ReRegister;
-		//ReRegister = nullptr;
-
 		if (GIsEditor && GEditor)
 		{
 			GEditor->RedrawAllViewports(true);
@@ -136,35 +133,17 @@ FStateMachineBlueprintCompilerContext::FStateMachineBlueprintCompilerContext(USt
 	: Super(SourceSketch, InMessageLog, InCompilerOptions)
 	, NewStateMachineBlueprintClass(nullptr)
 {
-	/*
-	UStateMachineBlueprintExtension::ForEachExtension(StateMachineBlueprint(), [this](UStateMachineBlueprintExtension* InExtension)
-		{
-			InExtension->BeginCompilation(*this);
-		});
-	*/
+
 }
 
 FStateMachineBlueprintCompilerContext::~FStateMachineBlueprintCompilerContext()
 {
-	/*
-	UStateMachineBlueprintExtension::ForEachExtension(StateMachineBlueprint(), [](UStateMachineBlueprintExtension* InExtension)
-		{
-			InExtension->EndCompilation();
-		});
-	*/
+
 }
 
 void FStateMachineBlueprintCompilerContext::CreateFunctionList()
 {
-	/*
-	UStateMachineBlueprintExtension::ForEachExtension(StateMachineBlueprint(), [Self = this](UStateMachineBlueprintExtension* InExtension)
-		{
-			InExtension->CreateFunctionList(FCreateFunctionContext(*Self));
-		});
-	*/
-
 	Super::CreateFunctionList();
-
 }
 
 void FStateMachineBlueprintCompilerContext::ValidateStateMachineNames()
@@ -227,7 +206,6 @@ void FStateMachineBlueprintCompilerContext::CreateClassVariablesFromBlueprint()
 
 void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObject* DefaultObject)
 {
-	
 	Super::CopyTermDefaultsToDefaultObject(DefaultObject);
 
 	if (this->bIsFullCompile)
@@ -238,11 +216,10 @@ void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObj
 
 			if (auto SMBP = this->StateMachineBlueprint())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Compiled Start State: %s"), *SMBP->GetMainGraph()->GetStartStateName().ToString());
 				StateMachine->StartState = SMBP->GetMainGraph()->GetStartStateName();
 			}
 		}
-	}
+	}	
 }
 
 
@@ -276,9 +253,9 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 
 			for (auto& SubGraph : SMBP->GetSubgraphs())
 			{
-				BPGClass->SubStateMachineArchetypes.Add(
-					SubGraph->GetFName(), 
-					SubGraph->GenerateStateMachine(*this));
+				auto SubSM = SubGraph->GenerateStateMachine(*this);
+
+				BPGClass->SubStateMachineArchetypes.Add(SubGraph->GetFName(), SubSM);
 			}
 
 			BPGClass->EventSet.Append(SMBP->GetEventSet());

@@ -43,7 +43,7 @@ UEdStateGraph* UEdEventObject::GetGraph() const
 
 void UEdEventObject::Delete()
 {
-
+	this->GetGraph()->RemoveEvent(this);
 }
 
 bool UEdEventObject::Modify(bool bAlwaysMarkDirty)

@@ -47,9 +47,16 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 	GENERATED_BODY()
 
 private:
+
+	/*
 	UPROPERTY(EditAnywhere, Category="StateMachineEditor",
 		meta=(AllowPrivateAccess, EditCondition="!bIsMainGraph", EditConditionHides))
 	TSubclassOf<UStateMachine> SourceClass;
+	*/
+
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineEditor",
+		meta = (AllowPrivateAccess, EditCondition = "!bIsMainGraph", EditConditionHides))
+	TObjectPtr<UStateMachine> MachineArchetype;
 
 	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor",
 		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
@@ -57,6 +64,10 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Events")
 	TSet<TObjectPtr<UDataTable>> EventSets;
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
+		meta = (AllowPrivateAccess))
+	ESubMachineAccessibility Accessibility = ESubMachineAccessibility::PRIVATE;
 
 public:
 
@@ -72,15 +83,28 @@ public:
 	virtual ~UEdStateGraph() {}
 
 	FName GetNewStateName();
-	bool IsStateNameAvilable(FName Name) const;
-	bool IsEventNameAvilable(FName Name) const;
-	FName RenameEvent(UEdEventObject* EventObj, FName To);
-	void RemoveEvent(UEdEventObject* EventObj);
+	bool IsStateNameAvilable(FName Name) const;	
 	void ClearDelegates();
 	void Select();
-	UClass* GetSourceClass() { return this->SourceClass.Get(); }
 
-	UEdEventObject* CreateEvent();
+	/* Creates a new event and returns it. */
+	UEdEventObject* CreateEvent();	
+
+	/* 
+	 * Attempts to rename the given event to a new name. Returns the name of the event; If the
+	 * renaming was successful it'll be To. If the renaming failed, it'll return current name.
+	 */
+	FName RenameEvent(UEdEventObject* EventObj, FName To);
+
+	/* Returns whether or not the event name is available for a new event. */
+	bool IsEventNameAvilable(FName Name) const;
+
+	/* Removes the event from this graph. */
+	void RemoveEvent(UEdEventObject* EventObj);
+
+	/* Gets a map from their name to their data table values. */
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	void GetEventEntries(TMap<FName, FEventSetRow>& Entries);
 
 	const TArray<TObjectPtr<UEdEventObject>>& GetEventList() const 
 	{ 
@@ -91,7 +115,7 @@ public:
 	TArray<class UEdTransition*> GetTransitions();
 	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start);
 	UStateMachineArchetype* GenerateStateMachine(FKismetCompilerContext& Context);
-	FName GetStartStateName();
+	FName GetStartStateName() const;
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
 	UEdStartStateNode* GetStartNode() const;
 	bool HasEvent(FName EName) const;
@@ -111,9 +135,6 @@ public:
 
 	void Delete();
 	void RenameGraph(FName NewName);
-
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void GetEventEntries(TMap<FName, FEventSetRow>& Entries);
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;

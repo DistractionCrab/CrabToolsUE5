@@ -35,6 +35,10 @@ class UEdStateNode : public UEdBaseStateNode, public IStateLike
 		meta=(GetOptions="GetStateClassesOptions"))
 	TSet<FName> StateClasses;
 
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
+		meta = (AllowPrivateAccess))
+	ESubMachineAccessibility Accessibility = ESubMachineAccessibility::PRIVATE;
+
 public:
 	UEdStateNode();
 	virtual ~UEdStateNode();

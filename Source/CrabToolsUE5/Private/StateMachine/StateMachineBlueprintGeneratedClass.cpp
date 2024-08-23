@@ -1,11 +1,12 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/Utils.h"
 
-UStateMachine* UStateMachineArchetype::CreateStateMachine(UStateMachine* Parent, FName ParentKey)
+UStateMachine* UStateMachineArchetype::CreateStateMachine(UStateMachine* Parent, FName NewParentKey)
 {
-	auto NewMachine = NewObject<UStateMachine>(Parent, this->ArchetypeClass.Get(), ParentKey);
-	NewMachine->ParentMachine = this;
-	NewMachine->ParentKey = Key;
+	check(this->ArchetypeObject)
+
+	auto NewMachine = DuplicateObject<UStateMachine>(this->ArchetypeObject, Parent, NewParentKey);
+	NewMachine->SetParentData(Parent, NewParentKey);
 	NewMachine->StartState = this->StartState;
 
 	return NewMachine;
@@ -47,6 +48,7 @@ bool UStateMachineBlueprintGeneratedClass::GetStateData(
 		if (ArchData)
 		{
 			Output.AppendCopy(*ArchData, Outer);
+			FoundData = true;
 		}		
 	}	
 
