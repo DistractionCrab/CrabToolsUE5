@@ -20,7 +20,7 @@ public:
 	TObjectPtr<UStateMachine> ArchetypeObject;
 
 	UPROPERTY()
-	ESubMachineAccessibility Accessibility = ESubMachineAccessibility::PRIVATE;
+	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
 
 	UStateMachine* CreateStateMachine(UStateMachine* Parent, FName ParentKey);
 };
@@ -43,8 +43,15 @@ public:
 	UPROPERTY()
 	TSet<FName> EventSet;
 
+	UPROPERTY();
+	TSet<FName> EmittedEvents;
+
 public:
 
 	bool GetStateData(FStateData& Output, UStateMachine* Outer, FName Machine, FName StateName);
 	FName GetStartState() const;
+
+	TArray<FString> GetStateOptions(EStateMachineAccessibility Access = EStateMachineAccessibility::PUBLIC) const;
+
+	CRABTOOLSUE5_API TArray<FString> GetChildAccessibleSubMachines() const;
 };

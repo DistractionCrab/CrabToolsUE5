@@ -14,7 +14,7 @@
 #define DEFAULT_NODE_NAME "NewState"
 #define DEFAULT_EVENT_NAME "NewEvent"
 
-UEdStateGraph::UEdStateGraph(): Accessibility(ESubMachineAccessibility::PRIVATE)
+UEdStateGraph::UEdStateGraph(): Accessibility(EStateMachineAccessibility::PRIVATE)
 {
 	this->MachineArchetype = this->CreateDefaultSubobject<UStateMachine>(TEXT("Default Machine"));
 }
@@ -291,11 +291,19 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 
 	for (auto State : this->GetStates())
 	{
-		StateMachine->AddStateWithNode(State->GetStateName(), State->GetCompiledNode());
-
-		for (auto StateClass : State->GetStateClasses())
+		// Compile the full state data for the state.
 		{
-			StateMachine->AddStateClass(State->GetStateName(), StateClass);
+			FStateData NewData;
+
+			NewData.Node = State->GetCompiledNode();
+			NewData.Access = State->GetAccessibility();
+
+			for (auto StateClass : State->GetStateClasses())
+			{
+				NewData.StateClasses.Add(StateClass);
+			}
+
+			StateMachine->AddStateData(State->GetStateName(), NewData);
 		}
 
 		for (auto Transition : this->GetExitTransitions(State))
@@ -341,7 +349,7 @@ void UEdStateGraph::Inspect()
 	this->GetBlueprintOwner()->Events.OnObjectInspected.Broadcast(this);
 }
 
-TArray<FString> UEdStateGraph::GetStateOptions() const
+TArray<FString> UEdStateGraph::GetStateOptions(const UObject* Asker) const
 {
 	TArray<FString> Names;
 
@@ -488,14 +496,63 @@ TArray<FString> UEdStateGraph::GetDataConditionOptions() const
 
 TArray<FString> UEdStateGraph::GetMachineOptions() const
 {
-	return this->GetBlueprintOwner()->GetMachineOptions();
+	TArray<FString> Names = this->GetBlueprintOwner()->GetMachineOptions();
+
+	if (!this->bIsMainGraph)
+	{
+		// Need to make sure the references are to the parent machine.
+		TArray<FString> NewNames;
+
+		for (auto& OldName : Names)
+		{
+			NewNames.Add("../" + OldName);
+		}
+
+		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->MachineArchetype->GetClass()))
+		{
+			NewNames.Append(BPGC->GetChildAccessibleSubMachines());
+		}
+
+		Names = NewNames;
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
 }
 
+TArray<FString> UEdStateGraph::GetPropertiesOptions(FSMPropertySearch& SearchParam) const
+{
+	TArray<FString> Names = this->GetBlueprintOwner()->GetPropertiesOptions(SearchParam);
 
+	if (!this->bIsMainGraph)
+	{
+		TArray<FString> NewNames;
+
+		for (auto& Name : Names)
+		{
+			NewNames.Add("../" + Name);
+		}
+
+		for (TFieldIterator<FProperty> FIT(this->MachineArchetype->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+		{
+			FProperty* f = *FIT;
+
+			if (SearchParam.Matches(f))
+			{
+				NewNames.Add(f->GetName());
+			}
+		}
+
+		Names = NewNames;
+	}
+
+	return Names;
+}
 
 void UEdStateGraph::Delete()
 {
-
+	this->GetBlueprintOwner()->DeleteGraph(this);
 }
 
 void UEdStateGraph::RenameGraph(FName NewName)
@@ -518,25 +575,6 @@ bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
 	return this->GetBlueprintOwner()->Modify(bAlwaysMarkDirty);	
 }
 
-UClass* UEdStateGraph::GetStateMachineClass() 
-{ 
-	if (this->bIsMainGraph)
-	{
-		return this->GetBlueprintOwner()->GetStateMachineClass();
-	}
-	else
-	{
-		if (this->MachineArchetype)
-		{
-			return this->MachineArchetype->GetClass();
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
-}
-
 void UEdStateGraph::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 {
 	for (auto EventObj : this->EventObjects)
@@ -544,7 +582,6 @@ void UEdStateGraph::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 		Entries.Add(EventObj->GetEventName(), EventObj->GetDescription());
 	}
 }
-
 
 #if WITH_EDITOR
 void UEdStateGraph::PostEditUndo()

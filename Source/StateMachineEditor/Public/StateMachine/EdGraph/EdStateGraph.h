@@ -67,7 +67,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
 		meta = (AllowPrivateAccess))
-	ESubMachineAccessibility Accessibility = ESubMachineAccessibility::PRIVATE;
+	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
+
+	/* Events which can be emitted to parent machines. */
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true"))
+	TSet<FName> EmittedEvents;
 
 public:
 
@@ -126,6 +131,7 @@ public:
 	UStateMachineBlueprint* GetBlueprintOwner() const;
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
+	UStateMachine* GetMachineArchetype() const { return this->MachineArchetype; }
 
 	#if WITH_EDITOR	
 		virtual void PostEditUndo() override;
@@ -138,9 +144,10 @@ public:
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
-	virtual TArray<FString> GetStateOptions() const override;
+	virtual TArray<FString> GetStateOptions(const UObject* Asker) const override;
 	virtual TArray<FString> GetEventOptions() const override;
 	virtual TArray<FString> GetConditionOptions() const override;
 	virtual TArray<FString> GetDataConditionOptions() const override;
-	virtual UClass* GetStateMachineClass() override;
+	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
+	virtual FProperty* GetStateMachineProperty(FString& Address) const override { return nullptr; }
 };

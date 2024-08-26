@@ -134,16 +134,19 @@ void UStateMachineBlueprint::InspectObject(UObject* Obj)
 
 TArray<FString> UStateMachineBlueprint::GetMachineOptions() const
 {
-	TArray<FString> Names;
+	TSet<FString> Names;
 
 	for (auto Graph : this->SubGraphs)
 	{
-		Names.Add(Graph->GetName());
+		Names.Add(Graph->GetName());	
 	}
 
-	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
-
-	return Names;
+	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GeneratedClass))
+	{
+		Names.Append(BPGC->GetChildAccessibleSubMachines());
+	}
+	
+	return Names.Array();
 }
 
 TSet<FName> UStateMachineBlueprint::GetEventSet() const
@@ -188,16 +191,35 @@ TArray<FString> UStateMachineBlueprint::GetStateClassesOptions() const
 	return Names;
 }
 
-TArray<FString> UStateMachineBlueprint::GetSubMachineStateOptions(FName MachineName) const
+TArray<FString> UStateMachineBlueprint::GetPropertiesOptions(FSMPropertySearch& SearchParam) const
 {
-	auto Found = this->SubGraphs.FindByPredicate([&](UEdStateGraph* A) { return MachineName == A->GetName(); });
+	TArray<FString> Names;
 
-	if (Found)
+	for (TFieldIterator<FProperty> FIT(this->GeneratedClass, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
 	{
-		return (*Found)->GetStateOptions();
+		FProperty* f = *FIT;
+
+		if (SearchParam.Matches(f))
+		{
+			Names.Add(f->GetName());
+		}
 	}
 
-	return {};
+	for (auto SubMachine : this->SubGraphs)
+	{
+		for (TFieldIterator<FProperty> FIT(SubMachine->GetMachineArchetype()->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+		{
+			FProperty* f = *FIT;
+
+			if (SearchParam.Matches(f))
+			{
+				FString Formatted = FString::Printf(TEXT("%s/%s"), *SubMachine->GetName(), *f->GetName());
+				Names.Add(Formatted);
+			}
+		}
+	}
+
+	return Names;
 }
 
 void UStateMachineBlueprint::DeleteGraph(UEdStateGraph* Graph)

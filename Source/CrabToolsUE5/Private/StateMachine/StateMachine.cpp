@@ -251,19 +251,7 @@ void UStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
 	}
 }
 
-UStateMachine* UStateMachine::GetSubMachine(FName MachineKey)
-{
-	if (this->SubMachines.Contains(MachineKey))
-	{
-		return this->SubMachines.Find(MachineKey)->Get();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to find submachine key: \"%s\""), *MachineKey.ToString());
-		return nullptr;
-	}
-	
-}
+
 
 void UStateMachine::StateChangeObject(UObject* Obj) {
 	if (Obj->GetClass()->ImplementsInterface(UStateChangeListenerInterface::StaticClass())) {
@@ -428,7 +416,7 @@ TSet<FName> UStateMachine::GetEvents() const {
 	return List;
 }
 
-bool UStateMachine::HasEventVariable(FName VName) {
+bool UStateMachine::HasEventVariable(FName VName) const {
 	auto Prop = this->GetClass()->FindPropertyByName(VName);
 
 	if (Prop) {
@@ -464,9 +452,12 @@ UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESea
 	return nullptr;
 }
 
-void SplitConditionPath(FName ConditionName, FString& OutParent, FString& ConditionString)
+void UStateMachine::AddStateData(FName StateName, FStateData Data)
 {
-	ConditionName.ToString().Split("/", &OutParent, &ConditionString);
+	if (!this->Graph.Contains(StateName))
+	{
+		this->Graph.Add(StateName, Data);
+	}
 }
 
 void UStateMachine::AddStateWithNode(FName StateName, UStateNode* Node)
@@ -544,11 +535,113 @@ FStateData* UStateMachine::GetCurrentState()
 	return nullptr;
 }
 
+TArray<FString> UStateMachine::GetPropertiesOptions(FSMPropertySearch& SearchParam) const
+{
+	TArray<FString> Names;
+
+	for (TFieldIterator<FProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
+		FProperty* f = *FIT;
+
+		if (SearchParam.Matches(f))
+		{
+			Names.Add(f->GetName());
+		}
+	}
+
+	for (auto& SubMachine : this->SubMachines)
+	{
+		for (TFieldIterator<FProperty> FIT(SubMachine.Value->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+		{
+			FProperty* f = *FIT;
+
+			if (SearchParam.Matches(f))
+			{
+				FString Formatted = FString::Printf(TEXT("%s/%s"), *SubMachine.Key.ToString(), *f->GetName());
+				Names.Add(Formatted);
+			}
+		}
+	}
+
+	return Names;
+}
+
+IStateMachineLike* UStateMachine::GetSubMachine(FString& Address) const
+{
+	FString Base;
+	FString Target;
+
+	if (Address.Split(TEXT("/"), &Base, &Target))
+	{
+		FName BaseName(Base);
+
+		if (auto SubM = this->SubMachines.Find(BaseName))
+		{
+			return SubM->Get();
+		}
+		else if (Base == "..")
+		{
+			if (this->ParentMachine)
+			{
+				return this->ParentMachine->GetSubMachine(Target);
+			}
+			else
+			{
+				return nullptr;
+			}
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+	else
+	{
+		return this->SubMachines.Find(FName(Address))->Get();
+	}
+}
+
+FProperty* UStateMachine::GetStateMachineProperty(FString& Address) const
+{
+	FString Base;
+	FString Target;
+	
+	if (Address.Split(TEXT("/"), &Base, &Target))
+	{
+		FName BaseName(Base);
+
+		if (auto SubM = this->SubMachines.Find(BaseName))
+		{
+			return SubM->Get()->GetStateMachineProperty(Address);
+		}
+		else if (Base == "..")
+		{
+			if (this->ParentMachine)
+			{
+				return this->ParentMachine->GetStateMachineProperty(Target);
+			}
+			else
+			{
+				return nullptr;
+			}
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+	else
+	{
+		return this->GetClass()->FindPropertyByName(FName(Address));
+	}
+}
+
 void UStateMachine::BindCondition(FTransitionData& Data)
 {
 	FString RootPath;
 	FString ConditionPath;
-	SplitConditionPath(Data.Condition, RootPath, ConditionPath);
+	Data.Condition.ToString().Split("/", &RootPath, &ConditionPath);
+	//SplitConditionPath(Data.Condition, RootPath, ConditionPath);
 
 	if (RootPath == "..")
 	{
@@ -567,8 +660,26 @@ void UStateMachine::BindCondition(FTransitionData& Data)
 		Data.ConditionCallback.BindUFunction(this, Data.Condition);
 	}
 
+	RootPath = "";
+	ConditionPath = "";
+	Data.DataCondition.ToString().Split("/", &RootPath, &ConditionPath);
 
-	Data.DataConditionCallback.BindUFunction(this, Data.DataCondition);
+	if (RootPath == "..")
+	{
+		if (this->ParentMachine)
+		{
+			Data.DataConditionCallback.BindUFunction(this->ParentMachine, FName(ConditionPath));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
+				*Data.Condition.ToString());
+		}
+	}
+	else
+	{
+		Data.DataConditionCallback.BindUFunction(this, Data.DataCondition);
+	}
 }
 
 void UStateMachine::PushStateToStack(FName EName)
@@ -597,6 +708,78 @@ void UStateMachine::SetParentData(UStateMachine* Parent, FName NewParentKey)
 {
 	this->ParentMachine = Parent;
 	this->ParentKey = NewParentKey;
+}
+
+UStateMachineBlueprintGeneratedClass* UStateMachine::GetGeneratedClass() const
+{
+	return Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass());
+}
+
+TArray<FString> UStateMachine::GetStateOptions(const UObject* Asker) const
+{
+	TArray<FString> Names;
+
+	for (auto& State : this->Graph)
+	{
+		if (Asker)
+		{
+			if (Asker->IsIn(this) && StateMachineAccessibility::IsChildVisible(State.Value.Access))
+			{
+				Names.Add(State.Key.ToString());
+			}
+			else if (State.Value.Access == EStateMachineAccessibility::PUBLIC)
+			{
+				Names.Add(State.Key.ToString());
+			}
+		}
+		else if (State.Value.Access == EStateMachineAccessibility::PUBLIC)
+		{
+			Names.Add(State.Key.ToString());
+		}
+	}
+
+	if (auto BPGC = this->GetGeneratedClass())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Getting State Options from BPGC"));
+		if (Asker)
+		{
+			if (Asker->IsIn(this))
+			{
+				Names.Append(BPGC->GetStateOptions(EStateMachineAccessibility::PROTECTED));
+			}
+			else
+			{
+				Names.Append(BPGC->GetStateOptions(EStateMachineAccessibility::PUBLIC));
+			}
+		}
+		else
+		{
+			Names.Append(BPGC->GetStateOptions(EStateMachineAccessibility::PUBLIC));
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UStateMachine::GetStatesWithAccessibility(EStateMachineAccessibility Access) const
+{
+	TArray<FString> Names;
+
+	UE_LOG(LogTemp, Warning, TEXT("Attempting to find states with: %s"), *UEnum::GetValueAsString(Access));
+
+	for (auto State : this->Graph)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("- Found State %s with Access: %s"), *State.Key.ToString(), *UEnum::GetValueAsString(State.Value.Access));
+		if (State.Value.Access == Access)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("- - Adding State %s"), *State.Key.ToString());
+			Names.Add(State.Key.ToString());
+		}
+	}
+
+	return Names;
 }
 
 #pragma endregion

@@ -81,7 +81,8 @@ public:
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
-	virtual UClass* GetStateMachineClass() override { return this->GeneratedClass; }
+	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
+	virtual FProperty* GetStateMachineProperty(FString& Address) const override { return nullptr; }
 
 	TArray<FString> GetStateClassesOptions() const;
 
@@ -89,8 +90,4 @@ private:
 
 	void InspectObject(UObject* Obj);
 	FName GetNewGraphName();
-
-	/* Used by Hierarchy nodes to generate states for their slot. */
-	UFUNCTION()
-	TArray<FString> GetSubMachineStateOptions(FName MachineName) const;	
 };

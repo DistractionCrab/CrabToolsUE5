@@ -1,17 +1,16 @@
 #include "StateMachine/HierarchyNode.h"
-
 #include "StateMachine/IStateMachineLike.h"
+#include "Utils/UtilsLibrary.h"
 
 void UHierarchyNode::Initialize_Implementation()
 {
 	UStateNode::Initialize_Implementation();
-	UE_LOG(LogTemp, Warning, TEXT("HierarchyNode::Init: %s"), *this->SlotName.ToString());
 
-	this->SubMachine = this->GetMachine()->GetSubMachine(this->SlotName);
+	FString Address = this->SlotName.ToString();
 	
-	if (this->SubMachine)
+	if (auto Machine = Cast<UStateMachine>(this->GetMachine()->GetSubMachine(Address)))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HierarchyNode::Init: Found SubMachine"));
+		this->SubMachine = Machine;
 		this->SubMachine->Initialize_Internal(this->GetMachine()->GetOwner());
 	}
 }
@@ -23,7 +22,7 @@ void UHierarchyNode::PerformExit()
 
 		if (this->ExitStates.Contains(SubStateName))
 		{
-			this->GetMachine()->Event(this->ExitStates[SubStateName]);
+			this->GetMachine()->Event(this->ExitStates[SubStateName].GetEvent());
 		}
 	}
 }
@@ -63,22 +62,76 @@ void UHierarchyNode::Exit_Implementation() {
 
 }
 
-// Editor helper functions.
-#if WITH_EDITORONLY_DATA
-	TArray<FString> UHierarchyNode::GetMachineOptions() const
+FName FHierarchyEventValue::GetEvent() const
+{
+	if (this->EventType == EHierarchyInputType::INLINED)
 	{
-		const UObject* Outer = this;
-
-		do
-		{
-			if (auto SMLike = Cast<IStateMachineLike>(Outer))
-			{
-				return SMLike->GetMachineOptions();
-			}
-			Outer = Outer->GetOuter();
-
-		} while (Outer);
-
-		return { };
+		return this->InlinedEvent;
 	}
+	else
+	{
+		return this->DefinedEvent;
+	}
+}
+
+
+
+// Editor helper functions.
+#if WITH_EDITOR
+TArray<FString> UHierarchyNode::GetMachineOptions() const
+{
+	const UObject* Outer = this;
+
+	if (auto SMLike = UtilsFunctions::GetOuterAs<IStateMachineLike>(Outer))
+	{
+		return SMLike->GetMachineOptions();
+	}
+
+	return { };
+}
+
+void UHierarchyNode::GetEmittedEvents(TSet<FName>& Events) const
+{
+	Super::GetEmittedEvents(Events);
+
+	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
+	{
+		Events.Append(Outer->GetEmittedEvents());
+	}
+}
+
+void UHierarchyNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (this->StateMachineSource == EHierarchyInputType::DEFINED)
+	{
+		this->SubMachine = nullptr;
+	}
+	else if (this->StateMachineSource == EHierarchyInputType::INLINED)
+	{
+		this->SlotName = NAME_None;
+	}
+}
+
+TArray<FString> UHierarchyNode::GetSubMachineStateOptions() const
+{
+	TArray<FString> Names;
+
+	if (IsValid(this->SubMachine))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Getting SubMachine Options?"));
+		Names.Append(this->SubMachine->GetStateOptions(this));
+	}
+	else
+	{
+		if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
+		{
+			Names.Append(Outer->GetStateOptions(this));
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
 #endif

@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -41,9 +39,6 @@ UCLASS()
 class APatrolPath : public AActor
 {
 	GENERATED_BODY()
-
-	UPROPERTY()
-	TObjectPtr<USceneComponent> Root;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI, meta = (MakeEditWidget, AllowPrivateAccess=true))
 	TArray<FVector> PatrolPoints;

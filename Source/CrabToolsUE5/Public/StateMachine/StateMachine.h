@@ -8,6 +8,8 @@
 #include "Utils/Enums.h"
 #include "UObject/ObjectPtr.h"
 #include "StateMachine/EventListener.h"
+#include "StateMachine/IStateMachineLike.h"
+#include "StateMachine/StateMachineEnum.h"
 #include "Containers/List.h"
 #include "StateMachine.generated.h"
 
@@ -16,25 +18,12 @@ class UStateMachine;
 class UNodeTransition;
 class UStateMachineBlueprintGeneratedClass;
 
-UENUM(BlueprintType)
-enum class ESubMachineAccessibility : uint8
-{
-	/* All access available. */
-	PUBLIC          UMETA(DisplayName = "Public"),
-	/* For State Machines, Children can use them in Hierarchy Nodes. For Nodes, they can be transitioned to and from.  */
-	PROTECTED       UMETA(DisplayName = "Protected"),
-	/* Can only be seen/used in the machine that defines them. */
-	PRIVATE         UMETA(DisplayName = "Private"),
-	/* For State Machines, new nodes can be added. For Nodes, they can have their*/
-	OVERRIDEABLE    UMETA(DisplayName = "Overrideable"),
-};
-
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
 DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FTransitionDataDelegate, UObject*, Data);
 
 USTRUCT(BlueprintType)
-struct  FTransitionData
+struct FTransitionData
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -51,7 +40,7 @@ public:
 };
 
 USTRUCT(BlueprintType, meta = (DisableSplitPin))
-struct  FStateMachineEventRef
+struct FStateMachineEventRef
 {
 	GENERATED_USTRUCT_BODY()
 
@@ -84,6 +73,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "StateMachine")
 	TSet<FName> StateClasses;
+
+	UPROPERTY()
+	EStateMachineAccessibility Access = EStateMachineAccessibility::PRIVATE;
 
 	void Append(FStateData& Data, UStateMachine* Outer);
 	void AppendCopy(FStateData& Data, UStateMachine* Outer);
@@ -257,7 +249,7 @@ protected:
  * appropriate state machine behaviour.
  */
 UCLASS(Blueprintable, EditInlineNew, Category = "StateMachine")
-class CRABTOOLSUE5_API UStateMachine : public UObject, public IEventListenerInterface
+class CRABTOOLSUE5_API UStateMachine : public UObject, public IEventListenerInterface, public IStateMachineLike
 {
 	GENERATED_BODY()
 
@@ -363,8 +355,6 @@ public:
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
-	UStateMachine* GetSubMachine(FName MachineKey);
-
 	/*
 	* Tick function to be called regularly. This is managed by the owner object.
 	*/
@@ -401,6 +391,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	FName GetPreviousState() const;
 
+
 	/* Condition function that always returns true. */
 	UFUNCTION(meta = (IsDefaultCondition))
 	bool TrueCondition();
@@ -428,9 +419,13 @@ public:
 	void AddTransition(FName State, FName Event, FTransitionData Data);
 	void ClearStates() { this->Graph.Empty(); }
 
+	void AddStateData(FName StateName, FStateData Data);
 	void AddStateWithNode(FName StateName, UStateNode* Node);
 	void AddStateClass(FName StateName, FName StateClass);
 	void SetParentData(UStateMachine* Parent, FName NewParentKey);
+	UStateMachineBlueprintGeneratedClass* GetGeneratedClass() const;
+	TArray<FString> GetStatesWithAccessibility(EStateMachineAccessibility Access) const;
+
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -439,10 +434,18 @@ public:
 		virtual void PostLinkerChange() override;
 	#endif
 
+	// IStateMachineLike interface
+	virtual TArray<FString> GetStateOptions(const UObject* Asker) const override;
+	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
+	virtual FProperty* GetStateMachineProperty(FString& Address) const override;
+	virtual IStateMachineLike* GetSubMachine(FString& Address) const override;
+
+	
+
 
 private:
 
-	bool HasEventVariable(FName VName);
+	bool HasEventVariable(FName VName) const;
 	FName GetEventVarName(FName EName);
 	void InitFromArchetype();
 	void PushStateToStack(FName EName);
@@ -454,4 +457,5 @@ private:
 
 	void InitSubMachines();
 
+	
 };

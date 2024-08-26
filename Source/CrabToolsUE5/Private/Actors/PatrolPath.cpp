@@ -2,16 +2,14 @@
 #include "Components/BillboardComponent.h"
 #include "Interfaces/IPluginManager.h"
 
-// Sets default values
 APatrolPath::APatrolPath()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	this->Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	Root->SetMobility(EComponentMobility::Static);
-	SetRootComponent(this->Root);
+	this->SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
+	this->RootComponent->SetMobility(EComponentMobility::Static);
 	
 	this->EditorSprite = CreateEditorOnlyDefaultSubobject<UBillboardComponent>(TEXT("EditorSprite"));
 
@@ -22,7 +20,7 @@ APatrolPath::APatrolPath()
 
 		this->EditorSprite->Sprite = Icon.Get();
 		this->EditorSprite->bHiddenInGame = true;
-		this->EditorSprite->SetupAttachment(this->Root);
+		this->EditorSprite->SetupAttachment(this->RootComponent);
 		this->EditorSprite->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
 	#endif
 }

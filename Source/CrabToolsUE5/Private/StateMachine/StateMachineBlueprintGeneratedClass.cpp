@@ -78,3 +78,36 @@ FName UStateMachineBlueprintGeneratedClass::GetStartState() const
 		return this->StateMachineArchetype->StartState;
 	}
 }
+
+TArray<FString> UStateMachineBlueprintGeneratedClass::GetChildAccessibleSubMachines() const
+{
+	TArray<FString> Names;
+
+	for (auto SubMachine : this->SubStateMachineArchetypes)
+	{
+		bool Check = SubMachine.Value->Accessibility == EStateMachineAccessibility::PUBLIC
+			|| SubMachine.Value->Accessibility == EStateMachineAccessibility::PROTECTED
+			|| SubMachine.Value->Accessibility == EStateMachineAccessibility::OVERRIDEABLE;
+
+		if (Check)
+		{
+			Names.Add(SubMachine.Key.ToString());
+		}
+	}
+
+	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
+	{
+		Names.Append(BPGC->GetChildAccessibleSubMachines());
+	}
+
+	return Names;
+}
+
+TArray<FString> UStateMachineBlueprintGeneratedClass::GetStateOptions(EStateMachineAccessibility Access) const
+{
+	TArray<FString> Names;
+
+	Names.Append(this->StateMachineArchetype->GetStatesWithAccessibility(Access));
+
+	return Names;
+}

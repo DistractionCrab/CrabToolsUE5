@@ -17,17 +17,11 @@ void UAISimplePatrolNode::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	if (auto Prop = this->GetMachine()->GetClass()->FindPropertyByName(this->PatrolPathProperty))
+	FString Address = this->PatrolPathProperty.ToString();
+
+	if (auto Prop = this->GetMachine()->GetStateMachineProperty(Address))
 	{
-		if (Prop->GetClass() == FObjectProperty::StaticClass())
-		{
-			this->PatrolProperty = (FObjectProperty*) Prop;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Invalid property found for patrol path. Found Type: %s"),
-				*Prop->GetClass()->GetName());
-		}
+		this->PatrolProperty = (FObjectProperty*) Prop;
 	}
 
 	this->PatrolState.Reset();
@@ -127,18 +121,12 @@ TArray<FString> UAISimplePatrolNode::GetPatrolOptions() const
 
 	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
 	{
-		if (auto SMClass = Outer->GetStateMachineClass())
-		{
-			for (TFieldIterator<FObjectProperty> FIT(SMClass, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
-			{
-				FObjectProperty* f = *FIT;
+		FSMPropertySearch Params;
 
-				if (f->PropertyClass == APatrolPath::StaticClass())
-				{
-					Props.Add(f->GetName());
-				}
-			}
-		}
+		Params.FClass = FObjectProperty::StaticClass();
+		Params.Class = APatrolPath::StaticClass();
+
+		Props.Append(Outer->GetPropertiesOptions(Params));
 	}
 
 	Props.Sort([&](const FString& A, const FString& B) { return A < B; });
@@ -157,6 +145,25 @@ TArray<FString> UAISimplePatrolNode::GetResetStateOptions() const
 	else
 	{
 		return {};
+	}
+}
+
+void UAISimplePatrolNode::PostLinkerChange()
+{
+	Super::PostLinkerChange();
+
+	if (this->PatrolPathProperty != NAME_None)
+	{
+		// Otherwise, make sure the property exists, and is of the correct type.
+		if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
+		{
+			FString Address = this->PatrolPathProperty.ToString();
+
+			if (Outer->GetStateMachineProperty(Address))
+			{
+				return;
+			}
+		}
 	}
 }
 

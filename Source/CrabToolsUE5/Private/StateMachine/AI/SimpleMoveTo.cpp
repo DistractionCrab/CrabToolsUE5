@@ -15,17 +15,11 @@ void UAISimpleMoveToNode::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-		if (auto Prop = this->GetMachine()->GetClass()->FindPropertyByName(this->DestinationData))
+	FString Address = this->DestinationData.ToString();
+
+	if (auto Prop = this->GetMachine()->GetStateMachineProperty(Address))
 	{
-		if (Prop->GetClass() == FStructProperty::StaticClass())
-		{
-			this->DataPropRef = (FStructProperty*) Prop;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Invalid property found for movement information. Found Type: %s"),
-				*Prop->GetClass()->GetName());
-		}
+		this->DataPropRef = (FStructProperty*) Prop;
 	}
 }
 
@@ -122,18 +116,12 @@ TArray<FString> UAISimpleMoveToNode::GetPropertyOptions() const
 
 	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
 	{
-		if (auto SMClass = Outer->GetStateMachineClass())
-		{
-			for (TFieldIterator<FStructProperty> FIT(SMClass, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
-			{
-				FStructProperty* f = *FIT;
+		FSMPropertySearch Params;
 
-				if (f->Struct == FMoveToData::StaticStruct())
-				{
-					Props.Add(f->GetName());
-				}
-			}
-		}
+		Params.FClass = FStructProperty::StaticClass();
+		Params.Struct = FMoveToData::StaticStruct();
+
+		Props.Append(Outer->GetPropertiesOptions(Params));
 	}
 
 	Props.Sort([&](const FString& A, const FString& B) { return A < B; });
@@ -147,28 +135,22 @@ void UAISimpleMoveToNode::PostLinkerChange()
 {
 	Super::PostLinkerChange();
 
-	// If it was never set, then don't bother checking.
-	if (this->DestinationData == NAME_None) { return; }
-
-	// Otherwise, make sure the property exists, and is of the correct type.
-	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
+	if (this->DestinationData != NAME_None)
 	{
-		if (auto SMClass = Outer->GetStateMachineClass())
+		// Otherwise, make sure the property exists, and is of the correct type.
+		if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
 		{
-			for (TFieldIterator<FStructProperty> FIT(SMClass, EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+			FString Address = this->DestinationData.ToString();
+
+			if (Outer->GetStateMachineProperty(Address))
 			{
-				FStructProperty* f = *FIT;
-
-				if (f->Struct == FMoveToData::StaticStruct() && f->GetFName() == this->DestinationData)
-				{
-					return;
-				}
+				return;
 			}
-		}
 
-		UE_LOG(LogTemp, Warning, TEXT("SimpleMoveTo: Movement Property no longer exists: %s"),
-			*this->DestinationData.ToString());
-		this->DestinationData = NAME_None;		
-	}	
+			UE_LOG(LogTemp, Warning, TEXT("SimpleMoveTo: Movement Property no longer exists: %s"),
+				*this->DestinationData.ToString());
+			this->DestinationData = NAME_None;
+		}
+	}
 }
 #endif

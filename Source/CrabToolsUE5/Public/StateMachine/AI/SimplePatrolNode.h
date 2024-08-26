@@ -46,6 +46,8 @@ public:
 	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
 
 	#if WITH_EDITOR
+		virtual void PostLinkerChange() override;
+
 		UFUNCTION()
 		TArray<FString> GetPatrolOptions() const;
 

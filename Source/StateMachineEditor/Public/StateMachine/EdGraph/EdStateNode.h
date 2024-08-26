@@ -37,7 +37,7 @@ class UEdStateNode : public UEdBaseStateNode, public IStateLike
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
 		meta = (AllowPrivateAccess))
-	ESubMachineAccessibility Accessibility = ESubMachineAccessibility::PRIVATE;
+	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
 
 public:
 	UEdStateNode();
@@ -53,6 +53,7 @@ public:
 	void Delete();
 	virtual bool HasEvent(FName EName) override;
 	const TSet<FName>& GetStateClasses() { return this->StateClasses; }
+	EStateMachineAccessibility GetAccessibility() const { return this->Accessibility; }
 
 
 	/* Begin IStateLike Interface */

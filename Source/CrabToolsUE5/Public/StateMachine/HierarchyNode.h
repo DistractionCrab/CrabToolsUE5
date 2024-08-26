@@ -4,6 +4,37 @@
 #include "StateMachine/StateMachine.h"
 #include "HierarchyNode.generated.h"
 
+UENUM(BlueprintType)
+enum class EHierarchyInputType : uint8
+{
+	/* Use an event or state machine that is defined in the blueprint. */
+	DEFINED       UMETA(DisplayName = "Defined"),
+	/* Use an event or state machine that is inlined in this slot. */
+	INLINED       UMETA(DisplayName = "Inlined"),
+};
+
+USTRUCT(BlueprintType)
+struct FHierarchyEventValue
+{
+	GENERATED_USTRUCT_BODY()
+
+	/* Use custom inlined event? */
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine")
+	EHierarchyInputType EventType = EHierarchyInputType::INLINED;
+
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine|Events",
+		meta=(EditCondition="EventType == EHierarchyInputType::INLINED", EditConditionHides))
+	FName InlinedEvent;
+
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|Events",
+		meta = (EditCondition = "EventType == EHierarchyInputType::DEFINED", EditConditionHides,
+			GetOptions="GetStateEventOptions"))
+	FName DefinedEvent;
+
+	FName GetEvent() const;
+};
+
 /**
  * State Machine node used that is controlled by a StateMachine.
  */
@@ -12,23 +43,24 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 {
 	GENERATED_BODY()
 	
-	//UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
-	//TSubclassOf<UStateMachine> MachineClass;
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
+	EHierarchyInputType StateMachineSource = EHierarchyInputType::DEFINED;
 
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine", 
-		meta = (AllowPrivateAccess = "true", ShowInnerProperties, ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine", 
+		meta = (AllowPrivateAccess = "true", ShowInnerProperties, ShowOnlyInnerProperties,
+			EditCondition = "StateMachineSource == EHierarchyInputType::INLINED", EditConditionHides))
 	TObjectPtr<UStateMachine> SubMachine;
 
 	/* Name of the submachine to be placed in this node. */
 	UPROPERTY(EditAnywhere, Category="StateMachine",
-		meta=(GetOptions="GetMachineOptions"))
+		meta=(GetOptions="GetMachineOptions", EditCondition= "StateMachineSource == EHierarchyInputType::DEFINED", EditConditionHides))
 	FName SlotName;
 
 	/* Map of SubMachine states and events to be emitted to the SM of this node. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", 
 		meta = (AllowPrivateAccess = "true", 
-			GetKeyOptions="GetSubMachineStateOptions"))
-	TMap<FName, FName> ExitStates;
+			GetKeyOptions="GetSubMachineStateOptions", ForceInlineRow, ShowOnlyInnerProperties))
+	TMap<FName, FHierarchyEventValue> ExitStates;
 
 	/* Whether or not the submachine should be reset when this node is entered. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
@@ -40,7 +72,7 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	 * the state, on the next tick or event the exist state will be detected again.
 	 */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
-	FName EnterEventName = "HIERARCHY_REENTER";
+	FName EnterEventName;
 
 public:
 	virtual void Initialize_Implementation() override;
@@ -53,7 +85,20 @@ public:
 	void PerformExit();
 
 	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 		UFUNCTION()
 		TArray<FString> GetMachineOptions() const;
+
+		virtual void GetEmittedEvents(TSet<FName>& Events) const;
+	#endif
+
+private:
+
+	#if WITH_EDITOR
+		UFUNCTION()
+		TArray<FString> GetSubMachineStateOptions() const;
+
+		UFUNCTION()
+		TArray<FString> GetStateEventOptions() const { return {}; }
 	#endif
 };
