@@ -286,7 +286,7 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 
 	if (!this->bIsMainGraph)
 	{
-		StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, Outer);
+		StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, StateMachine);
 	}	
 
 	for (auto State : this->GetStates())

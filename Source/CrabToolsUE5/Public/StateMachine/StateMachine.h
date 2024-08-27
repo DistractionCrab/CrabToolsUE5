@@ -136,8 +136,8 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	bool bActive = false;
 
 	#if WITH_EDITORONLY_DATA
-		UPROPERTY(BlueprintReadOnly, Category="StateMachine|Events",
-			meta=(AllowPrivateAccess=true))
+		UPROPERTY(EditDefaultsOnly, Category="StateMachine|Events",
+			meta=(AllowPrivateAccess=true, HideInDetailPanel))
 		TSet<FName> EmittedEvents;
 		TSet<FName> PreEditEmittedEvents;
 	#endif

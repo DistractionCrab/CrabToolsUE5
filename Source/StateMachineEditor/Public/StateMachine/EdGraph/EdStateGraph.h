@@ -48,12 +48,6 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 
 private:
 
-	/*
-	UPROPERTY(EditAnywhere, Category="StateMachineEditor",
-		meta=(AllowPrivateAccess, EditCondition="!bIsMainGraph", EditConditionHides))
-	TSubclassOf<UStateMachine> SourceClass;
-	*/
-
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineEditor",
 		meta = (AllowPrivateAccess, EditCondition = "!bIsMainGraph", EditConditionHides))
 	TObjectPtr<UStateMachine> MachineArchetype;
@@ -62,7 +56,7 @@ private:
 		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
 	TArray<TObjectPtr<UEdEventObject>> EventObjects;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Events")
+	UPROPERTY(EditDefaultsOnly, Category = "Events", meta=(RowType = "FEventSetRow"))
 	TSet<TObjectPtr<UDataTable>> EventSets;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",

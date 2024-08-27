@@ -23,7 +23,7 @@ struct FStateClassSetRow : public FTableRowBase
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "EventSet",
+	UPROPERTY(EditDefaultsOnly, Category = "StateClassSet",
 		meta = (MultiLine = true))
 	FText Description;
 };

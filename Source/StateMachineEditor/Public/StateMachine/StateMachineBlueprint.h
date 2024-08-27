@@ -40,7 +40,7 @@ private:
 	TMap<FName, FStateClassSetRow> StateClasses;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineGraph",
-		meta = (AllowPrivateAccess = true))
+		meta = (AllowPrivateAccess = true, RowType="FStateClassSetRow"))
 	TSet<TObjectPtr<class UDataTable>> StateClassSets;
 
 public:

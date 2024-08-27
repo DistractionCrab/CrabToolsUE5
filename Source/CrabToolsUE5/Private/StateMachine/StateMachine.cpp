@@ -22,7 +22,6 @@ void UStateMachine::InitSubMachines()
 		for (auto& SubMachine : BPGC->SubStateMachineArchetypes)
 		{
 			auto Machine = SubMachine.Value->CreateStateMachine(this, SubMachine.Key);
-
 			this->SubMachines.Add(SubMachine.Key, Machine);
 		}
 	}
@@ -597,7 +596,15 @@ IStateMachineLike* UStateMachine::GetSubMachine(FString& Address) const
 	}
 	else
 	{
-		return this->SubMachines.Find(FName(Address))->Get();
+		if (auto Found = this->SubMachines.Find(FName(Address)))
+		{
+			return Found->Get();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attempting retrieve null SubMachine: %s"), *Address);
+			return nullptr;
+		}
 	}
 }
 
@@ -641,7 +648,6 @@ void UStateMachine::BindCondition(FTransitionData& Data)
 	FString RootPath;
 	FString ConditionPath;
 	Data.Condition.ToString().Split("/", &RootPath, &ConditionPath);
-	//SplitConditionPath(Data.Condition, RootPath, ConditionPath);
 
 	if (RootPath == "..")
 	{
@@ -740,7 +746,6 @@ TArray<FString> UStateMachine::GetStateOptions(const UObject* Asker) const
 
 	if (auto BPGC = this->GetGeneratedClass())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Getting State Options from BPGC"));
 		if (Asker)
 		{
 			if (Asker->IsIn(this))
@@ -767,14 +772,10 @@ TArray<FString> UStateMachine::GetStatesWithAccessibility(EStateMachineAccessibi
 {
 	TArray<FString> Names;
 
-	UE_LOG(LogTemp, Warning, TEXT("Attempting to find states with: %s"), *UEnum::GetValueAsString(Access));
-
 	for (auto State : this->Graph)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("- Found State %s with Access: %s"), *State.Key.ToString(), *UEnum::GetValueAsString(State.Value.Access));
 		if (State.Value.Access == Access)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("- - Adding State %s"), *State.Key.ToString());
 			Names.Add(State.Key.ToString());
 		}
 	}
@@ -1036,7 +1037,7 @@ void FStateData::AppendNodeCopy(UStateNode* ANode, UStateMachine* Outer)
 {
 	if (IsValid(ANode))
 	{
-		auto NewNode = DuplicateObject(ANode, Outer, Naming::GenerateStateNodeName(Outer, ANode->GetFName()));
+		auto NewNode = DuplicateObject(ANode, Outer);
 		this->AppendNode(NewNode, Outer);
 	}
 }

@@ -7,18 +7,23 @@
 #include "Components/Interaction/Interactable.h"
 #include "InteractionSystem.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionSelected, TScriptInterface<IInteractableInterface>, Selected);
 
+/* 
+ * Interaction System used to control which nearby objects one can interact with. This
+ * is primarily useful for games which has a button to interact with a nearby object, e.g.
+ * Ammo, Levers, or otherwise, and multiple of them can be available at a time.
+ */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class CRABTOOLSUE5_API UInteractionSystem : public UActorComponent
 {
 	GENERATED_BODY()
-
 	
 	TArray<TWeakObjectPtr<UObject>> InteractableObjects;
 	unsigned int SelectedIndex;
 
 public:
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionSelected, TScriptInterface<IInteractableInterface>, Selected);
 
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
 	FInteractionSelected InteractableAddedEvent;
@@ -30,9 +35,9 @@ public:
 	FInteractionSelected InteractableSelectedEvent;
 
 public:	
+
 	// Sets default values for this component's properties
 	UInteractionSystem();
-
 
 public:	
 	
