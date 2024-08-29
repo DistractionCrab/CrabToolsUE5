@@ -82,8 +82,6 @@ FVector APatrolPath::Get(int i)
 
 void APatrolPath::ToggleDisplay()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnSelectionChanged called."));
-
 	if (this->PatrolPoints.Num() != this->Arrows.Num())
 	{
 		this->InitArrows();
@@ -95,7 +93,6 @@ void APatrolPath::ToggleDisplay()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Hiding all arrows"));
 		for (auto& Arrow : this->Arrows) { Arrow->SetVisibility(false); }
 	}
 }
@@ -165,6 +162,27 @@ void APatrolPath::InitArrows()
 	// Need to re-register this component, otherwise it vanishes when changing (Not permanently, but
 	// until the next time the editor is reloaded).
 	this->EditorSprite->RegisterComponent();
+}
+
+void APatrolPath::PreSave(FObjectPreSaveContext SaveContext)
+{
+	for (auto& Arrow : this->Arrows)
+	{
+		Arrow->DestroyComponent();
+	}
+
+	this->Arrows.Empty();
+
+	Super::PreSave(SaveContext);
+}
+
+void APatrolPath::PostSaveRoot(FObjectPostSaveRootContext SaveContext)
+{
+	if (this->IsSelected())
+	{
+		this->ClearArrows();
+		this->InitArrows();
+	}
 }
 
 #endif

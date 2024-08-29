@@ -13,8 +13,9 @@ FCrabToolsUE5EditorModule::FCrabToolsUE5EditorModule() {
 
 void FCrabToolsUE5EditorModule::StartupModule() 
 {
-	UE_LOG(LogTemp, Warning, TEXT("Setting up on selection changed callback."));
-	this->SelectionChangedHandle = USelection::SelectionChangedEvent.AddRaw(this, &FCrabToolsUE5EditorModule::OnSelectionChanged);
+	this->SelectionChangedHandle = USelection::SelectionChangedEvent.AddRaw(
+		this,
+		&FCrabToolsUE5EditorModule::OnSelectionChanged);
 }
 
 void FCrabToolsUE5EditorModule::ShutdownModule() 
@@ -29,8 +30,6 @@ FString FCrabToolsUE5EditorModule::GetReferencerName() const  {
 
 void FCrabToolsUE5EditorModule::OnSelectionChanged(UObject* Obj)
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnSelectionChanged called in module."));
-
 	if (auto PatrolPath = Cast<APatrolPath>(Obj))
 	{
 		PatrolPath->ToggleDisplay();
@@ -44,7 +43,6 @@ void FCrabToolsUE5EditorModule::OnSelectionChanged(UObject* Obj)
 		TSet<APatrolPath*> SelectedPaths;
 		for (auto& SelectedObj : Selected)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("- Selected object found: %s"), *SelectedObj->GetName());
 			if (auto PatrolPath = Cast<APatrolPath>(SelectedObj))
 			{
 				SelectedPaths.Add(PatrolPath);

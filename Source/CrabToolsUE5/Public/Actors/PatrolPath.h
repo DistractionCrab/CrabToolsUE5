@@ -73,6 +73,8 @@ public:
 	FORCEINLINE int Num() const { return this->PatrolPoints.Num(); }
 
 	#if WITH_EDITOR
+		virtual void PreSave(FObjectPreSaveContext SaveContext) override;
+		virtual void PostSaveRoot(FObjectPostSaveRootContext SaveContext) override;
 		virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 		void ToggleDisplay();
 	#endif
