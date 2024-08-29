@@ -1,6 +1,7 @@
 #include "Actors/PatrolPath.h"
 #include "Components/BillboardComponent.h"
-#include "Interfaces/IPluginManager.h"
+#include "Components/ArrowComponent.h"
+#include "UObject/ObjectSaveContext.h"
 
 APatrolPath::APatrolPath()
 {
@@ -10,11 +11,11 @@ APatrolPath::APatrolPath()
 
 	this->SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	this->RootComponent->SetMobility(EComponentMobility::Static);
-	
-	this->EditorSprite = CreateEditorOnlyDefaultSubobject<UBillboardComponent>(TEXT("EditorSprite"));
 
 	// Setup Icon Display in the Editor
 	#if WITH_EDITORONLY_DATA
+		this->EditorSprite = CreateEditorOnlyDefaultSubobject<UBillboardComponent>(TEXT("EditorSprite"));
+
 		ConstructorHelpers::FObjectFinderOptional<UTexture2D> Icon(
 			TEXT("/CrabToolsUE5/Icons/PatrolPathIcon.PatrolPathIcon"));
 
@@ -22,6 +23,7 @@ APatrolPath::APatrolPath()
 		this->EditorSprite->bHiddenInGame = true;
 		this->EditorSprite->SetupAttachment(this->RootComponent);
 		this->EditorSprite->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+		this->EditorSprite->SetSimulatePhysics(false);
 	#endif
 }
 
@@ -77,6 +79,95 @@ FVector APatrolPath::Get(int i)
 {
 	return this->PatrolPoints[i] + this->GetActorLocation();
 }
+
+void APatrolPath::ToggleDisplay()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnSelectionChanged called."));
+
+	if (this->PatrolPoints.Num() != this->Arrows.Num())
+	{
+		this->InitArrows();
+	}
+
+	if (this->IsSelected())
+	{
+		for (auto& Arrow : this->Arrows) { Arrow->SetVisibility(true); }
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hiding all arrows"));
+		for (auto& Arrow : this->Arrows) { Arrow->SetVisibility(false); }
+	}
+}
+
+#if WITH_EDITOR
+void APatrolPath::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(APatrolPath, PatrolPoints))
+	{
+		this->ClearArrows();
+		this->InitArrows();
+	}
+}
+
+void APatrolPath::ClearArrows()
+{
+	// If we already have the arrows needed don't bother clearing them.
+	if (this->PatrolPoints.Num() == this->Arrows.Num()) { return; }
+
+	for (auto& Arrow : this->Arrows)
+	{
+		Arrow->DestroyComponent();
+	}
+
+	this->Arrows.Empty();
+}
+
+void APatrolPath::InitArrows()
+{
+	for (int Index = 0; Index < this->PatrolPoints.Num(); ++Index) 
+	{
+		auto Point = this->Get(Index);
+		auto NextPoint = this->Get((Index + 1) % this->PatrolPoints.Num());
+
+		FVector Dir = NextPoint - Point;
+		UArrowComponent* Arrow = nullptr;
+
+		// If we have the arrows, don't make anymore, just retrieve and update it's information.
+		if (this->Arrows.Num() == this->PatrolPoints.Num())
+		{
+			Arrow = this->Arrows[Index];
+		}
+		else
+		{
+			Arrow = NewObject<UArrowComponent>(this);
+			Arrow->SetupAttachment(this->RootComponent);
+			this->AddInstanceComponent(Arrow);
+
+			Arrow->bHiddenInGame = true;
+			Arrow->SetVisibility(true);
+			Arrow->bTreatAsASprite = true;
+			Arrow->bIsScreenSizeScaled = true;
+			Arrow->SetSimulatePhysics(false);
+			Arrow->SetRelativeScale3D(FVector(5, 5, 5));
+			Arrow->ArrowColor = FColor(4, 99, 32);
+
+			Arrows.Add(Arrow);
+		}
+		
+		Arrow->SetWorldLocation(Point);
+		Arrow->SetWorldRotation((NextPoint - Point).Rotation());		
+		Arrow->ArrowLength = Dir.Length()/5;
+		
+		Arrow->RegisterComponent();		
+	}
+
+	// Need to re-register this component, otherwise it vanishes when changing (Not permanently, but
+	// until the next time the editor is reloaded).
+	this->EditorSprite->RegisterComponent();
+}
+
+#endif
 
 FVector FPatrolPathState::GetNextTarget(APatrolPath* Path)
 {

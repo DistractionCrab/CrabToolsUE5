@@ -36,17 +36,20 @@ public:
 };
 
 UCLASS()
-class APatrolPath : public AActor
+class CRABTOOLSUE5_API APatrolPath : public AActor
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI, meta = (MakeEditWidget, AllowPrivateAccess=true))
 	TArray<FVector> PatrolPoints;
 
-protected:
+	#if WITH_EDITORONLY_DATA
+		UPROPERTY()
+		TObjectPtr<class UBillboardComponent> EditorSprite;
 
-	UPROPERTY()
-	TObjectPtr<class UBillboardComponent> EditorSprite;
+		UPROPERTY()
+		TArray<TObjectPtr<class UArrowComponent>> Arrows;
+	#endif
 
 public:	
 	// Sets default values for this actor's properties
@@ -68,4 +71,16 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "AI")
 	FORCEINLINE int Num() const { return this->PatrolPoints.Num(); }
+
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+		void ToggleDisplay();
+	#endif
+
+private:
+
+	#if WITH_EDITOR
+		void ClearArrows();
+		void InitArrows();
+	#endif
 };

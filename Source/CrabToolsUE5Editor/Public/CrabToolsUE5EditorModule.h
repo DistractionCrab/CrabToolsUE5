@@ -4,6 +4,10 @@
 class FCrabToolsUE5EditorModule: public ICrabToolsUE5EditorModule, public FGCObject
 {
 private:
+
+	TSet<TObjectPtr<class APatrolPath>> SelectedPatrolPaths;
+
+	FDelegateHandle SelectionChangedHandle;
 	TSharedPtr<FExtensibilityManager> MenuExtensibilityManager;
 	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
 
@@ -16,8 +20,10 @@ public:
 
 	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return MenuExtensibilityManager; }
 	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return ToolBarExtensibilityManager; }
-
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override {}
-
 	virtual FString GetReferencerName() const override;
+
+private:
+
+	void OnSelectionChanged(UObject* Obj);
 };
