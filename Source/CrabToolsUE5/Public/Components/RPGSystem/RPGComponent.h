@@ -5,21 +5,29 @@
 #include "Utils/Enums.h"
 #include "RPGComponent.generated.h"
 
-
+/* Base class for all Status objects for the RPG System*/
 UCLASS(Blueprintable, DefaultToInstanced, CollapseCategories, EditInlineNew)
 class UStatus: public UObject
 {
 	GENERATED_BODY()
 
-	URPGComponent* Owner;
+	TWeakObjectPtr<URPGComponent> Owner;
 
 public:
+
+	/* Used for real time handling.*/
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
 	void Tick(float DeltaTime);
 	virtual void Tick_Implementation(float DeltaTime) {}
 
+	/* Used for turn based calls. */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "RPG|Status")
+	void Turn();
+	virtual void Turn_Implementation() {}
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="RPG|Status")
 	void Apply();
+	/* Call this method instead of Apply to attach this to a component.*/
 	void Apply_Internal(URPGComponent* Comp);
 	virtual void Apply_Implementation() {}
 
@@ -29,7 +37,7 @@ public:
 	virtual void Remove_Implementation() {}
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="RPG|Status", meta = (HideSelfPin, DefaultToSelf))
-	URPGComponent* GetOwner() const { return this->Owner; }
+	URPGComponent* GetOwner() const;
 };
 
 
@@ -229,7 +237,9 @@ public:
 
 #pragma endregion
 
-UCLASS(Blueprintable, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+/* Component that handles control, access, and manipualtion of Resources and Attributes in an RPG Setting.*/
+UCLASS(Blueprintable, CollapseCategories, ClassGroup=(Custom),
+	meta=(BlueprintSpawnableComponent))
 class CRABTOOLSUE5_API URPGComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -237,35 +247,18 @@ class CRABTOOLSUE5_API URPGComponent : public UActorComponent
 	UPROPERTY(EditDefaultsOnly, Instanced, Category="RPG|Status")
 	TArray<UStatus*> Statuses;
 
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RPG", meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintReadOnly, Category = "RPG", meta=(AllowPrivateAccess=true))
 	FIntAttribute ZeroInt;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "RPG", meta = (AllowPrivateAccess = true))
+	UPROPERTY(BlueprintReadOnly, Category = "RPG", meta = (AllowPrivateAccess = true))
 	FFloatAttribute ZeroFloat;
 
 public:
+
 	URPGComponent(const FObjectInitializer& ObjectInitializer);
 
-protected:
-	virtual void InitializeComponent() override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	#if WITH_EDITOR
-		virtual void PostEditChangeProperty(struct FPropertyChangedEvent& e) override;
-	#endif
-	virtual void PostLoad() override;
-	void Validate();
-
-public:
-	UFUNCTION()
-	int IntPassThrough(int Value) { return Value; }
-
-	UFUNCTION()
-	TArray<FString> GetIntAttributeNames() const;
-
-	UFUNCTION()
-	TArray<FString> GetFloatAttributeNames() const;	
+	UFUNCTION(BlueprintCallable, Category = "RPG")
+	void Turn();
 
 	UFUNCTION(BlueprintCallable, Category="RPG|Status")
 	void ApplyStatus(UStatus* Status);
@@ -276,5 +269,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "RPG|Status", meta=(ExpandEnumAsExecs="Result", DeterminesOutputType="SClass"))
 	UStatus* GetStatus(TSubclassOf<UStatus> SClass, ESearchResult& Result);
 
-	
+
+protected:
+
+	virtual void InitializeComponent() override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(struct FPropertyChangedEvent& e) override;
+	#endif
+
+	virtual void PostLoad() override;
+	void Validate();
+
+private:
+
+	UFUNCTION()
+	TArray<FString> GetIntAttributeNames() const;
+
+	UFUNCTION()
+	TArray<FString> GetFloatAttributeNames() const;
 };

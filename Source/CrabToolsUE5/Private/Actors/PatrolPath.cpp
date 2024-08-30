@@ -168,10 +168,8 @@ void APatrolPath::PreSave(FObjectPreSaveContext SaveContext)
 {
 	for (auto& Arrow : this->Arrows)
 	{
-		Arrow->DestroyComponent();
+		Arrow->SetVisibility(false);
 	}
-
-	this->Arrows.Empty();
 
 	Super::PreSave(SaveContext);
 }
@@ -180,9 +178,13 @@ void APatrolPath::PostSaveRoot(FObjectPostSaveRootContext SaveContext)
 {
 	if (this->IsSelected())
 	{
-		this->ClearArrows();
-		this->InitArrows();
+		for (auto& Arrow : this->Arrows)
+		{
+			Arrow->SetVisibility(true);
+		}
 	}
+
+	Super::PostSaveRoot(SaveContext);
 }
 
 #endif

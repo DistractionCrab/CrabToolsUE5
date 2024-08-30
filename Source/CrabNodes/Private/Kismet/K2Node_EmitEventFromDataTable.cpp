@@ -61,8 +61,6 @@ void UK2Node_EmitEventFromDataTable::AllocateDefaultPins()
 	// Add execution pins
 	CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Execute);
 	UEdGraphPin* RowFoundPin = CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
-	//RowFoundPin->PinFriendlyName = LOCTEXT("EmitEventFromDataTable Row Found Exec pin", "Row Found");
-	//CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, EmitEventFromDataTableHelper::RowNotFoundPinName);
 
 	// Add State Machine Pin
 	UEdGraphPin* StateMachinePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Object, UEventListenerInterface::StaticClass(), EmitEventFromDataTableHelper::StateMachinePinName);
@@ -314,12 +312,7 @@ void UK2Node_EmitEventFromDataTable::ExpandNode(class FKismetCompilerContext& Co
 
 	// Get some pins to work with
     UEdGraphPin* FunctionThenPin = EmitEventFromDataTableFunction->GetThenPin();
-        
-    //BRANCH NODE
-    //UK2Node_IfThenElse* BranchNode = CompilerContext.SpawnIntermediateNode<UK2Node_IfThenElse>(this, SourceGraph);
-    //BranchNode->AllocateDefaultPins();
-    //FunctionThenPin->MakeLinkTo(BranchNode->GetExecPin());
-        
+                
     // Hook up outputs
     CompilerContext.MovePinLinksToIntermediate(*GetThenPin(), *FunctionThenPin);
 
@@ -336,8 +329,6 @@ FSlateIcon UK2Node_EmitEventFromDataTable::GetIconAndTint(FLinearColor& OutColor
 void UK2Node_EmitEventFromDataTable::PostReconstructNode()
 {
 	Super::PostReconstructNode();
-
-	//RefreshOutputPinType();
 }
 
 void UK2Node_EmitEventFromDataTable::EarlyValidation(class FCompilerResultsLog& MessageLog) const
@@ -396,17 +387,6 @@ void UK2Node_EmitEventFromDataTable::NotifyPinConnectionListChanged(UEdGraphPin*
 {
 	Super::NotifyPinConnectionListChanged(Pin);
 
-	/*if (Pin == GetResultPin())
-	{
-		UEdGraphPin* TablePin = GetDataTablePin();
-		// this connection would only change the output type if the table pin is undefined
-		const bool bIsTypeAuthority = (TablePin->LinkedTo.Num() > 0 || TablePin->DefaultObject == nullptr);
-		if (bIsTypeAuthority)
-		{
-			RefreshOutputPinType();
-		}		
-	}
-	else*/ 
 	if (Pin == GetDataTablePin())
 	{
 		const bool bConnectionAdded = Pin->LinkedTo.Num() > 0;

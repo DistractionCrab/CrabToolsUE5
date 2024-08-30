@@ -14,8 +14,6 @@ void SMachineDetailsView::Construct(
 	ChildSlot
 	[
 		SAssignNew(Inspector, SKismetInspector)
-		//SNew(STextBlock)
-		//.Text(FText::Format(LOCTEXT("GraphView", "MyWidgetName: {0}"), FText::FromName(WidgetName)))
 	];
 
 	this->BindEvents(InEditor);
@@ -23,19 +21,10 @@ void SMachineDetailsView::Construct(
 
 void SMachineDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor)
 {
-	//InEditor->CommandEvents.NewStateEvent.AddRaw(this, &SGraphDetailsView::AddState);
-
 	if (auto BPObj = InEditor->GetStateMachineBlueprintObj())
 	{
 		auto Graph = BPObj->GetMainGraph();
 
-		//FOnGraphChanged::FDelegate f;
-		//f.BindRaw(this, &SMachineDetailsView::OnGraphChanged);
-
-		//Graph->AddOnGraphChangedHandler(f);
-		/*Graph->Events.OnNodeSelected.AddRaw(
-			this, 
-			&SMachineDetailsView::OnSelectionChanged);*/
 		BPObj->Events.OnObjectInspected.AddSP(this, &SMachineDetailsView::InspectObject);
 	}
 }
@@ -58,38 +47,9 @@ void SMachineDetailsView::OnSelectionChanged(TArray<class UEdGraphNode*>& Select
 	}
 	else
 	{
-		//TArray<UObject*> Objs;
-		//this->Inspector->ShowDetailsForObjects(Objs);
 		Inspector->ShowDetailsForSingleObject(nullptr);
 	}
 }
 
-void SMachineDetailsView::OnGraphChanged(const FEdGraphEditAction& Action)
-{
-	if (Action.Action & EEdGraphActionType::GRAPHACTION_SelectNode)
-	{
-		if (Action.Nodes.Num() == 1)
-		{
-			for (auto Node : Action.Nodes)
-			{
-				// Need to static cast due to limitations of this interface.
-				UObject* CastNode = const_cast<UEdGraphNode*>(Node);
-				//Inspector->ShowDetailsForSingleObject(CastNode);
-			}
-		}
-	}
-	else if (Action.Action & EEdGraphActionType::GRAPHACTION_AddNode)
-	{
-		for (auto Node : Action.Nodes)
-		{
-			UObject* CastNode = const_cast<UEdGraphNode*>(Node);
-			//Inspector->ShowDetailsForSingleObject(CastNode);
-		}
-	}
-	else
-	{
-
-	}
-}
 
 #undef LOCTEXT_NAMESPACE

@@ -40,6 +40,10 @@ class CRABTOOLSUE5_API APatrolPath : public AActor
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI,
+		meta = (AllowPrivateAccess = true))
+	float LostDistance = 100000;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI, meta = (MakeEditWidget, AllowPrivateAccess=true))
 	TArray<FVector> PatrolPoints;
 
@@ -52,12 +56,8 @@ class CRABTOOLSUE5_API APatrolPath : public AActor
 	#endif
 
 public:	
-	// Sets default values for this actor's properties
+
 	APatrolPath();	
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI)
-	float LostDistance = 100000;
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	virtual FVector FindClosestPoint(AActor* Patroller);

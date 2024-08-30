@@ -10,36 +10,44 @@ URPGComponent::URPGComponent(const FObjectInitializer& ObjectInitializer): Super
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void URPGComponent::InitializeComponent() {
+void URPGComponent::InitializeComponent()
+{
 	Super::InitializeComponent();
 
-	for (TFieldIterator<FStructProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT) {
+	for (TFieldIterator<FStructProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+	{
 		FStructProperty* f = *FIT;
 
-		if (f->Struct == FIntAttribute::StaticStruct()) {
+		if (f->Struct == FIntAttribute::StaticStruct())
+		{
 			auto Value = f->ContainerPtrToValuePtr<FIntAttribute>(this);
 			Value->SetOwner(this);
 			Value->Initialize(this);
 		}
-		else if (f->Struct == FIntResource::StaticStruct()) {
+		else if (f->Struct == FIntResource::StaticStruct())
+		{
 			auto Value = f->ContainerPtrToValuePtr<FIntResource>(this);
 			Value->SetOwner(this);
 			Value->Initialize(this);
 		}
-		else if (f->Struct == FFloatAttribute::StaticStruct()) {
+		else if (f->Struct == FFloatAttribute::StaticStruct())
+		{
 			auto Value = f->ContainerPtrToValuePtr<FFloatAttribute>(this);
 			Value->SetOwner(this);
 			Value->Initialize(this);
 		}
-		else if (f->Struct == FFloatResource::StaticStruct()) {
+		else if (f->Struct == FFloatResource::StaticStruct())
+		{
 			auto Value = f->ContainerPtrToValuePtr<FFloatResource>(this);
 			Value->SetOwner(this);
 			Value->Initialize(this);
 		}
 	}
 
-	for (auto& Status : this->Statuses) {
-		if (Status) {
+	for (auto& Status : this->Statuses)
+	{
+		if (Status)
+		{
 			Status->Apply_Internal(this);
 		}
 	}
@@ -49,13 +57,22 @@ void URPGComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FAc
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 		
 	for (auto& Status : this->Statuses) {
-		if (Status) {			
+		if (IsValid(Status)) {
 			Status->Tick(DeltaTime);
 		}
 	}
 }
 
-
+void URPGComponent::Turn()
+{
+	for (auto& Status : this->Statuses)
+	{
+		if (IsValid(Status))
+		{
+			Status->Turn();
+		}
+	}
+}
 
 TArray<FString> URPGComponent::GetIntAttributeNames() const {
 	TArray<FString> Names;
@@ -446,6 +463,18 @@ void UStatus::Apply_Internal(URPGComponent* Comp) {
 void UStatus::Remove_Internal() {	
 	this->Remove();
 	this->Owner = nullptr;
+}
+
+URPGComponent* UStatus::GetOwner() const
+{
+	if (this->Owner.IsValid())
+	{
+		return this->Owner.Get();
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 #pragma endregion

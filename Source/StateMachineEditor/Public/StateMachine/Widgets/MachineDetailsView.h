@@ -21,6 +21,7 @@ private:
 	TSharedPtr<class SKismetInspector> Inspector;
 
 public:
+
 	SLATE_BEGIN_ARGS( SMachineDetailsView ){}
 	SLATE_END_ARGS()
 
@@ -36,7 +37,7 @@ public:
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
 private:
-	void OnGraphChanged(const FEdGraphEditAction& Action);
+
 	void OnSelectionChanged(TArray<class UEdGraphNode*>& SelectedNodes);
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
 
