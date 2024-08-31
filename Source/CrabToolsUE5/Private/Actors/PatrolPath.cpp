@@ -1,15 +1,17 @@
 #include "Actors/PatrolPath.h"
 #include "Components/BillboardComponent.h"
 #include "Components/ArrowComponent.h"
+#include "Components/SplineComponent.h"
 #include "UObject/ObjectSaveContext.h"
 
 APatrolPath::APatrolPath()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	PrimaryActorTick.bStartWithTickEnabled = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 
-	this->SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
+	auto SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+	this->SetRootComponent(SceneComponent);
 	this->RootComponent->SetMobility(EComponentMobility::Static);
 
 	// Setup Icon Display in the Editor
@@ -22,9 +24,22 @@ APatrolPath::APatrolPath()
 		this->EditorSprite->Sprite = Icon.Get();
 		this->EditorSprite->bHiddenInGame = true;
 		this->EditorSprite->SetupAttachment(this->RootComponent);
-		this->EditorSprite->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+		this->EditorSprite->SetRelativeScale3D_Direct(FVector(0.4f, 0.4f, 0.4f));
+		this->EditorSprite->SetRelativeLocation_Direct(50*FVector::UpVector);
 		this->EditorSprite->SetSimulatePhysics(false);
+		
+		this->PathSpline = CreateEditorOnlyDefaultSubobject<USplineComponent>(TEXT("PathDisplay"));
+
+		this->PathSpline->SetClosedLoop(true);
+		this->PathSpline->bHiddenInGame = true;
+		this->PathSpline->SetVisibility(false);
+		this->PathSpline->bDrawDebug = false;
+		this->PathSpline->SetupAttachment(EditorSprite);
+		this->PathSpline->SetSimulatePhysics(false);
+
 	#endif
+
+	this->SetCanBeDamaged(false);
 }
 
 FVector APatrolPath::FindClosestPoint(AActor* Patroller)
@@ -82,18 +97,14 @@ FVector APatrolPath::Get(int i)
 
 void APatrolPath::ToggleDisplay()
 {
-	if (this->PatrolPoints.Num() != this->Arrows.Num())
-	{
-		this->InitArrows();
-	}
-
 	if (this->IsSelected())
 	{
-		for (auto& Arrow : this->Arrows) { Arrow->SetVisibility(true); }
-	}
+		this->InitArrows();
+		this->PathSpline->SetVisibility(true);
+	} 
 	else
 	{
-		for (auto& Arrow : this->Arrows) { Arrow->SetVisibility(false); }
+		this->PathSpline->SetVisibility(false);
 	}
 }
 
@@ -102,75 +113,26 @@ void APatrolPath::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyC
 {
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(APatrolPath, PatrolPoints))
 	{
-		this->ClearArrows();
 		this->InitArrows();
 	}
 }
 
-void APatrolPath::ClearArrows()
-{
-	// If we already have the arrows needed don't bother clearing them.
-	if (this->PatrolPoints.Num() == this->Arrows.Num()) { return; }
-
-	for (auto& Arrow : this->Arrows)
-	{
-		Arrow->DestroyComponent();
-	}
-
-	this->Arrows.Empty();
-}
-
 void APatrolPath::InitArrows()
 {
-	for (int Index = 0; Index < this->PatrolPoints.Num(); ++Index) 
+	this->PathSpline->SetSplineLocalPoints(this->PatrolPoints);
+
+	for (int i = 0; i < this->PatrolPoints.Num(); ++i)
 	{
-		auto Point = this->Get(Index);
-		auto NextPoint = this->Get((Index + 1) % this->PatrolPoints.Num());
-
-		FVector Dir = NextPoint - Point;
-		UArrowComponent* Arrow = nullptr;
-
-		// If we have the arrows, don't make anymore, just retrieve and update it's information.
-		if (this->Arrows.Num() == this->PatrolPoints.Num())
-		{
-			Arrow = this->Arrows[Index];
-		}
-		else
-		{
-			Arrow = NewObject<UArrowComponent>(this);
-			Arrow->SetupAttachment(this->RootComponent);
-			this->AddInstanceComponent(Arrow);
-
-			Arrow->bHiddenInGame = true;
-			Arrow->SetVisibility(true);
-			Arrow->bTreatAsASprite = true;
-			Arrow->bIsScreenSizeScaled = true;
-			Arrow->SetSimulatePhysics(false);
-			Arrow->SetRelativeScale3D(FVector(5, 5, 5));
-			Arrow->ArrowColor = FColor(4, 99, 32);
-
-			Arrows.Add(Arrow);
-		}
-		
-		Arrow->SetWorldLocation(Point);
-		Arrow->SetWorldRotation((NextPoint - Point).Rotation());		
-		Arrow->ArrowLength = Dir.Length()/5;
-		
-		Arrow->RegisterComponent();		
+		this->PathSpline->SetTangentAtSplinePoint(i, FVector::Zero(), ESplineCoordinateSpace::World);
 	}
 
-	// Need to re-register this component, otherwise it vanishes when changing (Not permanently, but
-	// until the next time the editor is reloaded).
 	this->EditorSprite->RegisterComponent();
+	this->PathSpline->RegisterComponent();
 }
 
 void APatrolPath::PreSave(FObjectPreSaveContext SaveContext)
 {
-	for (auto& Arrow : this->Arrows)
-	{
-		Arrow->SetVisibility(false);
-	}
-
+	this->PathSpline->SetVisibility(false);
 	Super::PreSave(SaveContext);
 }
 
@@ -178,10 +140,7 @@ void APatrolPath::PostSaveRoot(FObjectPostSaveRootContext SaveContext)
 {
 	if (this->IsSelected())
 	{
-		for (auto& Arrow : this->Arrows)
-		{
-			Arrow->SetVisibility(true);
-		}
+		this->PathSpline->SetVisibility(true);
 	}
 
 	Super::PostSaveRoot(SaveContext);

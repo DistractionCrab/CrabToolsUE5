@@ -52,7 +52,7 @@ class CRABTOOLSUE5_API APatrolPath : public AActor
 		TObjectPtr<class UBillboardComponent> EditorSprite;
 
 		UPROPERTY()
-		TArray<TObjectPtr<class UArrowComponent>> Arrows;
+		TObjectPtr<class USplineComponent> PathSpline;
 	#endif
 
 public:	
@@ -82,7 +82,6 @@ public:
 private:
 
 	#if WITH_EDITOR
-		void ClearArrows();
 		void InitArrows();
 	#endif
 };
