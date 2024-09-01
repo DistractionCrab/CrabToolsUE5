@@ -109,8 +109,9 @@ void APatrolPath::ToggleDisplay()
 }
 
 #if WITH_EDITOR
-void APatrolPath::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void APatrolPath::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(APatrolPath, PatrolPoints))
 	{
 		this->InitArrows();

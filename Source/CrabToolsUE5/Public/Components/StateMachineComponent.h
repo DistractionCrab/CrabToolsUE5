@@ -16,21 +16,15 @@ class CRABTOOLSUE5_API UStateMachineComponent : public UActorComponent, public I
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine")
-	TSubclassOf<UStateMachine> MachineClass;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "StateMachine", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UStateMachine> Machine;
 
-	// Cache of State Change Listeners to add to the machine when it is initiated.
-	TArray<FStateChangeDispatcher> StateChangeListenerCache;
-
 public:	
-	// Sets default values for this component's properties
+	
 	UStateMachineComponent();
 
 protected:
-	// Called when the game starts
+	
 	virtual void BeginPlay() override;
 
 public:	
@@ -41,22 +35,21 @@ public:
 		FActorComponentTickFunction* ThisTickFunction)
 		override;
 
-	//UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	//void Event(FName EName);
 	virtual void Event_Implementation(FName EName) override final { this->Event_Direct(EName); }
 	void Event_Direct(FName EName);
 
-	//UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	//void EventWithData(FName EName, UObject* Data);
 	void EventWithData_Implementation(FName EName, UObject* Data) override final { this->EventWithData_Direct(EName, Data); }
 	void EventWithData_Direct(FName EName, UObject* Data);
-
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void StateChangeListen(const FStateChangeDispatcher& Callback);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName CurrentStateName();
 
+	UStateMachine* GetMachine() const { return this->Machine; }
+
 private:
+
 	bool HasMachine();
+
+	UFUNCTION()
+	void StateChanged(const FStateChangedEventData& Data);
 };

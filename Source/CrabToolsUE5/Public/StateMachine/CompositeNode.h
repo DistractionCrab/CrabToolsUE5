@@ -29,4 +29,7 @@ public:
 	#if WITH_EDITORONLY_DATA
 		virtual void GetEmittedEvents(TSet<FName>& Events) const override;
 	#endif
+
+private:
+	bool ShouldContinueIterating() const;
 };

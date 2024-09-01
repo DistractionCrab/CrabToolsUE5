@@ -5,8 +5,9 @@
 #include "PatrolPath.generated.h"
 
 USTRUCT(BlueprintType)
-struct FPatrolPathState {
-	GENERATED_BODY()
+struct FPatrolPathState
+{
+	GENERATED_USTRUCT_BODY()
 
 private:
 

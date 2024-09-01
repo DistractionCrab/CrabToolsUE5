@@ -102,73 +102,77 @@ void UStateMachine::UpdateState(FName Name)
 {
 	if (Name != this->CurrentStateName)
 	{
+		this->TransitionIdentifier.EnterTransition();
+		this->bIsTransitioning = true;
+
+		FStateChangedEventData StateChangedData;
+
+		StateChangedData.StateMachine = this;
+		StateChangedData.From = this->CurrentStateName;
+		StateChangedData.To = Name;
+
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
-		auto TID = this->TRANSITION.EnterTransition();
-		// Always exit on the node, regardless of further state transitions.
-		// If there were any updates to the state prior to this, then Exit will have
-		// called already, and this function will have returned;
-		if (CurrentState && CurrentState->Node) CurrentState->Node->Exit_Internal();
-
-		if (this->TRANSITION.Valid(TID))
+		if (CurrentState && CurrentState->Node)
 		{
-			this->CurrentStateName = Name;
-			this->PushStateToStack(Name);
-			CurrentState = this->GetCurrentState();
-			if (CurrentState && CurrentState->Node) CurrentState->Node->Enter_Internal();
+			CurrentState->Node->Exit_Internal();
+			StateChangedData.FromNode = CurrentState->Node;
+		}
 
-			
-			if (this->TRANSITION.Valid(TID))
-			{
-				// Alert all listeners, and if one of them changes the state, return.
-				for (auto& Listener : this->StateChangeEvents)
-				{
-					Listener.ExecuteIfBound(OldState, Name);
-					if (!this->TRANSITION.Valid(TID))
-					{
-						break;
-					}
-				}
-			}
-		}	
+		this->CurrentStateName = Name;
+		this->PushStateToStack(Name);
+		CurrentState = this->GetCurrentState();
+		if (CurrentState && CurrentState->Node)
+		{
+			StateChangedData.ToNode = CurrentState->Node;
+			CurrentState->Node->Enter_Internal();
+		}
+
+		this->OnStateChanged.Broadcast(StateChangedData);
 	}
+
+	this->bIsTransitioning = false;
+	this->OnTransitionFinished.Broadcast(this);
 }
 
-void UStateMachine::UpdateStateWithData(FName Name, UObject* Data) {
+void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
+{
 	if (Name != this->CurrentStateName)
 	{
+		this->TransitionIdentifier.EnterTransition();
+		this->bIsTransitioning = true;
+
+		FStateChangedEventData StateChangedData;
+
+		StateChangedData.StateMachine = this;
+		StateChangedData.From = this->CurrentStateName;
+		StateChangedData.To = Name;
+
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
-		auto TID = this->TRANSITION.EnterTransition();
-		// Always exit on the node, regardless of further state transitions.
-		// If there were any updates to the state prior to this, then Exit will have
-		// called already, and this function will have returned;
-		if (CurrentState && CurrentState->Node) CurrentState->Node->ExitWithData_Internal(Data);
-
-		if (this->TRANSITION.Valid(TID))
+		if (CurrentState && CurrentState->Node)
 		{
-			this->CurrentStateName = Name;
-			this->PushStateToStack(Name);
-			CurrentState = this->GetCurrentState();
-
-			if (CurrentState->Node) CurrentState->Node->EnterWithData_Internal(Data);
-
-			if (this->TRANSITION.Valid(TID))
-			{
-				// Alert all listeners, and if one of them changes the state, return.
-				for (auto& Listener : this->StateChangeEvents)
-				{
-					Listener.ExecuteIfBound(OldState, Name);
-					if (!this->TRANSITION.Valid(TID))
-					{
-						break;
-					}
-				}
-			}
+			StateChangedData.ToNode = CurrentState->Node;
+			CurrentState->Node->ExitWithData_Internal(Data);
 		}
+
+		this->CurrentStateName = Name;
+		this->PushStateToStack(Name);
+		CurrentState = this->GetCurrentState();
+
+		if (CurrentState && CurrentState->Node)
+		{
+			StateChangedData.ToNode = CurrentState->Node;
+			CurrentState->Node->EnterWithData_Internal(Data);
+		}
+
+		this->OnStateChanged.Broadcast(StateChangedData);
 	}
+
+	this->bIsTransitioning = false;
+	this->OnTransitionFinished.Broadcast(this);
 }
 
 void UStateMachine::Tick(float DeltaTime) {
@@ -185,9 +189,10 @@ void UStateMachine::Reset() {
 	this->UpdateState(this->StartState);
 }
 
-void UStateMachine::Event_Direct(FName EName) {
-	// Need to validate possible transitions.
-	auto TID = this->TRANSITION.CurrentID();
+void UStateMachine::SendEvent(FName EName)
+{
+	if (this->bIsTransitioning) { return; }
+
 	auto CurrentState = this->GetCurrentState();
 
 	if (CurrentState) {
@@ -204,19 +209,15 @@ void UStateMachine::Event_Direct(FName EName) {
 			}
 		}
 		
-
-		// If the current node's event code didn't change the graph's state, then we check for
-		// static event transitions.
-		if (this->TRANSITION.Valid(TID)) {
-			if (CurrentState->Node) CurrentState->Node->Event_Internal(EName);	
-		}
+		if (CurrentState->Node) CurrentState->Node->Event_Internal(EName);
 	}	
 }
 
 
-void UStateMachine::EventWithData_Direct(FName EName, UObject* Data) {
-	// Need to validate possible transitions.
-	auto TID = this->TRANSITION.CurrentID();
+void UStateMachine::SendEventWithData(FName EName, UObject* Data)
+{
+	if (this->bIsTransitioning) { return; }
+
 	auto CurrentState = this->GetCurrentState();
 
 	if (CurrentState) {
@@ -233,39 +234,7 @@ void UStateMachine::EventWithData_Direct(FName EName, UObject* Data) {
 			}
 		}
 
-
-		// If the current node's event code didn't change the graph's state, then we check for
-		// static event transitions.
-		if (this->TRANSITION.Valid(TID)) {
-			if (CurrentState->Node) CurrentState->Node->EventWithData_Internal(EName, Data);
-		}
-	}
-}
-
-void UStateMachine::StateChangeListen(const FStateChangeDispatcher& Callback) {
-	this->StateChangeEvents.Add(Callback);
-
-	if (this->CurrentStateName != NAME_None) {
-		Callback.ExecuteIfBound(this->CurrentStateName, this->CurrentStateName);
-	}
-}
-
-
-
-void UStateMachine::StateChangeObject(UObject* Obj) {
-	if (Obj->GetClass()->ImplementsInterface(UStateChangeListenerInterface::StaticClass())) {
-		auto UFn = Obj->FindFunction("Listen");
-
-		if (UFn) {
-			FStateChangeDispatcher Callback;
-			Callback.BindUFunction(Obj, "Listen");
-
-			this->StateChangeEvents.Add(Callback);
-
-			if (this->CurrentStateName != NAME_None) {
-				Callback.ExecuteIfBound(this->CurrentStateName, this->CurrentStateName);
-			}
-		}
+		if (CurrentState->Node) CurrentState->Node->EventWithData_Internal(EName, Data);
 	}
 }
 
@@ -474,7 +443,7 @@ void UStateMachine::AddStateClass(FName StateName, FName StateClass)
 	}
 }
 
-FStateData* UStateMachine::GetCurrentState()
+const FStateData* UStateMachine::GetCurrentState()
 {
 	auto FoundData = this->Graph.Find(this->CurrentStateName);
 
@@ -645,46 +614,84 @@ FProperty* UStateMachine::GetStateMachineProperty(FString& Address) const
 
 void UStateMachine::BindCondition(FTransitionData& Data)
 {
+	FString ConditionAddress = Data.Condition.ToString();
+	FString DataConditionAddress = Data.DataCondition.ToString();
+	this->BindConditionAt(ConditionAddress, Data);
+	this->BindDataConditionAt(DataConditionAddress, Data);
+
+
+
+}
+
+void UStateMachine::BindConditionAt(FString& Address, FTransitionData& Data)
+{
 	FString RootPath;
 	FString ConditionPath;
-	Data.Condition.ToString().Split("/", &RootPath, &ConditionPath);
 
-	if (RootPath == "..")
+	if (Address.Split("/", &RootPath, &ConditionPath))
 	{
-		if (this->ParentMachine)
+		if (RootPath == "..")
 		{
-			Data.ConditionCallback.BindUFunction(this->ParentMachine, FName(ConditionPath));
+			if (this->ParentMachine)
+			{
+				this->ParentMachine->BindConditionAt(ConditionPath, Data);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
+					*Data.Condition.ToString());
+			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
-				*Data.Condition.ToString());
+			if (auto SubPtr = this->SubMachines.Find(FName(RootPath)))
+			{
+				if (auto SubMachine = SubPtr->Get())
+				{
+					SubMachine->BindConditionAt(ConditionPath, Data);
+				}
+			}
 		}
 	}
 	else
 	{
-		Data.ConditionCallback.BindUFunction(this, Data.Condition);
+		Data.ConditionCallback.BindUFunction(this, FName(Address));
 	}
+}
 
-	RootPath = "";
-	ConditionPath = "";
-	Data.DataCondition.ToString().Split("/", &RootPath, &ConditionPath);
+void UStateMachine::BindDataConditionAt(FString& Address, FTransitionData& Data)
+{
+	FString RootPath;
+	FString ConditionPath;
 
-	if (RootPath == "..")
+	if (Address.Split("/", &RootPath, &ConditionPath))
 	{
-		if (this->ParentMachine)
+		if (RootPath == "..")
 		{
-			Data.DataConditionCallback.BindUFunction(this->ParentMachine, FName(ConditionPath));
+			if (this->ParentMachine)
+			{
+				this->ParentMachine->BindDataConditionAt(ConditionPath, Data);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
+					*Data.Condition.ToString());
+			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
-				*Data.Condition.ToString());
+			if (auto SubPtr = this->SubMachines.Find(FName(RootPath)))
+			{
+				if (auto SubMachine = SubPtr->Get())
+				{
+					SubMachine->BindDataConditionAt(ConditionPath, Data);
+				}
+			}
 		}
 	}
 	else
 	{
-		Data.DataConditionCallback.BindUFunction(this, Data.DataCondition);
+		Data.DataConditionCallback.BindUFunction(this, FName(Address));
 	}
 }
 
@@ -909,11 +916,11 @@ void UStateNode::RenameEvent_Implementation(FName From, FName To)
 	}
 }
 
-void UStateNode::EmitEvent(FName EName) { this->GetMachine()->Event_Direct(EName); }
-void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->Event_Direct(ESlot.EventName); }
+void UStateNode::EmitEvent(FName EName) { this->GetMachine()->SendEvent(EName); }
+void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->SendEvent(ESlot.EventName); }
 
-void UStateNode::EmitEventWithData(FName EName, UObject* Data) { this->GetMachine()->EventWithData_Direct(EName, Data); }
-void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) { this->GetMachine()->EventWithData_Direct(ESlot.EventName, Data); }
+void UStateNode::EmitEventWithData(FName EName, UObject* Data) { this->GetMachine()->SendEventWithData(EName, Data); }
+void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) { this->GetMachine()->SendEventWithData(ESlot.EventName, Data); }
 
 #if WITH_EDITOR
 void UStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

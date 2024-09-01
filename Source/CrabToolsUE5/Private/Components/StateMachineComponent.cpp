@@ -18,20 +18,13 @@ UStateMachineComponent::UStateMachineComponent()
 void UStateMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (this->MachineClass.Get() != nullptr) {
-		if (this->Machine == nullptr) {
-			this->Machine = NewObject<UStateMachine>(this, this->MachineClass);
-		}		
-
-		for (auto const& l : this->StateChangeListenerCache) {
-			this->Machine->StateChangeListen(l);
-		}
-
-		this->StateChangeListenerCache.Empty();
-	}
 
 	if (this->Machine)
-	{		
+	{
+		FScriptDelegate Callback;
+		Callback.BindUFunction(this, "StateChanged");
+
+		this->Machine->OnStateChanged.Add(Callback);
 		this->Machine->Initialize_Internal(this->GetOwner());
 	}
 }
@@ -50,22 +43,13 @@ void UStateMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 void UStateMachineComponent::Event_Direct(FName EName) {
 	if (this->HasMachine()) {
-		this->Machine->Event_Direct(EName);
+		this->Machine->SendEvent(EName);
 	}
 }
 
 void UStateMachineComponent::EventWithData_Direct(FName EName, UObject* Data) {
 	if (this->HasMachine()) {
-		this->Machine->EventWithData_Direct(EName, Data);
-	}
-}
-
-void UStateMachineComponent::StateChangeListen(const FStateChangeDispatcher& Callback) {
-	if (this->HasMachine()) {
-		this->Machine->StateChangeListen(Callback);
-	}
-	else {
-		this->StateChangeListenerCache.Add(Callback);
+		this->Machine->SendEventWithData(EName, Data);
 	}
 }
 
@@ -75,4 +59,15 @@ FName UStateMachineComponent::CurrentStateName() {
 
 bool UStateMachineComponent::HasMachine() {
 	return this->Machine != nullptr;
+}
+
+void UStateMachineComponent::StateChanged(const FStateChangedEventData& Data)
+{
+	if (IsValid(this->Machine))
+	{
+		if (auto RetData = this->Machine->GetCurrentState())
+		{
+			this->SetComponentTickEnabled(RetData->Node->RequiresTick());
+		}
+	}
 }
