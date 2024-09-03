@@ -36,10 +36,25 @@ void UAISimpleMoveToNode::Exit_Implementation()
 void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
 {
 	this->BindCallback();
+	this->MoveTo(Data);
+}
+
+void UAISimpleMoveToNode::EventWithData_Implementation(FName EName, UObject* Data)
+{
+	this->MoveTo(Data);
+}
+
+void UAISimpleMoveToNode::MoveTo(UObject* Data)
+{
 	if (auto Actor = Cast<AActor>(Data))
 	{
 		if (auto Ctrl = this->GetAIController())
 		{
+			if (Ctrl->IsFollowingAPath())
+			{
+				Ctrl->StopMovement();
+			}
+
 			Ctrl->MoveToActor(Actor);
 		}
 		else

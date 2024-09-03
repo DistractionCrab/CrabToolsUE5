@@ -8,6 +8,8 @@
 #include "StateMachine/Utils.h"
 #include "StateMachine/IStateMachineLike.h"
 
+DEFINE_LOG_CATEGORY(LogStateMachine);
+
 #pragma region StateMachine Code
 
 UStateMachine::UStateMachine(const FObjectInitializer& ObjectInitializer)
@@ -19,10 +21,10 @@ void UStateMachine::InitSubMachines()
 {
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
-		for (auto& SubMachine : BPGC->SubStateMachineArchetypes)
+		for (auto& Key : BPGC->GetSubMachineOptions())
 		{
-			auto Machine = SubMachine.Value->CreateStateMachine(this, SubMachine.Key);
-			this->SubMachines.Add(SubMachine.Key, Machine);
+			auto Machine = BPGC->ConstructSubMachine(this, Key);
+			this->SubMachines.Add(Key, Machine);
 		}
 	}
 
@@ -73,7 +75,8 @@ AActor* UStateMachine::GetOwner() {
 
 void UStateMachine::AddState(FName StateName)
 {
-	this->Graph.Add(StateName, FStateData());
+	auto State = NewObject<UState>(this);
+	this->Graph.Add(StateName, State);
 }
 
 void UStateMachine::AddTransition(FName State, FName Event, FName Destination, FName Condition, FName DataCondition)
@@ -86,7 +89,7 @@ void UStateMachine::AddTransition(FName State, FName Event, FName Destination, F
 			Condition,
 			DataCondition
 		};
-		StateData->Transitions.Add(Event, Data);
+		StateData->Get()->Transitions.Add(Event, Data);
 	}
 }
 
@@ -94,7 +97,7 @@ void UStateMachine::AddTransition(FName State, FName Event, FTransitionData Data
 {
 	if (auto StateData = this->Graph.Find(State))
 	{
-		StateData->Transitions.Add(Event, Data);
+		StateData->Get()->Transitions.Add(Event, Data);
 	}
 }
 
@@ -114,26 +117,38 @@ void UStateMachine::UpdateState(FName Name)
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
-		if (CurrentState && CurrentState->Node)
+		bool ValidState = CurrentState && CurrentState->Node;
+
+		if (ValidState)
 		{
 			CurrentState->Node->Exit_Internal();
-			StateChangedData.FromNode = CurrentState->Node;
+			StateChangedData.FromState = CurrentState;
 		}
+
 
 		this->CurrentStateName = Name;
 		this->PushStateToStack(Name);
 		CurrentState = this->GetCurrentState();
-		if (CurrentState && CurrentState->Node)
+
+		ValidState = CurrentState && CurrentState->Node;
+
+		if (ValidState)
 		{
-			StateChangedData.ToNode = CurrentState->Node;
+			StateChangedData.ToState = CurrentState;
 			CurrentState->Node->Enter_Internal();
 		}
 
 		this->OnStateChanged.Broadcast(StateChangedData);
-	}
 
-	this->bIsTransitioning = false;
-	this->OnTransitionFinished.Broadcast(this);
+		this->bIsTransitioning = false;
+
+		if (ValidState)
+		{
+			CurrentState->Node->PostTransition_Internal();
+		}
+		
+		this->OnTransitionFinished.Broadcast(this);
+	}
 }
 
 void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
@@ -152,9 +167,11 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
+		bool ValidState = CurrentState && CurrentState->Node;
+
 		if (CurrentState && CurrentState->Node)
 		{
-			StateChangedData.ToNode = CurrentState->Node;
+			StateChangedData.FromState = CurrentState;
 			CurrentState->Node->ExitWithData_Internal(Data);
 		}
 
@@ -162,17 +179,24 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		this->PushStateToStack(Name);
 		CurrentState = this->GetCurrentState();
 
-		if (CurrentState && CurrentState->Node)
+		ValidState = CurrentState && CurrentState->Node;
+
+		if (ValidState)
 		{
-			StateChangedData.ToNode = CurrentState->Node;
+			StateChangedData.ToState = CurrentState;
 			CurrentState->Node->EnterWithData_Internal(Data);
 		}
 
 		this->OnStateChanged.Broadcast(StateChangedData);
-	}
+		this->bIsTransitioning = false;
 
-	this->bIsTransitioning = false;
-	this->OnTransitionFinished.Broadcast(this);
+		if (ValidState)
+		{
+			CurrentState->Node->PostTransition_Internal();
+		}
+
+		this->OnTransitionFinished.Broadcast(this);
+	}
 }
 
 void UStateMachine::Tick(float DeltaTime) {
@@ -205,7 +229,7 @@ void UStateMachine::SendEvent(FName EName)
 				}
 			}
 			else {
-				UE_LOGFMT(LogTemp, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
+				UE_LOGFMT(LogStateMachine, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
 			}
 		}
 		
@@ -230,7 +254,7 @@ void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 				}
 			}
 			else {
-				UE_LOGFMT(LogTemp, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
+				UE_LOGFMT(LogStateMachine, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
 			}
 		}
 
@@ -238,6 +262,16 @@ void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 	}
 }
 
+void UStateMachine::SetActive(bool bNewActive)
+{
+	if (auto State = this->GetCurrentState())
+	{
+		if (State->GetNode())
+		{
+			State->GetNode()->SetActive(bNewActive);
+		}
+	}
+}
 
 #if WITH_EDITOR
 void UStateMachine::PreEditChange(FProperty* PropertyAboutToChange)
@@ -261,9 +295,16 @@ void UStateMachine::PostLinkerChange()
 }
 #endif
 
-FStateData* UStateMachine::GetStateData(FName Name)
+UState* UStateMachine::GetStateData(FName Name)
 {
-	return this->Graph.Find(Name);
+	if (auto Data = this->Graph.Find(Name))
+	{
+		return Data->Get();
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 
@@ -376,7 +417,7 @@ TSet<FName> UStateMachine::GetEvents() const {
 	TSet<FName> List;
 
 	for (const auto& States : this->Graph) {
-		for (const auto& Event : States.Value.Transitions) {
+		for (const auto& Event : States.Value->Transitions) {
 			List.Add(Event.Key);
 		}
 	}
@@ -420,8 +461,13 @@ UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESea
 	return nullptr;
 }
 
-void UStateMachine::AddStateData(FName StateName, FStateData Data)
+void UStateMachine::AddStateData(FName StateName, UState* Data)
 {
+	if (Data->GetOuter() != this)
+	{
+		Data = DuplicateObject(Data, this);
+	}
+
 	if (!this->Graph.Contains(StateName))
 	{
 		this->Graph.Add(StateName, Data);
@@ -430,36 +476,28 @@ void UStateMachine::AddStateData(FName StateName, FStateData Data)
 
 void UStateMachine::AddStateWithNode(FName StateName, UStateNode* Node)
 {
-	FStateData Data;
-	Data.Node = Cast<UStateNode>(DuplicateObject(Node, this));
+	UState* Data = NewObject<UState>(this);
+	Data->Node = Cast<UStateNode>(DuplicateObject(Node, this));
 	this->Graph.Add(StateName, Data);
 }
 
-void UStateMachine::AddStateClass(FName StateName, FName StateClass)
-{
-	if (auto State = this->Graph.Find(StateName))
-	{
-		State->StateClasses.Add(StateClass);
-	}
-}
 
-const FStateData* UStateMachine::GetCurrentState()
+UState* UStateMachine::GetCurrentState()
 {
 	auto FoundData = this->Graph.Find(this->CurrentStateName);
 
 	if (FoundData)
 	{
-		return FoundData;
+		return FoundData->Get();
 	}
 	else
 	{
-		FStateData Data;
-		bool Found = false;
+		UState* BuiltState = nullptr;
 
 		// First get the data for this state from the Generated class if it exists.
 		if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 		{			
-			Found = BPGC->GetStateData(Data, this, NAME_None, this->CurrentStateName);
+			BuiltState = BPGC->GetStateData(this, NAME_None, this->CurrentStateName);
 		}
 		
 		// Then check to see if there's a parent machine to get extra state data from.
@@ -467,38 +505,46 @@ const FStateData* UStateMachine::GetCurrentState()
 		{
 			if (auto ParentBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->GetClass()))
 			{
-				FStateData SubData;
-				bool SubFound = ParentBPGC->GetStateData(SubData, this, this->ParentKey, this->CurrentStateName);
+				
+				auto SubState = ParentBPGC->GetStateData(this, this->ParentKey, this->CurrentStateName);
 
-				if (Found)
+				if (IsValid(SubState))
 				{
-					Data.Append(SubData, this);
-				}
-				else
-				{
-					Data = SubData;
-					Found = SubFound;
+					if (IsValid(BuiltState))
+					{
+						BuiltState->Append(SubState);
+					}
+					else
+					{
+						BuiltState = SubState;
+					}
+					
 				}
 			}
 		}
 
-		if (Found)
+		if (IsValid(BuiltState))
 		{
-			for (auto& tpairs : Data.Transitions)
+			this->Graph.Add(this->CurrentStateName, BuiltState);
+
+			for (auto& tpairs : BuiltState->Transitions)
 			{
 				this->BindCondition(tpairs.Value);
-			}
+			}			
 
-			this->Graph.Add(this->CurrentStateName, Data);
-
-			if (IsValid(Data.Node))
+			if (IsValid(BuiltState->Node))
 			{
-				Data.Node->Initialize_Internal(this);
+				BuiltState->Node->Initialize_Internal(this);
 			}
 
-			return this->Graph.Find(this->CurrentStateName);
+			return BuiltState;
+		}
+		else
+		{
+			this->Graph.Add(this->CurrentStateName, NewObject<UState>());
 		}
 	}
+	
 
 	return nullptr;
 }
@@ -571,7 +617,7 @@ IStateMachineLike* UStateMachine::GetSubMachine(FString& Address) const
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Attempting retrieve null SubMachine: %s"), *Address);
+			UE_LOG(LogStateMachine, Warning, TEXT("Attempting retrieve null SubMachine: %s"), *Address);
 			return nullptr;
 		}
 	}
@@ -638,7 +684,7 @@ void UStateMachine::BindConditionAt(FString& Address, FTransitionData& Data)
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
+				UE_LOG(LogStateMachine, Error, TEXT("Found Condition for parent machine with null parent: %s"),
 					*Data.Condition.ToString());
 			}
 		}
@@ -674,7 +720,7 @@ void UStateMachine::BindDataConditionAt(FString& Address, FTransitionData& Data)
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Found Condition for parent machine with null parent: %s"),
+				UE_LOG(LogStateMachine, Error, TEXT("Found Condition for parent machine with null parent: %s"),
 					*Data.Condition.ToString());
 			}
 		}
@@ -734,18 +780,20 @@ TArray<FString> UStateMachine::GetStateOptions(const UObject* Asker) const
 
 	for (auto& State : this->Graph)
 	{
+		auto Access = State.Value->Access;
+
 		if (Asker)
 		{
-			if (Asker->IsIn(this) && StateMachineAccessibility::IsChildVisible(State.Value.Access))
+			if (Asker->IsIn(this) && StateMachineAccessibility::IsChildVisible(Access))
 			{
 				Names.Add(State.Key.ToString());
 			}
-			else if (State.Value.Access == EStateMachineAccessibility::PUBLIC)
+			else if (Access == EStateMachineAccessibility::PUBLIC)
 			{
 				Names.Add(State.Key.ToString());
 			}
 		}
-		else if (State.Value.Access == EStateMachineAccessibility::PUBLIC)
+		else if (Access == EStateMachineAccessibility::PUBLIC)
 		{
 			Names.Add(State.Key.ToString());
 		}
@@ -781,7 +829,7 @@ TArray<FString> UStateMachine::GetStatesWithAccessibility(EStateMachineAccessibi
 
 	for (auto State : this->Graph)
 	{
-		if (State.Value.Access == Access)
+		if (State.Value->Access == Access)
 		{
 			Names.Add(State.Key.ToString());
 		}
@@ -800,8 +848,15 @@ UStateNode::UStateNode()
 }
 
 void UStateNode::Initialize_Internal(UStateMachine* POwner) {
-	this->Owner = POwner;
-	this->Initialize();
+	if (POwner)
+	{
+		this->Owner = POwner;
+		this->Initialize();
+	}
+	else
+	{
+		UE_LOG(LogStateMachine, Error, TEXT(""));
+	}
 }
 
 void UStateNode::Initialize_Implementation() {}
@@ -843,6 +898,14 @@ void UStateNode::SetOwner(UStateMachine* Parent) {
 void UStateNode::Tick_Internal(float DeltaTime) {
 	if (this->bActive) {
 		this->Tick(DeltaTime);
+	}
+}
+
+void UStateNode::PostTransition_Internal()
+{
+	if (this->bActive)
+	{
+		this->PostTransition();
 	}
 }
 
@@ -1000,51 +1063,57 @@ void FStateMachineEventRef::ActivateWithData(UObject* Data) {
 	}
 }
 
-
-void FStateData::Append(FStateData& Data, UStateMachine* Outer)
+void UState::Append(UState* Data)
 {
-	this->AppendNode(Data.Node, Outer);
-	this->StateClasses.Append(Data.StateClasses);
-	this->Transitions.Append(Data.Transitions);
+	this->AppendNode(Data->Node);
+	this->Transitions.Append(Data->Transitions);
 }
 
-void FStateData::AppendCopy(FStateData& Data, UStateMachine* Outer)
+void UState::AppendCopy(UState* Data)
 {
-	this->AppendNodeCopy(Data.Node, Outer);
-	this->StateClasses.Append(Data.StateClasses);
-	this->Transitions.Append(Data.Transitions);
+	this->AppendNodeCopy(Data->Node);
+	this->Transitions.Append(Data->Transitions);
 }
 
-void FStateData::AppendNode(UStateNode* ANode, UStateMachine* Outer)
-{
-	if (auto ArrayNode = Cast<UArrayNode>(this->Node))
-	{
-		if (IsValid(ANode))
-		{
-			ArrayNode->AddNode(ANode);
-		}
-	}
-	else
-	{
-		if (IsValid(this->Node) && IsValid(ANode))
-		{
-			auto NewNode = NewObject<UArrayNode>(Outer);
-			NewNode->AddNode(this->Node);
-			NewNode->AddNode(ANode);
-			this->Node = NewNode;
-		}
-		else if (IsValid(ANode))
-		{
-			this->Node = ANode;
-		}
-	}
-}
-
-void FStateData::AppendNodeCopy(UStateNode* ANode, UStateMachine* Outer)
+void UState::AppendNode(UStateNode* ANode)
 {
 	if (IsValid(ANode))
 	{
-		auto NewNode = DuplicateObject(ANode, Outer);
-		this->AppendNode(NewNode, Outer);
+
+		if (ANode->GetOuter() != this)
+		{
+			ANode = DuplicateObject(ANode, this);
+		}
+
+		if (auto ArrayNode = Cast<UArrayNode>(this->Node))
+		{
+			if (IsValid(ANode))
+			{
+				ArrayNode->AddNode(ANode);
+			}
+		}
+		else
+		{
+			if (IsValid(this->Node))
+			{
+				auto NewNode = NewObject<UArrayNode>(this);
+				NewNode->AddNode(this->Node);
+				NewNode->AddNode(ANode);
+				this->Node = NewNode;
+			}
+			else
+			{
+				this->Node = ANode;
+			}
+		}
+	}
+}
+
+void UState::AppendNodeCopy(UStateNode* ANode)
+{
+	if (IsValid(ANode))
+	{
+		auto NewNode = DuplicateObject(ANode, this);
+		this->AppendNode(NewNode);
 	}
 }

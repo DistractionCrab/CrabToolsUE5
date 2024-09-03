@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "StateMachine/CompositeNode.h"
 
 void UCompositeNode::Initialize_Implementation() {
@@ -88,6 +85,35 @@ void UCompositeNode::ExitWithData_Implementation(UObject* Data) {
 		if (Node.Value) {
 			Node.Value->ExitWithData_Internal(Data);
 			if (!(!this->Active() && this->GetMachine()->IsInState(TID))) {
+				return;
+			}
+		}
+	}
+}
+
+bool UCompositeNode::RequiresTick_Implementation() const
+{ 
+	for (const auto& Node : this->Nodes)
+	{
+		if (IsValid(Node.Value) && Node.Value->RequiresTick())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UCompositeNode::PostTransition_Implementation()
+{
+	int TID = this->GetMachine()->GetStateID();
+	for (const auto& Node : this->Nodes)
+	{
+		if (Node.Value)
+		{
+			Node.Value->PostTransition_Internal();
+			if (!(!this->Active() && this->GetMachine()->IsInState(TID)))
+			{
 				return;
 			}
 		}

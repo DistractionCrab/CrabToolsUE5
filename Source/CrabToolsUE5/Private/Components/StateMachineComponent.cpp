@@ -67,7 +67,14 @@ void UStateMachineComponent::StateChanged(const FStateChangedEventData& Data)
 	{
 		if (auto RetData = this->Machine->GetCurrentState())
 		{
-			this->SetComponentTickEnabled(RetData->Node->RequiresTick());
+			if (IsValid(RetData->GetNode()))
+			{
+				this->SetComponentTickEnabled(RetData->GetNode()->RequiresTick());
+			}
+			else
+			{
+				this->SetComponentTickEnabled(false);
+			}
 		}
 	}
 }

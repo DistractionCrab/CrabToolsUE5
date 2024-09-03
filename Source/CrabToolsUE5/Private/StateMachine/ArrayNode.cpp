@@ -94,6 +94,34 @@ void UArrayNode::ExitWithData_Implementation(UObject* Data) {
 	}
 }
 
+void UArrayNode::PostTransition_Implementation()
+{
+	int TID = this->GetMachine()->GetStateID();
+	for (const auto& Node : this->Nodes)
+	{
+		if (Node)
+		{
+			Node->PostTransition_Internal();
+			if (!(!this->Active() && this->GetMachine()->IsInState(TID)))
+			{
+				return;
+			}
+		}
+	}
+}
+
+bool UArrayNode::RequiresTick_Implementation() const
+{
+	for (const auto& Node : this->Nodes)
+	{
+		if (IsValid(Node) && Node->RequiresTick())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
 
 #if WITH_EDITORONLY_DATA
 void UArrayNode::GetEmittedEvents(TSet<FName>& Events) const

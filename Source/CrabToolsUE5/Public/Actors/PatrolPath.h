@@ -11,17 +11,19 @@ struct FPatrolPathState
 
 private:
 
-	int Index;
+	/* The index in the patrol path to get. */
+	UPROPERTY(EditDefaultsOnly, Category="PatrolPath")
+	int PathIndex;
 
 public:
 
-	FPatrolPathState() : Index(0) {}
+	FPatrolPathState() : PathIndex(0) {}
 
 	FVector GetCurrentTarget(APatrolPath* Path);
 	FVector GetNextTarget(APatrolPath* Path);
 	void Skip();
 
-	void Reset() { this->Index = 0; }
+	void Reset() { this->PathIndex = 0; }
 };
 
 

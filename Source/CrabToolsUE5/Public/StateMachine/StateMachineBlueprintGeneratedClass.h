@@ -17,6 +17,9 @@ class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
 
 public:
 	UPROPERTY()
+	bool bIsVariable = false;
+
+	UPROPERTY()
 	TObjectPtr<UStateMachine> ArchetypeObject;
 
 	UPROPERTY()
@@ -27,8 +30,8 @@ public:
 
 
 
-UCLASS(MinimalAPI)
-class UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
+UCLASS()
+class CRABTOOLSUE5_API UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
 {
 	GENERATED_BODY()
 
@@ -48,10 +51,10 @@ public:
 
 public:
 
-	bool GetStateData(FStateData& Output, UStateMachine* Outer, FName Machine, FName StateName);
+	UState* GetStateData(UStateMachine* Outer, FName Machine, FName StateName);
 	FName GetStartState() const;
-
 	TArray<FString> GetStateOptions(EStateMachineAccessibility Access = EStateMachineAccessibility::PUBLIC) const;
-
-	CRABTOOLSUE5_API TArray<FString> GetChildAccessibleSubMachines() const;
+	TArray<FString> GetChildAccessibleSubMachines() const;
+	TArray<FName> GetSubMachineOptions() const;
+	UStateMachine* ConstructSubMachine(UStateMachine* Outer, FName Key) const;
 };

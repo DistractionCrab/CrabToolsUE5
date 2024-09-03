@@ -10,7 +10,7 @@
 #include "EdStateNode.generated.h"
 
 
-UCLASS(MinimalAPI)
+UCLASS(CollapseCategories, MinimalAPI)
 class UEdStateNode : public UEdBaseStateNode, public IStateLike
 {
 	GENERATED_BODY()
@@ -31,15 +31,11 @@ class UEdStateNode : public UEdBaseStateNode, public IStateLike
 	UPROPERTY(VisibleAnywhere, Category="StateMachineGraph|Events")
 	TSet<FName> NodeEmittedEvents;
 
-	UPROPERTY(EditDefaultsOnly, Category="StateMachineGraph",
-		meta=(GetOptions="GetStateClassesOptions"))
-	TSet<FName> StateClasses;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
-		meta = (AllowPrivateAccess))
-	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
+	TObjectPtr<UState> StateClass;
 
 public:
+
 	UEdStateNode();
 	virtual ~UEdStateNode();
 
@@ -49,12 +45,9 @@ public:
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
-	UStateNode* GetCompiledNode();
+	UState* GetCompiledState(UObject* Outer);
 	void Delete();
 	virtual bool HasEvent(FName EName) override;
-	const TSet<FName>& GetStateClasses() { return this->StateClasses; }
-	EStateMachineAccessibility GetAccessibility() const { return this->Accessibility; }
-
 
 	/* Begin IStateLike Interface */
 	virtual TArray<FString> GetEventOptions() const override;

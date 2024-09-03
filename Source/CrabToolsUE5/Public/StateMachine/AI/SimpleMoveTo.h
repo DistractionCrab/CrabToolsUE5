@@ -42,6 +42,7 @@ public:
 
 	virtual void EnterWithData_Implementation(UObject* Data) override;
 	virtual void Enter_Implementation() override;
+	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
 	virtual void Exit_Implementation() override;
 	virtual void Initialize_Implementation() override;
 	
@@ -58,4 +59,6 @@ public:
 private:
 	void BindCallback();
 	void UnbindCallback();
+
+	void MoveTo(UObject* Obj);
 };

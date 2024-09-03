@@ -48,6 +48,10 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 
 private:
 
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
+		meta = (AllowPrivateAccess))
+	bool bIsVariable = false;
+
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineEditor",
 		meta = (AllowPrivateAccess, EditCondition = "!bIsMainGraph", EditConditionHides))
 	TObjectPtr<UStateMachine> MachineArchetype;
@@ -67,6 +71,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true"))
 	TSet<FName> EmittedEvents;
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true"))
+	FName Category;
 
 public:
 
@@ -135,6 +143,10 @@ public:
 
 	void Delete();
 	void RenameGraph(FName NewName);
+
+	bool IsVariable() const { return this->bIsVariable; }
+	FName GetCategoryName() const;
+	const UStateMachine* GetMarchineArchetype() const { return this->MachineArchetype; }
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;

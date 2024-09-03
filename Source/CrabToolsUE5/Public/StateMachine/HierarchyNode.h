@@ -71,34 +71,46 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	 * work needs to be continued. Specifically, if ResetOnEnter is false, and nothing is done to transition 
 	 * the state, on the next tick or event the exist state will be detected again.
 	 */
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true", GetOptions="GetSubMachineTransitionEvents"))
 	FName EnterEventName;
 
+	/* Event used when exiting this node. Will pass this event to the submachine upon exiting.*/
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true", GetOptions = "GetSubMachineTransitionEvents"))
+	FName ExitEventName;
+
 public:
+
 	virtual void Initialize_Implementation() override;
 	virtual void Event_Implementation(FName EName) override;
 	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
 	virtual void Enter_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	virtual void Exit_Implementation() override;
-
-	void PerformExit();
+	virtual void PostTransition_Implementation() override;
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-		UFUNCTION()
-		TArray<FString> GetMachineOptions() const;
-
 		virtual void GetEmittedEvents(TSet<FName>& Events) const;
 	#endif
 
 private:
+
+	/* Handle checking for submachine states, and if in appropriate state, pass an event to Owner Machine. */
+	void PerformExit();
 
 	#if WITH_EDITOR
 		UFUNCTION()
 		TArray<FString> GetSubMachineStateOptions() const;
 
 		UFUNCTION()
-		TArray<FString> GetStateEventOptions() const { return {}; }
+		TArray<FString> GetSubMachineTransitionEvents() const;
+
+		UFUNCTION()
+		TArray<FString> GetStateEventOptions() const;
+
+		UFUNCTION()
+		TArray<FString> GetMachineOptions() const;
 	#endif
 };

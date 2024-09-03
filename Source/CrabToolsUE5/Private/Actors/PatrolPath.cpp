@@ -156,9 +156,8 @@ FVector FPatrolPathState::GetNextTarget(APatrolPath* Path)
 		auto PointCount = Path->Num();
 		if (PointCount > 0)
 		{
-			this->Index += 1;
-			auto Next = Path->Get(this->Index);
-			this->Index %= PointCount;
+			this->PathIndex = (this->PathIndex + 1) % Path->Num();
+			auto Next = Path->Get(this->PathIndex);
 
 			return Next;
 		}
@@ -180,8 +179,8 @@ FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
 		auto PointCount = Path->Num();
 		if (PointCount > 0)
 		{
-			this->Index %= PointCount;
-			auto Next = Path->Get(this->Index);
+			this->PathIndex %= PointCount;
+			auto Next = Path->Get(this->PathIndex);
 
 			return Next;
 		}
@@ -198,7 +197,7 @@ FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
 
 void FPatrolPathState::Skip()
 {
-	this->Index += 1;
+	this->PathIndex += 1;
 }
 
 FVector UPatrolPathLibrary::GetNextTarget(FPatrolPathState& State, APatrolPath* Path)

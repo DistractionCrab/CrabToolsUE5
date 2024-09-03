@@ -198,10 +198,34 @@ void FStateMachineBlueprintCompilerContext::CreateClassVariablesFromBlueprint()
 		return;
 	}
 
-	UClass* ParentClass = StateMachineBP->ParentClass;
+	
+
+	for (auto& SubGraph : StateMachineBP->GetSubgraphs())
+	{
+		if (SubGraph->IsVariable())
+		{
+			FEdGraphPinType PinType(
+				UEdGraphSchema_K2::PC_Object,
+				NAME_None,
+				SubGraph->GetMachineArchetype()->GetClass(),
+				EPinContainerType::None,
+				false,
+				FEdGraphTerminalType());
+
+			FProperty* SMProp = CreateVariable(SubGraph->GetFName(), PinType);
+
+			SMProp->SetMetaData(TEXT("Category"), SubGraph->GetCategoryName().ToString());
+
+			SMProp->SetPropertyFlags(
+				CPF_BlueprintVisible | 
+				CPF_BlueprintReadOnly | 
+				CPF_DisableEditOnInstance |
+				CPF_Instanced |
+				CPF_RepSkip);
+		}
+	}
 
 	ValidateStateMachineNames();
-
 }
 
 void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObject* DefaultObject)

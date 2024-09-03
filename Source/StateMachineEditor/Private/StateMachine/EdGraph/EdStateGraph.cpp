@@ -287,23 +287,17 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 	if (!this->bIsMainGraph)
 	{
 		StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, StateMachine);
-	}	
+	}
+
+	StateMachine->bIsVariable = this->bIsVariable;
 
 	for (auto State : this->GetStates())
 	{
 		// Compile the full state data for the state.
 		{
-			FStateData NewData;
+			UState* BuiltState = State->GetCompiledState(StateMachine);
 
-			NewData.Node = State->GetCompiledNode();
-			NewData.Access = State->GetAccessibility();
-
-			for (auto StateClass : State->GetStateClasses())
-			{
-				NewData.StateClasses.Add(StateClass);
-			}
-
-			StateMachine->AddStateData(State->GetStateName(), NewData);
+			StateMachine->AddStateData(State->GetStateName(), BuiltState);
 		}
 
 		for (auto Transition : this->GetExitTransitions(State))
@@ -580,6 +574,22 @@ void UEdStateGraph::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 	for (auto EventObj : this->EventObjects)
 	{
 		Entries.Add(EventObj->GetEventName(), EventObj->GetDescription());
+	}
+}
+
+FName UEdStateGraph::GetCategoryName() const
+{
+	if (this->Category == NAME_None)
+	{
+		return "SubMachines";
+	}
+	else
+	{
+		FString CategoryName;
+		CategoryName.Append("SubMachines/");
+		CategoryName.Append(this->Category.ToString());
+
+		return FName(CategoryName);
 	}
 }
 

@@ -10,6 +10,8 @@
 
 UEdStateNode::UEdStateNode() {
 	this->bCanRenameNode = true;
+
+	this->StateClass = CreateDefaultSubobject<UState>(TEXT("DefaultStateClass"));
 }
 
 UEdStateNode::~UEdStateNode() {
@@ -38,19 +40,23 @@ FName UEdStateNode::SetStateName(FName NewName)
 	return this->StateName;
 }
 
-UStateNode* UEdStateNode::GetCompiledNode()
+UState* UEdStateNode::GetCompiledState(UObject* Outer)
 {
-	if (this->Nodes.Num() == 0)
+	if (!IsValid(this->StateClass.Get()))
 	{
-		return nullptr;
-	} 
-	else if (this->Nodes.Num() == 1)
+		this->Modify();
+		this->StateClass = NewObject<UState>(this);
+	}
+
+	UState* BuiltState = DuplicateObject(this->StateClass, Outer, this->GetStateName());	
+
+	if (this->Nodes.Num() == 1)
 	{
-		return this->Nodes[0];
+		BuiltState->AppendNodeCopy(this->Nodes[0]);
 	}
 	else
 	{
-		auto ArrayNode = NewObject<UArrayNode>(this);
+		auto ArrayNode = NewObject<UArrayNode>(BuiltState);
 
 		for (auto Node : this->Nodes)
 		{
@@ -60,8 +66,10 @@ UStateNode* UEdStateNode::GetCompiledNode()
 				Naming::GenerateStateNodeName(Node, this->GetStateName())));
 		}
 
-		return ArrayNode;
+		BuiltState->AppendNode(ArrayNode);
 	}
+
+	return BuiltState;
 }
 
 
@@ -200,6 +208,11 @@ void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateNode, Nodes))
 	{
 		this->Modify();
+	}
+
+	if (!IsValid(this->StateClass))
+	{
+		this->StateClass = NewObject<UState>(this);
 	}
 }
 

@@ -28,26 +28,36 @@ void UHierarchyNode::PerformExit()
 }
 
 void UHierarchyNode::Event_Implementation(FName EName){
-	if (this->SubMachine) {
-		this->SubMachine->Event_Direct(EName);
-		this->PerformExit();
+	if (this->SubMachine)
+	{
+		this->SubMachine->SendEvent(EName);
 	}
 }
 
-void UHierarchyNode::EventWithData_Implementation(FName EName, UObject* Data) {
-	if (this->SubMachine) {
-		this->SubMachine->EventWithData_Direct(EName, Data);
-		this->PerformExit();
+void UHierarchyNode::EventWithData_Implementation(FName EName, UObject* Data)
+{
+	if (this->SubMachine)
+	{
+		this->SubMachine->SendEventWithData(EName, Data);
 	}
+}
+
+void UHierarchyNode::PostTransition_Implementation()
+{
+	this->PerformExit();
 }
 
 void UHierarchyNode::Enter_Implementation() {
-	UE_LOG(LogTemp, Warning, TEXT("Entering HierarchyNode"));
 	if (this->SubMachine) {
-		if (this->ResetOnEnter) {
+		this->SubMachine->SetActive(true);
+		if (this->ResetOnEnter)
+		{
 			this->SubMachine->Reset();
 		}
-		this->SubMachine->Event_Direct(this->EnterEventName);
+		else
+		{
+			this->SubMachine->SendEvent(this->EnterEventName);
+		}
 	}
 }
 
@@ -58,8 +68,13 @@ void UHierarchyNode::Tick_Implementation(float DeltaTime) {
 	}
 }
 
-void UHierarchyNode::Exit_Implementation() {
-
+void UHierarchyNode::Exit_Implementation()
+{
+	if (this->SubMachine)
+	{
+		this->SubMachine->SendEvent(this->ExitEventName);
+		this->SubMachine->SetActive(false);
+	}
 }
 
 FName FHierarchyEventValue::GetEvent() const
@@ -118,7 +133,6 @@ TArray<FString> UHierarchyNode::GetSubMachineStateOptions() const
 
 	if (IsValid(this->SubMachine))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Getting SubMachine Options?"));
 		Names.Append(this->SubMachine->GetStateOptions(this));
 	}
 	else
@@ -128,6 +142,25 @@ TArray<FString> UHierarchyNode::GetSubMachineStateOptions() const
 			Names.Append(Outer->GetStateOptions(this));
 		}
 	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UHierarchyNode::GetSubMachineTransitionEvents() const
+{
+	TArray<FString> Names;
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+
+TArray<FString> UHierarchyNode::GetStateEventOptions() const
+{
+	TArray<FString> Names;
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
 

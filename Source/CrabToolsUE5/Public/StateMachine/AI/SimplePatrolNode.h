@@ -16,6 +16,7 @@ class CRABTOOLSUE5_API UAISimplePatrolNode : public UAIBaseNode
 {
 	GENERATED_BODY()
 	
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|AI")
 	FPatrolPathState PatrolState;
 
 	/* 

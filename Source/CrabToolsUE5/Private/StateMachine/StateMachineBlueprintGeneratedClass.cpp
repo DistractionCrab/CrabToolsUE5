@@ -12,14 +12,13 @@ UStateMachine* UStateMachineArchetype::CreateStateMachine(UStateMachine* Parent,
 	return NewMachine;
 }
 
-bool UStateMachineBlueprintGeneratedClass::GetStateData(
-	FStateData& Output,
+UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 	UStateMachine* Outer,
 	FName MachineName,
 	FName StateName)
 {
 	UStateMachineArchetype* Machine = nullptr;
-	bool FoundData = false;
+	UState* BuiltState = nullptr;
 
 	if (MachineName == NAME_None)
 	{
@@ -27,32 +26,30 @@ bool UStateMachineBlueprintGeneratedClass::GetStateData(
 
 		if (auto ParentClass = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
 		{
-			FStateData Compile;
-			FoundData = ParentClass->GetStateData(Compile, Outer, NAME_None, StateName);
-
-			if (FoundData)
-			{
-				Output.Append(Compile, Outer);
-			}
+			BuiltState = ParentClass->GetStateData(Outer, NAME_None, StateName);
+		}
+		else
+		{
+			BuiltState = NewObject<UState>(Outer);
 		}
 	}
 	else if (this->SubStateMachineArchetypes.Contains(MachineName)) 
 	{
+		BuiltState = NewObject<UState>(Outer);
 		Machine = this->SubStateMachineArchetypes[MachineName];
 	}
 
 	if (Machine)
 	{
-		auto ArchData = Machine->GetStateData(StateName);
+		auto ArchData = DuplicateObject(Machine->GetStateData(StateName), Outer);
 		
-		if (ArchData)
+		if (IsValid(ArchData))
 		{
-			Output.AppendCopy(*ArchData, Outer);
-			FoundData = true;
+			BuiltState->AppendCopy(ArchData);
 		}		
 	}	
 
-	return FoundData;
+	return BuiltState;
 }
 
 FName UStateMachineBlueprintGeneratedClass::GetStartState() const
@@ -110,4 +107,46 @@ TArray<FString> UStateMachineBlueprintGeneratedClass::GetStateOptions(EStateMach
 	Names.Append(this->StateMachineArchetype->GetStatesWithAccessibility(Access));
 
 	return Names;
+}
+
+TArray<FName> UStateMachineBlueprintGeneratedClass::GetSubMachineOptions() const
+{
+	TArray<FName> Names;
+
+	for (auto& SubMachine : this->SubStateMachineArchetypes)
+	{
+		Names.Add(SubMachine.Key);
+	}
+
+	return Names;
+}
+
+UStateMachine* UStateMachineBlueprintGeneratedClass::ConstructSubMachine(UStateMachine* Outer, FName Key) const
+{
+	UStateMachine* Constructed = nullptr;
+
+	if (auto Ptr = this->SubStateMachineArchetypes.Find(Key))
+	{
+		if (auto SM = Ptr->Get())
+		{
+			Constructed = SM->CreateStateMachine(Outer, Key);
+
+			if (SM->bIsVariable)
+			{
+				FProperty* Prop = this->FindPropertyByName(Key);
+
+				if (Prop && Prop->GetClass() == FObjectProperty::StaticClass())
+				{
+					FObjectProperty* ObjProp = (FObjectProperty*)Prop;
+
+					if (ObjProp->PropertyClass == Constructed->GetClass())
+					{
+						ObjProp->SetValue_InContainer(Outer, Constructed);
+					}
+				}
+			}
+		}
+	}
+
+	return Constructed;
 }
