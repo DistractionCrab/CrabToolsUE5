@@ -312,4 +312,9 @@ void UStateMachineBlueprint::AddStateClassesToDataTable(UDataTable* EventSet, bo
 	}
 }
 
+UStateMachineBlueprintGeneratedClass* UStateMachineBlueprint::GetStateMachineGeneratedClass() const
+{
+	return Cast<UStateMachineBlueprintGeneratedClass>(this->GeneratedClass);
+}
+
 #undef LOCTEXT_NAMESPACE

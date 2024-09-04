@@ -93,6 +93,24 @@ UEdStartStateNode* UEdStateGraph::GetStartNode() const
 	return PossibleStarts[0];
 }
 
+FName UEdStateGraph::GetClassPrefix() const
+{
+	if (this->bIsMainGraph)
+	{
+		return this->GetBlueprintOwner()->GeneratedClass->GetFName();
+	}
+	else
+	{
+		FString Total;
+
+		Total.Append(this->MachineArchetype->GetClass()->GetFName().ToString());
+		Total.Append("::");
+		Total.Append(this->GetName());
+
+		return FName(Total);
+	}
+}
+
 TArray<UEdBaseNode*> UEdStateGraph::GetDestinations(UEdBaseNode* Node) const
 {
 	TArray<UEdBaseNode*> Destinations;
@@ -278,9 +296,9 @@ TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start)
 	return Transitions.FilterByPredicate(Pred);
 }
 
-UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerContext& Context)
+UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationContext& Context)
 {
-	UObject* Outer = Context.TargetClass;
+	UObject* Outer = Context.GetOuter();
 
 	UStateMachineArchetype* StateMachine = NewObject<UStateMachineArchetype>(Outer);
 
@@ -295,7 +313,7 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FKismetCompilerConte
 	{
 		// Compile the full state data for the state.
 		{
-			UState* BuiltState = State->GetCompiledState(StateMachine);
+			UState* BuiltState = State->GenerateState(Context, StateMachine);
 
 			StateMachine->AddStateData(State->GetStateName(), BuiltState);
 		}
@@ -325,6 +343,11 @@ bool UEdStateGraph::IsMainGraph()
 	}
 
 	return false;
+}
+
+bool UEdStateGraph::IsVariable() const 
+{
+	return StateMachineAccessibility::IsPublic(this->Accessibility) && this->bIsVariable;
 }
 
 UStateMachineBlueprint* UEdStateGraph::GetBlueprintOwner() const
@@ -594,6 +617,7 @@ FName UEdStateGraph::GetCategoryName() const
 }
 
 #if WITH_EDITOR
+
 void UEdStateGraph::PostEditUndo()
 {
 	Super::PostEditUndo();
@@ -624,7 +648,55 @@ void UEdStateGraph::PostEditChangeProperty(
 
 		this->EventSets = FilteredEventSets;
 	}
+	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, Accessibility))
+	{
+		if (!StateMachineAccessibility::IsPublic(this->Accessibility))
+		{
+			this->bIsVariable = false;
+		}
+	}
+	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, OverridenMachine))
+	{
+		if (this->OverridenMachine.IsNone())
+		{
+			this->Accessibility = EStateMachineAccessibility::PRIVATE;
+		}
+		else
+		{
+			if (!this->bIsMainGraph)
+			{
+				if (auto BPObj = this->GetBlueprintOwner())
+				{
+					if (auto Class = BPObj->GetStateMachineGeneratedClass())
+					{
+						this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
+					}
+				}
+			}
+		}
+	}
 }
-#endif
+
+TArray<FString> UEdStateGraph::GetOverrideableMachines() const
+{
+	TArray<FString> Names;
+
+	if (!this->bIsMainGraph)
+	{
+		if (auto BPObj = this->GetBlueprintOwner())
+		{
+			if (auto Class = BPObj->GetStateMachineGeneratedClass())
+			{
+				Names.Append(Class->GetChildAccessibleSubMachines());
+			}
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+#endif // WITH_EDITOR
 
 #undef LOCTEXT_NAMESPACE

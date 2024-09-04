@@ -30,9 +30,7 @@ void SEdStateNode::UpdateGraphNode()
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SVerticalBox> NodeBody;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, this->GraphNode);
-	//FText DisplayText = FText::FromName(InNode->GetStateName());
-
-
+	
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
 		.HAlign(HAlign_Fill)
@@ -176,7 +174,7 @@ FName SEdStateNode::GetStateName() const
 {
 	if (UEdStateNode* Node = Cast<UEdStateNode>(this->GraphNode))
 	{
-		return Node->GetStateName();
+		return Node->GetNodeName();
 	}
 
 	return NAME_None;

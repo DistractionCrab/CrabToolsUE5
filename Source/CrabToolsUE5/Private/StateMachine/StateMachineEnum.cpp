@@ -7,3 +7,8 @@ bool StateMachineAccessibility::IsChildVisible(EStateMachineAccessibility Access
 		Access == EStateMachineAccessibility::PROTECTED ||
 		Access == EStateMachineAccessibility::OVERRIDEABLE;
 }
+
+bool StateMachineAccessibility::IsPublic(EStateMachineAccessibility Access)
+{
+	return Access == EStateMachineAccessibility::PUBLIC;
+}

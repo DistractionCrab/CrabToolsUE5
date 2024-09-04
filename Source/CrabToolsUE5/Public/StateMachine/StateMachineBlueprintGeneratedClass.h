@@ -55,6 +55,7 @@ public:
 	FName GetStartState() const;
 	TArray<FString> GetStateOptions(EStateMachineAccessibility Access = EStateMachineAccessibility::PUBLIC) const;
 	TArray<FString> GetChildAccessibleSubMachines() const;
+	EStateMachineAccessibility GetSubMachineAccessibility(FName Key) const;
 	TArray<FName> GetSubMachineOptions() const;
 	UStateMachine* ConstructSubMachine(UStateMachine* Outer, FName Key) const;
 };

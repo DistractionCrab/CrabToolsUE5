@@ -51,7 +51,7 @@ public:
 
 	UEdBaseStateNode* GetStartNode() const;
 	UEdBaseStateNode* GetEndNode() const;
-	TMap<FName, FTransitionData> GetTransitionData(FKismetCompilerContext& Context);
+	TMap<FName, FTransitionData> GetTransitionData(FNodeVerificationContext& Context);
 
 	UFUNCTION()
 	TArray<FString> GetConditionOptions() const;

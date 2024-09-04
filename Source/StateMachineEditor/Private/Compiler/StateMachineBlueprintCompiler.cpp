@@ -19,6 +19,36 @@
 
 extern COREUOBJECT_API bool GMinimalCompileOnLoad;
 
+// TODO: Add in propery addressing objects passed to better help identify where the error is coming from.
+class FStateMachineBlueprintNodeVerificationContext : public FNodeVerificationContext
+{
+private:
+
+	FKismetCompilerContext& Context;
+
+public:
+
+	FStateMachineBlueprintNodeVerificationContext(
+		UClass* GeneratedClass,
+		FKismetCompilerContext& KismetContext)
+	: FNodeVerificationContext(GeneratedClass), Context(KismetContext) {}
+
+	virtual void Error(FString& Msg, const UObject* Obj) override
+	{
+		this->Context.MessageLog.Error(*Msg);
+	}
+
+	virtual void Warning(FString& Msg, const UObject* Obj) override
+	{
+		this->Context.MessageLog.Warning(*Msg);
+	}
+	
+	virtual void Note(FString& Msg, const UObject* Obj) override
+	{
+		this->Context.MessageLog.Note(*Msg);
+	}
+};
+
 //////////////////////////////////////////////////////////////////////////
 // FStateMachineBlueprintCompiler::FCreateVariableContext
 FStateMachineBlueprintCompilerContext::FCreateVariableContext::FCreateVariableContext(FStateMachineBlueprintCompilerContext& InContext)
@@ -198,8 +228,6 @@ void FStateMachineBlueprintCompilerContext::CreateClassVariablesFromBlueprint()
 		return;
 	}
 
-	
-
 	for (auto& SubGraph : StateMachineBP->GetSubgraphs())
 	{
 		if (SubGraph->IsVariable())
@@ -272,12 +300,14 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 	if (this->bIsFullCompile && !bIsSkeletonOnly)
 	{
 		if (auto SMBP = this->StateMachineBlueprint())
-		{			
-			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(*this);
+		{	
+			FStateMachineBlueprintNodeVerificationContext Context(BPGClass, *this);
+
+			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(Context);
 
 			for (auto& SubGraph : SMBP->GetSubgraphs())
 			{
-				auto SubSM = SubGraph->GenerateStateMachine(*this);
+				auto SubSM = SubGraph->GenerateStateMachine(Context);
 
 				BPGClass->SubStateMachineArchetypes.Add(SubGraph->GetFName(), SubSM);
 			}

@@ -38,16 +38,18 @@ public:
 
 	UEdStateNode();
 	virtual ~UEdStateNode();
-
 	virtual TSubclassOf<UStateNode> GetNodeClass() const;
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
-	virtual FName GetStateName() const override { return this->StateName; }
+	virtual FName GetStateName() const override;
+	/* Returns the name which should appear on graph nodes. */
+	virtual FName GetNodeName() const override { return this->StateName; }
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
-	UState* GetCompiledState(UObject* Outer);
+	UState* GenerateState(FNodeVerificationContext& Context, UObject* Outer);
 	void Delete();
 	virtual bool HasEvent(FName EName) override;
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
 	/* Begin IStateLike Interface */
 	virtual TArray<FString> GetEventOptions() const override;
@@ -55,7 +57,7 @@ public:
 	virtual TArray<FString> GetExitStates() const override;
 	/* End IStateLike Interface */
 
-	virtual bool Modify(bool bAlwaysMarkDirty = true) override;	
+	
 
 
 	#if WITH_EDITOR

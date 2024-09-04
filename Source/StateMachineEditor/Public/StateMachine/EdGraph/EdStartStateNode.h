@@ -23,6 +23,7 @@ public:
 	virtual ~UEdStartStateNode();
 
 	virtual FName GetStateName() const override { return FName("~Start~"); }
+	virtual FName GetNodeName() const override { return FName("~Start~"); }
 	virtual bool CanUserDeleteNode() const override { return false; }
 	virtual bool CanDuplicateNode() const override { return false; }
 };

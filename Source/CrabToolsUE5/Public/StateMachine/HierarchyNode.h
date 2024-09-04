@@ -53,8 +53,9 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 
 	/* Name of the submachine to be placed in this node. */
 	UPROPERTY(EditAnywhere, Category="StateMachine",
-		meta=(GetOptions="GetMachineOptions", EditCondition= "StateMachineSource == EHierarchyInputType::DEFINED", EditConditionHides))
-	FName SlotName;
+		meta=(EditCondition= "StateMachineSource == EHierarchyInputType::DEFINED", EditConditionHides,
+			ShowOnlyInnerProperties))
+	FSubMachineSlot Slot;
 
 	/* Map of SubMachine states and events to be emitted to the SM of this node. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", 
@@ -109,8 +110,5 @@ private:
 
 		UFUNCTION()
 		TArray<FString> GetStateEventOptions() const;
-
-		UFUNCTION()
-		TArray<FString> GetMachineOptions() const;
 	#endif
 };

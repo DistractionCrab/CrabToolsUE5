@@ -22,6 +22,23 @@ TSubclassOf<UStateNode> UEdStateNode::GetNodeClass() const {
 	return UStateNode::StaticClass();
 }
 
+FName UEdStateNode::GetStateName() const
+{ 
+	if (this->StateClass->GetAccess() == EStateMachineAccessibility::PRIVATE)
+	{
+		FString Total;
+		Total.Append(this->GetStateGraph()->GetClassPrefix().ToString());
+		Total.Append("::");
+		Total.Append(this->StateName.ToString());
+
+		return FName(Total);
+	}
+	else
+	{
+		return this->StateName;
+	}
+}
+
 FName UEdStateNode::SetStateName(FName NewName)
 {
 	if (UEdStateGraph* Graph = Cast<UEdStateGraph>(this->GetGraph()))
@@ -40,7 +57,7 @@ FName UEdStateNode::SetStateName(FName NewName)
 	return this->StateName;
 }
 
-UState* UEdStateNode::GetCompiledState(UObject* Outer)
+UState* UEdStateNode::GenerateState(FNodeVerificationContext& Context, UObject* Outer)
 {
 	if (!IsValid(this->StateClass.Get()))
 	{

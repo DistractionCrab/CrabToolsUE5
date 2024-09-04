@@ -13,8 +13,6 @@
 #include "Containers/List.h"
 #include "StateMachine.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogStateMachine, Log, All);
-
 class UStateNode;
 class UStateMachine;
 class UNodeTransition;
@@ -46,16 +44,30 @@ struct FStateChangedEventData
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStateChangedEvent, const FStateChangedEventData&, Data);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTransitionFinishedEvent, UStateMachine*, Machine);
-//DECLARE_DYNAMIC_DELEGATE_TwoParams(FStateChangeDispatcher, FName, From, FName, To);
 DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FTransitionDelegate);
 DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FTransitionDataDelegate, UObject*, Data);
 
-/* Structure used to pass to listeners for when states change.*/
-USTRUCT(BlueprintType)
-struct FStateChangedData
-{
-	GENERATED_USTRUCT_BODY()
 
+/* 
+ * Simple interface to use for external modules to relay messages when verifying Node integrity. 
+ * This is meant to mimic a KismetCompilerContext somewhat, but exists specifically to avoid the issue
+ * of needing an editor only interface in the runtime.
+ */
+class FNodeVerificationContext
+{
+private:
+
+	TObjectPtr<UClass> TargetClass;
+
+public:
+
+	FNodeVerificationContext(UClass* Class) : TargetClass(Class) {}
+
+	virtual void Error(FString& Msg, const UObject* Obj) = 0;
+	virtual void Warning(FString& Msg, const UObject* Obj) = 0;
+	virtual void Note(FString& Msg, const UObject* Obj) = 0;
+
+	UObject* GetOuter() const { return this->TargetClass; }
 };
 
 USTRUCT(BlueprintType)
@@ -107,15 +119,17 @@ public:
 	FName EventName;
 };
 
+/* Structure used to store a reference to a submachine. */
 USTRUCT(BlueprintType)
-struct FEmittedEvent
+struct FSubMachineSlot
 {
 	GENERATED_USTRUCT_BODY()
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|Events")
-	FName EventName;
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
+		meta = (GetOptions = "GetMachineOptions"))
+	FName MachineName;
 };
 
 
@@ -168,7 +182,8 @@ public:
 };
 
 /**
- *
+ * Base Node class for an individual node in a statemachine. Defines the general behaviour and interface
+ * for what nodes can do.
  */
 UCLASS(Abstract, Blueprintable, EditInlineNew, CollapseCategories, Category = "StateMachine")
 class CRABTOOLSUE5_API UStateNode : public UObject
@@ -233,8 +248,6 @@ public:
 	virtual bool RequiresTick_Implementation() const { return this->bRequiresTick; }
 
 	#if WITH_EDITOR
-		UFUNCTION()
-		TArray<FString> GetEventOptions() const;
 		virtual void GetEmittedEvents(TSet<FName>& Events) const;
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
@@ -248,8 +261,10 @@ public:
 	void Exit_Internal();
 	void ExitWithData_Internal(UObject* Data);
 	void PostTransition_Internal();
-
 	void SetActive(bool bNewActive) { this->bActive = bNewActive; }
+
+	/* Runs a verification check on the node. Returns true if no error, false if an error happened. */
+	virtual bool Verify(FNodeVerificationContext& Context) const;
 
 protected:
 
@@ -305,6 +320,14 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void DeleteEvent(FName Event);
 	virtual void DeleteEvent_Implementation(FName Event);
+
+	#if WITH_EDITOR
+		UFUNCTION()
+		TArray<FString> GetEventOptions() const;
+
+		UFUNCTION()
+		TArray<FString> GetMachineOptions() const;
+	#endif
 
 protected:
 

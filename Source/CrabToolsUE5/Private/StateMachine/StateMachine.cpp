@@ -4,11 +4,10 @@
 #include "Algo/Reverse.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/ArrayNode.h"
-#include "Utils/UtilsLibrary.h"
 #include "StateMachine/Utils.h"
+#include "StateMachine/Logging.h"
 #include "StateMachine/IStateMachineLike.h"
-
-DEFINE_LOG_CATEGORY(LogStateMachine);
+#include "Utils/UtilsLibrary.h"
 
 #pragma region StateMachine Code
 
@@ -611,13 +610,19 @@ IStateMachineLike* UStateMachine::GetSubMachine(FString& Address) const
 	}
 	else
 	{
-		if (auto Found = this->SubMachines.Find(FName(Address)))
+		FName Key(Address);
+
+		if (auto Found = this->SubMachines.Find(Key))
 		{
 			return Found->Get();
 		}
-		else
+		else if (!Key.IsNone())
 		{
 			UE_LOG(LogStateMachine, Warning, TEXT("Attempting retrieve null SubMachine: %s"), *Address);
+			return nullptr;
+		}
+		else
+		{
 			return nullptr;
 		}
 	}
@@ -979,41 +984,72 @@ void UStateNode::RenameEvent_Implementation(FName From, FName To)
 	}
 }
 
-void UStateNode::EmitEvent(FName EName) { this->GetMachine()->SendEvent(EName); }
-void UStateNode::EmitEventSlot(const FEventSlot& ESlot) { this->GetMachine()->SendEvent(ESlot.EventName); }
+bool UStateNode::Verify(FNodeVerificationContext& Context) const
+{
+	bool bErrorFree = true;
 
-void UStateNode::EmitEventWithData(FName EName, UObject* Data) { this->GetMachine()->SendEventWithData(EName, Data); }
-void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) { this->GetMachine()->SendEventWithData(ESlot.EventName, Data); }
+	if (auto SMLike = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
+	{
+		for (TFieldIterator<FStructProperty> FIT(this->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
+		{
+			FStructProperty* f = *FIT;
+
+			if (f->Struct == FEventSlot::StaticStruct())
+			{
+
+			}
+			else if (f->Struct == FSubMachineSlot::StaticStruct())
+			{
+				FSubMachineSlot Value;
+				f->GetValue_InContainer(this, &Value);
+
+				auto Options = SMLike->GetMachineOptions();
+
+				if (!(Value.MachineName.IsNone() || Options.Contains(Value.MachineName)))
+				{
+					FString Msg = FString::Printf(TEXT("Could not find StateMachine for slot %s: %s"),
+						*f->GetName(),
+						*this->GetName());
+					Context.Error(Msg, this);
+
+					bErrorFree = false;
+				}
+			}
+		}
+	}
+	else
+	{
+		FString Msg = FString::Printf(TEXT("Could not found outer ISMLike for Node: %s"), *this->GetName());
+		Context.Error(Msg, this);
+
+		bErrorFree = false;
+	}
+
+	return bErrorFree;
+}
+
+void UStateNode::EmitEvent(FName EName)
+{
+	this->GetMachine()->SendEvent(EName); 
+}
+
+void UStateNode::EmitEventSlot(const FEventSlot& ESlot)
+{ 
+	this->GetMachine()->SendEvent(ESlot.EventName);
+}
+
+void UStateNode::EmitEventWithData(FName EName, UObject* Data) {
+	this->GetMachine()->SendEventWithData(EName, Data);
+}
+
+void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) {
+	this->GetMachine()->SendEventWithData(ESlot.EventName, Data);
+}
 
 #if WITH_EDITOR
 void UStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	/*
-	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UStateNode, EmittedEvents))
-	{
-		auto Removed = this->EmittedEvents.Difference(this->PreEditEmittedEvents);
-		if (Removed.Num() > 0)
-		{
-			if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
-			{
-				auto Replaced = this->PreEditEmittedEvents.Difference(this->EmittedEvents).Array();
-				if (Removed.Num() == 1 && Replaced.Num() == 1)
-				{
-					StateLike->RenameEvent(Replaced[0], Removed.Array()[0]);
-				}
-				else
-				{
-					for (auto EName : Removed)
-					{
-						StateLike->DeleteEvent(EName);
-					}
-				}
-			}
-		}		
-
-		this->PreEditEmittedEvents.Empty();
-	}
-	*/
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
@@ -1027,6 +1063,18 @@ void UStateNode::PreEditChange(FProperty* PropertyAboutToChange)
 			this->PreEditEmittedEvents.Add(EventName);
 		}
 	}
+}
+
+TArray<FString> UStateNode::GetMachineOptions() const
+{
+	const UObject* Outer = this;
+
+	if (auto SMLike = UtilsFunctions::GetOuterAs<IStateMachineLike>(Outer))
+	{
+		return SMLike->GetMachineOptions();
+	}
+
+	return { };
 }
 
 #endif

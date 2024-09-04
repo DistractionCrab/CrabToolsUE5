@@ -49,11 +49,14 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
-		meta = (AllowPrivateAccess))
+		meta = (AllowPrivateAccess, EditCondition="Accessibility == EStateMachineAccessibility::PUBLIC",
+			EditConditionHides))
 	bool bIsVariable = false;
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineEditor",
-		meta = (AllowPrivateAccess, EditCondition = "!bIsMainGraph", EditConditionHides))
+		meta = (AllowPrivateAccess, 
+			EditCondition = "!bIsMainGraph && OverridenMachine == NAME_None", 
+			EditConditionHides))
 	TObjectPtr<UStateMachine> MachineArchetype;
 
 	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor",
@@ -64,7 +67,9 @@ private:
 	TSet<TObjectPtr<UDataTable>> EventSets;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
-		meta = (AllowPrivateAccess))
+		meta = (AllowPrivateAccess, 
+			EditCondition = "!bIsMainGraph && OverridenMachine == NAME_None", 
+			EditConditionHides))
 	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
 
 	/* Events which can be emitted to parent machines. */
@@ -75,6 +80,13 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess = "true"))
 	FName Category;
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess = "true",
+			GetOptions="GetOverrideableMachines",
+			EditCondition="!bIsMainGraph",
+			EditConditionHides))
+	FName OverridenMachine;
 
 public:
 
@@ -121,32 +133,32 @@ public:
 	TArray<class UEdStateNode*> GetStates();
 	TArray<class UEdTransition*> GetTransitions();
 	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start);
-	UStateMachineArchetype* GenerateStateMachine(FKismetCompilerContext& Context);
+	UStateMachineArchetype* GenerateStateMachine(FNodeVerificationContext& Context);
 	FName GetStartStateName() const;
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
 	UEdStartStateNode* GetStartNode() const;
 	bool HasEvent(FName EName) const;
-
+	EStateMachineAccessibility GetAccessibility() const { return this->Accessibility; }
 	void Inspect();
-
 	bool IsMainGraph();
 	UStateMachineBlueprint* GetBlueprintOwner() const;
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	UStateMachine* GetMachineArchetype() const { return this->MachineArchetype; }
+	void Delete();
+	void RenameGraph(FName NewName);
+	bool IsVariable() const;
+	FName GetCategoryName() const;
+	const UStateMachine* GetMarchineArchetype() const { return this->MachineArchetype; }
+	FName GetClassPrefix() const;
 
 	#if WITH_EDITOR	
 		virtual void PostEditUndo() override;
 		virtual void PostEditChangeProperty(
 			FPropertyChangedEvent& PropertyChangedEvent) override;
-	#endif
-
-	void Delete();
-	void RenameGraph(FName NewName);
-
-	bool IsVariable() const { return this->bIsVariable; }
-	FName GetCategoryName() const;
-	const UStateMachine* GetMarchineArchetype() const { return this->MachineArchetype; }
+		UFUNCTION()
+		TArray<FString> GetOverrideableMachines() const;
+	#endif	
 
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;

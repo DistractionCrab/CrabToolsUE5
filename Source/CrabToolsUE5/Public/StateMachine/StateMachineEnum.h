@@ -19,5 +19,6 @@ enum class EStateMachineAccessibility : uint8
 
 namespace StateMachineAccessibility
 {
-	bool IsChildVisible(EStateMachineAccessibility Access);
+	CRABTOOLSUE5_API bool IsChildVisible(EStateMachineAccessibility Access);
+	CRABTOOLSUE5_API bool IsPublic(EStateMachineAccessibility Access);
 }

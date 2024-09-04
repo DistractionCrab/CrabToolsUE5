@@ -50,6 +50,9 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual UEdGraphPin* GetInputPin() const { return Pins[0]; }
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
+	/* Returns the name of this state when compiled. */
 	virtual FName GetStateName() const { return NAME_None; }
+	/* Returns the name displayed for graph nodes and UI purposes. */
+	virtual FName GetNodeName() const { return NAME_None; }
 	virtual bool HasEvent(FName EName) { return false; }
 };

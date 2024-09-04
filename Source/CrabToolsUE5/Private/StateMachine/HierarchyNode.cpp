@@ -6,7 +6,7 @@ void UHierarchyNode::Initialize_Implementation()
 {
 	UStateNode::Initialize_Implementation();
 
-	FString Address = this->SlotName.ToString();
+	FString Address = this->Slot.MachineName.ToString();
 	
 	if (auto Machine = Cast<UStateMachine>(this->GetMachine()->GetSubMachine(Address)))
 	{
@@ -93,18 +93,6 @@ FName FHierarchyEventValue::GetEvent() const
 
 // Editor helper functions.
 #if WITH_EDITOR
-TArray<FString> UHierarchyNode::GetMachineOptions() const
-{
-	const UObject* Outer = this;
-
-	if (auto SMLike = UtilsFunctions::GetOuterAs<IStateMachineLike>(Outer))
-	{
-		return SMLike->GetMachineOptions();
-	}
-
-	return { };
-}
-
 void UHierarchyNode::GetEmittedEvents(TSet<FName>& Events) const
 {
 	Super::GetEmittedEvents(Events);
@@ -123,7 +111,7 @@ void UHierarchyNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 	}
 	else if (this->StateMachineSource == EHierarchyInputType::INLINED)
 	{
-		this->SlotName = NAME_None;
+		this->Slot.MachineName = NAME_None;
 	}
 }
 
@@ -134,13 +122,6 @@ TArray<FString> UHierarchyNode::GetSubMachineStateOptions() const
 	if (IsValid(this->SubMachine))
 	{
 		Names.Append(this->SubMachine->GetStateOptions(this));
-	}
-	else
-	{
-		if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
-		{
-			Names.Append(Outer->GetStateOptions(this));
-		}
 	}
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });

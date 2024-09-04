@@ -150,3 +150,26 @@ UStateMachine* UStateMachineBlueprintGeneratedClass::ConstructSubMachine(UStateM
 
 	return Constructed;
 }
+
+EStateMachineAccessibility UStateMachineBlueprintGeneratedClass::GetSubMachineAccessibility(FName Key) const
+{
+	if (auto SMPtr = this->SubStateMachineArchetypes.Find(Key))
+	{
+		if (auto SM = SMPtr->Get())
+		{
+			return SM->Accessibility;
+		}
+		else
+		{
+			return EStateMachineAccessibility::PRIVATE;
+		}
+	}
+	else if (auto Parent = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
+	{
+		return Parent->GetSubMachineAccessibility(Key);
+	}
+	else
+	{
+		return EStateMachineAccessibility::PRIVATE;
+	}
+}

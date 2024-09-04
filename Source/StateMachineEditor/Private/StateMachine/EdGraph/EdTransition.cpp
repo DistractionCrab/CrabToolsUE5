@@ -112,7 +112,7 @@ TArray<FString> UEdTransition::GetDataConditionOptions() const
 	return Cast<UEdStateGraph>(this->GetGraph())->GetDataConditionOptions();
 }
 
-TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FKismetCompilerContext& Context)
+TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FNodeVerificationContext& Context)
 {
 	TMap<FName, FTransitionData> Data;
 
@@ -134,7 +134,7 @@ TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FKismetCompilerCon
 				*EndName.ToString(),
 				*Values.Key.ToString());
 
-			Context.MessageLog.Error(*Msg);
+			Context.Error(Msg, this);
 
 			continue;
 		}

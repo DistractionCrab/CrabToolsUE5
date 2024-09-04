@@ -345,7 +345,7 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 		[
 			SAssignNew(InlineText, SInlineEditableTextBlock)
 				//.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-				.Text(FText::FromName(this->NodeRef->GetStateName()))
+				.Text(FText::FromName(this->NodeRef->GetNodeName()))
 				.OnVerifyTextChanged(this, &FStateItem::OnVerifyNameTextChanged)
 				.OnTextCommitted(this, &FStateItem::OnNameTextCommited)
 				.IsSelected(
@@ -363,7 +363,7 @@ bool FStateItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMes
 {
 	FName NewName(InText.ToString());
 
-	if (NewName == this->NodeRef->GetStateName()) { return true; }
+	if (NewName == this->NodeRef->GetNodeName()) { return true; }
 
 	if (this->NodeRef.IsValid())
 	{
@@ -580,8 +580,8 @@ TSharedRef<ITableRow> FTransitionItem::GetEntryWidget(
 	// Make the text widget.
 	TSharedPtr<SWidget> TextWidget;
 	{
-		FName FromName = this->NodeRef->GetStartNode()->GetStateName();
-		FName ToName = this->NodeRef->GetEndNode()->GetStateName();
+		FName FromName = this->NodeRef->GetStartNode()->GetNodeName();
+		FName ToName = this->NodeRef->GetEndNode()->GetNodeName();
 
 		SAssignNew(TextWidget, SHorizontalBox)
 			+ SHorizontalBox::Slot()

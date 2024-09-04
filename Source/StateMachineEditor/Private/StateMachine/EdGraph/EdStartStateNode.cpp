@@ -6,6 +6,7 @@ UEdStartStateNode::UEdStartStateNode() {
 	this->Description = FText::FromString("Starting point for the State Machine.");
 }
 
-UEdStartStateNode::~UEdStartStateNode() {
+UEdStartStateNode::~UEdStartStateNode()
+{
 
 }

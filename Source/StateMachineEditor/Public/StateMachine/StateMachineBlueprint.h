@@ -86,6 +86,8 @@ public:
 
 	TArray<FString> GetStateClassesOptions() const;
 
+	UStateMachineBlueprintGeneratedClass* GetStateMachineGeneratedClass() const;
+
 private:
 
 	void InspectObject(UObject* Obj);

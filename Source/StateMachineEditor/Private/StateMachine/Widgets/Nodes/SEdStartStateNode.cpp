@@ -26,8 +26,6 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SVerticalBox> NodeBody;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, this->GraphNode);
-	//FText DisplayText = FText::FromName(InNode->GetStateName());
-
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
