@@ -6,7 +6,7 @@ UAnimNotifyWaitNode::UAnimNotifyWaitNode()
 
 }
 
-void UAnimNotifyWaitNode::Initialize_Implementation()
+void UAnimNotifyWaitNode::Initialize_Inner_Implementation()
 {
 
 }

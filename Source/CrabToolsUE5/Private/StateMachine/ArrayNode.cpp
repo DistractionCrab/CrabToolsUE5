@@ -1,20 +1,20 @@
 #include "StateMachine/ArrayNode.h"
 
-void UArrayNode::Initialize_Implementation() {
-	Super::Initialize_Implementation();
+void UArrayNode::Initialize_Inner_Implementation() {
+	Super::Initialize_Inner_Implementation();
 	for (auto& Node : this->Nodes) {
 		if (IsValid(Node))
 		{
-			Node->Initialize_Internal(this->GetMachine());
+			Node->Initialize(this->GetMachine());
 		}
 	}
 }
 
-void UArrayNode::Tick_Implementation(float DeltaTime) {
+void UArrayNode::Tick_Inner_Implementation(float DeltaTime) {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->Tick_Internal(DeltaTime);
+			Node->Tick(DeltaTime);
 			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -22,11 +22,11 @@ void UArrayNode::Tick_Implementation(float DeltaTime) {
 	}
 }
 
-void UArrayNode::Event_Implementation(FName Event) {
+void UArrayNode::Event_Inner_Implementation(FName Event) {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->Event_Internal(Event);
+			Node->Event(Event);
 			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -34,11 +34,11 @@ void UArrayNode::Event_Implementation(FName Event) {
 	}
 }
 
-void UArrayNode::EventWithData_Implementation(FName Event, UObject* Data) {
+void UArrayNode::EventWithData_Inner_Implementation(FName Event, UObject* Data) {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->EventWithData_Internal(Event, Data);
+			Node->EventWithData(Event, Data);
 			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -46,11 +46,11 @@ void UArrayNode::EventWithData_Implementation(FName Event, UObject* Data) {
 	}
 }
 
-void UArrayNode::Enter_Implementation() {
+void UArrayNode::Enter_Inner_Implementation() {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->Enter_Internal();
+			Node->Enter();
 			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -58,11 +58,11 @@ void UArrayNode::Enter_Implementation() {
 	}
 }
 
-void UArrayNode::EnterWithData_Implementation(UObject* Data) {
+void UArrayNode::EnterWithData_Inner_Implementation(UObject* Data) {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->EnterWithData_Internal(Data);
+			Node->EnterWithData(Data);
 			if (!(this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -70,11 +70,11 @@ void UArrayNode::EnterWithData_Implementation(UObject* Data) {
 	}
 }
 
-void UArrayNode::Exit_Implementation() {
+void UArrayNode::Exit_Inner_Implementation() {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->Exit_Internal();	
+			Node->Exit();	
 			if (!(!this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -82,11 +82,11 @@ void UArrayNode::Exit_Implementation() {
 	}
 }
 
-void UArrayNode::ExitWithData_Implementation(UObject* Data) {
+void UArrayNode::ExitWithData_Inner_Implementation(UObject* Data) {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes) {
 		if (Node) {
-			Node->ExitWithData_Internal(Data);
+			Node->ExitWithData(Data);
 			if (!(!this->Active() && this->GetMachine()->IsInState(TID))) {
 				return;
 			}
@@ -94,14 +94,14 @@ void UArrayNode::ExitWithData_Implementation(UObject* Data) {
 	}
 }
 
-void UArrayNode::PostTransition_Implementation()
+void UArrayNode::PostTransition_Inner_Implementation()
 {
 	int TID = this->GetMachine()->GetStateID();
 	for (const auto& Node : this->Nodes)
 	{
 		if (Node)
 		{
-			Node->PostTransition_Internal();
+			Node->PostTransition();
 			if (!(!this->Active() && this->GetMachine()->IsInState(TID)))
 			{
 				return;

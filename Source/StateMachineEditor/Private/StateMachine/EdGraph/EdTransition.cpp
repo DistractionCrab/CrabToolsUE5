@@ -90,8 +90,6 @@ UEdBaseStateNode* UEdTransition::GetEndNode() const
 	}
 }
 
-
-
 TArray<FString> UEdTransition::GetEventOptions() const
 {
 	if (auto StateNode = Cast<UEdStateNode>(this->GetStartNode()))
@@ -100,16 +98,6 @@ TArray<FString> UEdTransition::GetEventOptions() const
 	}
 
 	return Cast<UEdStateGraph>(this->GetGraph())->GetEventOptions();
-}
-
-TArray<FString> UEdTransition::GetConditionOptions() const
-{
-	return Cast<UEdStateGraph>(this->GetGraph())->GetConditionOptions();
-}
-
-TArray<FString> UEdTransition::GetDataConditionOptions() const
-{
-	return Cast<UEdStateGraph>(this->GetGraph())->GetDataConditionOptions();
 }
 
 TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FNodeVerificationContext& Context)
@@ -121,8 +109,8 @@ TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FNodeVerificationC
 		FTransitionData DataValue
 		{
 			this->GetEndNode()->GetStateName(),
-			Values.Value.Condition,
-			Values.Value.DataCondition,
+			DuplicateObject(Values.Value.Condition, Context.GetOuter()),
+			DuplicateObject(Values.Value.DataCondition, Context.GetOuter()),
 		};
 
 		if (!this->GetStartNode()->HasEvent(Values.Key))

@@ -1,11 +1,11 @@
 #include "StateMachine/Input/MovementStateNode.h"
 
-void UMovementStateNode::Tick_Implementation(float DeltaTime) {
+void UMovementStateNode::Tick_Inner_Implementation(float DeltaTime) {
 	this->ApplyMovement();
 }
 
-void UMovementStateNode::Initialize_Implementation() {
-	Super::Initialize_Implementation();
+void UMovementStateNode::Initialize_Inner_Implementation() {
+	Super::Initialize_Inner_Implementation();
 	auto MachineOwner = this->GetMachine();
 	// If the owning actor has a perspective manager, store it for simple use.
 	auto Persp = MachineOwner->GetOwner()->FindComponentByClass<UPerspectiveManager>();

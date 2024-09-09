@@ -19,7 +19,7 @@ class CRABTOOLSUE5_API UAIBaseNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 
 	/* Return the AIController that was retrieved by the Pawn onwer of the state machine. */
 	FORCEINLINE AAIController* GetAIController() { return this->AICtrl.Get(); }

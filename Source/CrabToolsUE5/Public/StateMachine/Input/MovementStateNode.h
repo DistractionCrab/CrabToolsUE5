@@ -25,8 +25,8 @@ class CRABTOOLSUE5_API UMovementStateNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation() override;
-	virtual void Tick_Implementation(float DeltaTime) override;
+	virtual void Initialize_Inner_Implementation() override;
+	virtual void Tick_Inner_Implementation(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, Category = "ProcStateMachine")
 	void UpdateInputAxis(FVector2D FVec);

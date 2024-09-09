@@ -35,14 +35,6 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<class UEdStateGraph>> SubGraphs;
 
-	UPROPERTY(EditDefaultsOnly, Category="StateMachineGraph",
-		meta=(AllowPrivateAccess=true))
-	TMap<FName, FStateClassSetRow> StateClasses;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineGraph",
-		meta = (AllowPrivateAccess = true, RowType="FStateClassSetRow"))
-	TSet<TObjectPtr<class UDataTable>> StateClassSets;
-
 public:
 
 	/* Editor Events when this object is changed. */
@@ -54,15 +46,8 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
 	void GetEventEntries(TMap<FName, FEventSetRow>& Entries);
 
-	/* Stores state class names mapped to their descriptions from this SMBP. */
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
-	void GetStateClassEntries(TMap<FName, FStateClassSetRow>& Entries);
-
 	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
 	void AddEventsToDataTable(UDataTable* EventSet, bool bClearEvents=false);
-
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "StateMachine")
-	void AddStateClassesToDataTable(UDataTable* EventSet, bool bClearEvents = false);
 
 	void SelectGraph(UEdStateGraph* Graph);
 	UClass* GetBlueprintClass() const override;
@@ -82,9 +67,6 @@ public:
 	// IStateMachineLike Interface
 	virtual TArray<FString> GetMachineOptions() const override;
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
-	virtual FProperty* GetStateMachineProperty(FString& Address) const override { return nullptr; }
-
-	TArray<FString> GetStateClassesOptions() const;
 
 	UStateMachineBlueprintGeneratedClass* GetStateMachineGeneratedClass() const;
 

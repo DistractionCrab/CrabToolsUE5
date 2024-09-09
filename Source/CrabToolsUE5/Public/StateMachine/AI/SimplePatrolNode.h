@@ -4,9 +4,8 @@
 #include "StateMachine/AI/BaseNode.h"
 #include "Actors/PatrolPath.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "StateMachine/DataStructures.h"
 #include "SimplePatrolNode.generated.h"
-
-class UPathFollowingComponent;
 
 /**
  * Simple node for making an entity follow a PatrolPath actor's path.
@@ -26,22 +25,22 @@ class CRABTOOLSUE5_API UAISimplePatrolNode : public UAIBaseNode
 	*/
 	int RecurseGuard = 0;
 
+	/* Name of the property to get a reference to a Patrolpath. */
 	UPROPERTY(EditDefaultsOnly, Category="StateMachine|AI",
 		meta=(GetOptions="GetPatrolOptions"))
-	FName PatrolPathProperty;
-	FObjectProperty* PatrolProperty;
+	FName PropertyName;
+	FSMPropertyReference PropertyRef;
 
 	/* Previous states which would not reset the patrolling state. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|AI",
-		meta = (GetOptions = "GetResetStateOptions"))
-	TSet<FName> NonResetStates;
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|AI", meta=(ShowOnlyInnerProperties))
+	TSet<FIncomingStateSlot> NonResetStates;
 
 public:
 	UAISimplePatrolNode();
 
-	virtual void Enter_Implementation() override;
-	virtual void Exit_Implementation() override;
-	virtual void Initialize_Implementation() override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void Exit_Inner_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 	
 	UFUNCTION()
 	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
@@ -61,4 +60,6 @@ private:
 	void MoveToNext();
 	void BindCallback();
 	void UnbindCallback();
+
+	APatrolPath* GetPatrolPath() const;
 };

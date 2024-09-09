@@ -32,7 +32,6 @@ void UEdBaseStateNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 void UEdBaseNode::ClearEvents()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Clearing events in BaseNode."));
 	this->Events.OnNameChanged.Clear();
 	this->Events.OnNodeDeleted.Clear();
 }

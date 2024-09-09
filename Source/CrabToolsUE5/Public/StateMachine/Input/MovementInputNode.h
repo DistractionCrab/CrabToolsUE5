@@ -25,7 +25,7 @@ public:
 
 	UMovementInputNode();
 
-	virtual void Initialize_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 	virtual void TriggerCallback_Implementation(const FInputActionValue& Value);
 	
 

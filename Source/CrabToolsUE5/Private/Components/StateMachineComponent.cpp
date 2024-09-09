@@ -25,7 +25,7 @@ void UStateMachineComponent::BeginPlay()
 		Callback.BindUFunction(this, "StateChanged");
 
 		this->Machine->OnStateChanged.Add(Callback);
-		this->Machine->Initialize_Internal(this->GetOwner());
+		this->Machine->Initialize(this->GetOwner());
 	}
 }
 

@@ -4,32 +4,40 @@
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
 #include "StateMachine/AI/Events.h"
+#include "StateMachine/Logging.h"
 
 #define LOCTEXT_NAMESPACE "AISimplePatrolNode"
 
-UAISimplePatrolNode::UAISimplePatrolNode(): PatrolProperty(nullptr)
+UAISimplePatrolNode::UAISimplePatrolNode()
 {
 	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
 	this->AddEmittedEvent(AI_Events::AI_LOST);
 }
 
-void UAISimplePatrolNode::Initialize_Implementation()
+void UAISimplePatrolNode::Initialize_Inner_Implementation()
 {
-	Super::Initialize_Implementation();
+	Super::Initialize_Inner_Implementation();
 
-	FString Address = this->PatrolPathProperty.ToString();
-
-	if (auto Prop = this->GetMachine()->GetStateMachineProperty(Address))
-	{
-		this->PatrolProperty = (FObjectProperty*) Prop;
-	}
+	FString Address = this->PropertyName.ToString();
+	FSMPropertySearch Params = FSMPropertySearch::ObjectProperty(APatrolPath::StaticClass());
+	this->PropertyRef = Params.GetProperty<FObjectProperty>(this->GetMachine(), Address);
 
 	this->PatrolState.Reset();
 }
 
-void UAISimplePatrolNode::Enter_Implementation()
+void UAISimplePatrolNode::Enter_Inner_Implementation()
 {
-	if (!this->NonResetStates.Contains(this->GetMachine()->GetPreviousState()))
+	bool bDoReset = true;
+
+	for (auto& IncState : this->NonResetStates)
+	{
+		if (IncState.StateName == this->GetMachine()->GetPreviousState())
+		{
+			bDoReset = false;
+		}
+	}
+
+	if (bDoReset)
 	{
 		this->PatrolState.Reset();
 	}
@@ -38,7 +46,7 @@ void UAISimplePatrolNode::Enter_Implementation()
 	this->MoveToNext();
 }
 
-void UAISimplePatrolNode::Exit_Implementation()
+void UAISimplePatrolNode::Exit_Inner_Implementation()
 {
 	this->UnbindCallback();
 
@@ -68,15 +76,14 @@ void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 
 void UAISimplePatrolNode::MoveToNext()
 {
-	if (this->PatrolProperty)
+	if (auto PatrolPath = this->GetPatrolPath()) 
 	{
-		auto PatrolPath = *this->PatrolProperty->ContainerPtrToValuePtr<APatrolPath*>(this->GetMachine());		
-
 		if (PatrolPath == nullptr || !IsValid(PatrolPath)) { return; }
 
 		if (auto Ctrl = this->GetAIController())
 		{
 			FVector Goal = this->PatrolState.GetCurrentTarget(PatrolPath);
+
 			this->RecurseGuard += 1;
 
 			if (this->RecurseGuard > PatrolPath->Num())
@@ -90,6 +97,11 @@ void UAISimplePatrolNode::MoveToNext()
 			this->RecurseGuard = 0;
 		}
 	}
+}
+
+APatrolPath* UAISimplePatrolNode::GetPatrolPath() const
+{
+	return this->PropertyRef.GetValue<APatrolPath>();
 }
 
 void UAISimplePatrolNode::BindCallback()
@@ -121,10 +133,7 @@ TArray<FString> UAISimplePatrolNode::GetPatrolOptions() const
 
 	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
 	{
-		FSMPropertySearch Params;
-
-		Params.FClass = FObjectProperty::StaticClass();
-		Params.Class = APatrolPath::StaticClass();
+		FSMPropertySearch Params = FSMPropertySearch::ObjectProperty(APatrolPath::StaticClass());
 
 		Props.Append(Outer->GetPropertiesOptions(Params));
 	}
@@ -151,20 +160,6 @@ TArray<FString> UAISimplePatrolNode::GetResetStateOptions() const
 void UAISimplePatrolNode::PostLinkerChange()
 {
 	Super::PostLinkerChange();
-
-	if (this->PatrolPathProperty != NAME_None)
-	{
-		// Otherwise, make sure the property exists, and is of the correct type.
-		if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
-		{
-			FString Address = this->PatrolPathProperty.ToString();
-
-			if (Outer->GetStateMachineProperty(Address))
-			{
-				return;
-			}
-		}
-	}
 }
 
 #endif

@@ -2,16 +2,16 @@
 #include "StateMachine/IStateMachineLike.h"
 #include "Utils/UtilsLibrary.h"
 
-void UHierarchyNode::Initialize_Implementation()
+void UHierarchyNode::Initialize_Inner_Implementation()
 {
-	UStateNode::Initialize_Implementation();
+	UStateNode::Initialize_Inner_Implementation();
 
 	FString Address = this->Slot.MachineName.ToString();
 	
 	if (auto Machine = Cast<UStateMachine>(this->GetMachine()->GetSubMachine(Address)))
 	{
 		this->SubMachine = Machine;
-		this->SubMachine->Initialize_Internal(this->GetMachine()->GetOwner());
+		this->SubMachine->Initialize(this->GetMachine()->GetOwner());
 	}
 }
 
@@ -27,14 +27,14 @@ void UHierarchyNode::PerformExit()
 	}
 }
 
-void UHierarchyNode::Event_Implementation(FName EName){
+void UHierarchyNode::Event_Inner_Implementation(FName EName){
 	if (this->SubMachine)
 	{
 		this->SubMachine->SendEvent(EName);
 	}
 }
 
-void UHierarchyNode::EventWithData_Implementation(FName EName, UObject* Data)
+void UHierarchyNode::EventWithData_Inner_Implementation(FName EName, UObject* Data)
 {
 	if (this->SubMachine)
 	{
@@ -42,12 +42,12 @@ void UHierarchyNode::EventWithData_Implementation(FName EName, UObject* Data)
 	}
 }
 
-void UHierarchyNode::PostTransition_Implementation()
+void UHierarchyNode::PostTransition_Inner_Implementation()
 {
 	this->PerformExit();
 }
 
-void UHierarchyNode::Enter_Implementation() {
+void UHierarchyNode::Enter_Inner_Implementation() {
 	if (this->SubMachine) {
 		this->SubMachine->SetActive(true);
 		if (this->ResetOnEnter)
@@ -61,14 +61,14 @@ void UHierarchyNode::Enter_Implementation() {
 	}
 }
 
-void UHierarchyNode::Tick_Implementation(float DeltaTime) {
+void UHierarchyNode::Tick_Inner_Implementation(float DeltaTime) {
 	if (this->SubMachine) {
 		this->SubMachine->Tick(DeltaTime);
 		this->PerformExit();
 	}
 }
 
-void UHierarchyNode::Exit_Implementation()
+void UHierarchyNode::Exit_Inner_Implementation()
 {
 	if (this->SubMachine)
 	{

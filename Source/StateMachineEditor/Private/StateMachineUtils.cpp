@@ -6,8 +6,3 @@ void UStateMachineUtils::AddEventsToEventSet(UStateMachineBlueprint* BP, UDataTa
 {
 	BP->AddEventsToDataTable(EventSet, bClearEntries);
 }
-
-void UStateMachineUtils::AddStateClassesToSet(UStateMachineBlueprint* BP, UDataTable* EventSet, bool bClearEntries)
-{
-	BP->AddStateClassesToDataTable(EventSet, bClearEntries);
-}

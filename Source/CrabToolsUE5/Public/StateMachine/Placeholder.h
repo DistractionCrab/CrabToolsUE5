@@ -23,14 +23,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE FName GetSlotName() { return this->SlotName; }
 
-	virtual void Initialize_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 
-	virtual void Tick_Implementation(float DeltaTime) override;
-	virtual void Event_Implementation(FName Event) override;
-	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
-	virtual void Enter_Implementation() override;
-	virtual void EnterWithData_Implementation(UObject* Data) override;
-	virtual void Exit_Implementation() override;
-	virtual void ExitWithData_Implementation(UObject* Data) override;
-	virtual void PostTransition_Implementation() override;
+	virtual void Tick_Inner_Implementation(float DeltaTime) override;
+	virtual void Event_Inner_Implementation(FName Event) override;
+	virtual void EventWithData_Inner_Implementation(FName EName, UObject* Data) override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
+	virtual void Exit_Inner_Implementation() override;
+	virtual void ExitWithData_Inner_Implementation(UObject* Data) override;
+	virtual void PostTransition_Inner_Implementation() override;
 };

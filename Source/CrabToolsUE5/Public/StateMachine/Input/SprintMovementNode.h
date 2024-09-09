@@ -38,7 +38,7 @@ class CRABTOOLSUE5_API USprintMovementNode : public UMovementInputNode
 
 public:
 
-	virtual void Initialize_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 	virtual void ApplyMovement_Implementation(FVector2D InputAxis) override;
 
 	void ApplySprint(bool DoSprint) { this-> bForceSprint = DoSprint; }

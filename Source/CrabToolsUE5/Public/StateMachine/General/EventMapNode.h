@@ -29,9 +29,9 @@ private:
 
 public:
 
-	virtual void Event_Implementation(FName Event) override;
-	virtual void EventWithData_Implementation(FName Event, UObject* Data) override;
-	virtual void Initialize_Implementation() override;
+	virtual void Event_Inner_Implementation(FName Event) override;
+	virtual void EventWithData_Inner_Implementation(FName Event, UObject* Data) override;
+	virtual void Initialize_Inner_Implementation() override;
 
 private:
 

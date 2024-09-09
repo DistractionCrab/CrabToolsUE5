@@ -103,7 +103,7 @@ FName UEdStateGraph::GetClassPrefix() const
 	{
 		FString Total;
 
-		Total.Append(this->MachineArchetype->GetClass()->GetFName().ToString());
+		Total.Append(this->GetBlueprintOwner()->GeneratedClass->GetName());
 		Total.Append("::");
 		Total.Append(this->GetName());
 
@@ -327,10 +327,11 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 				StateMachine->AddTransition(State->GetStateName(), Values.Key, Values.Value);
 			}
 		}
-	}	
+	}
 
-	
 	StateMachine->StartState = this->GetStartStateName();
+
+	UE_LOG(LogTemp, Warning, TEXT("Start state on compile found to be: %s "), *StateMachine->StartState.ToString());
 
 	return StateMachine;
 }

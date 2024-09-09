@@ -30,21 +30,21 @@ class CRABTOOLSUE5_API UAISimpleMoveToNode : public UAIBaseNode
 
 private:
 
+	/* The name of the property to get FMovetoData from. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine|AI",
 		meta = (AllowPrivateAccess = true, GetOptions = "GetPropertyOptions"))
-	FName DestinationData;
-
-	FStructProperty* DataPropRef;
+	FName PropertyName;
+	FSMPropertyReference PropertyRef;
 
 public:
 
 	UAISimpleMoveToNode();
 
-	virtual void EnterWithData_Implementation(UObject* Data) override;
-	virtual void Enter_Implementation() override;
-	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
-	virtual void Exit_Implementation() override;
-	virtual void Initialize_Implementation() override;
+	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void EventWithData_Inner_Implementation(FName EName, UObject* Data) override;
+	virtual void Exit_Inner_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 	
 	UFUNCTION()
 	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);

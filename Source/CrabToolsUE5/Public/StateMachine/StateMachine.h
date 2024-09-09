@@ -78,13 +78,19 @@ struct FTransitionData
 public:
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "StateOptions"))
 	FName Destination;
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionOptions"))
-	FName Condition = "TrueCondition";
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionDataOptions"))
-	FName DataCondition = "TrueDataCondition";
+	//UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionOptions"))
+	//FName Condition = "TrueCondition";
+	//UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionDataOptions"))
+	//FName DataCondition = "TrueDataCondition";
 	
-	FTransitionDelegate ConditionCallback;
-	FTransitionDataDelegate DataConditionCallback;
+	//FTransitionDelegate ConditionCallback;
+	//FTransitionDataDelegate DataConditionCallback;
+
+	UPROPERTY(EditAnywhere, Category = "StateMachine")
+	TObjectPtr<UTransitionCondition> Condition;
+
+	UPROPERTY(EditAnywhere, Category = "StateMachine")
+	TObjectPtr<UTransitionDataCondition> DataCondition;
 };
 
 USTRUCT(BlueprintType, meta = (DisableSplitPin))
@@ -104,46 +110,6 @@ public:
 
 	void Activate();
 	void ActivateWithData(UObject* Data);
-};
-
-/* Structure used to store an event to be used by a node. */
-USTRUCT(BlueprintType)
-struct FEventSlot
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	UPROPERTY(EditAnywhere, Category="StateMachine|Events",
-		meta=(GetOptions="GetEventOptions"))
-	FName EventName;
-};
-
-/* Structure used to store a reference to a submachine. */
-USTRUCT(BlueprintType)
-struct FSubMachineSlot
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-
-	UPROPERTY(EditAnywhere, Category = "StateMachine",
-		meta = (GetOptions = "GetMachineOptions"))
-	FName MachineName;
-};
-
-
-USTRUCT(BlueprintType)
-struct FAliasData
-{
-	GENERATED_USTRUCT_BODY()
-public:
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "StateOptions"))
-	TSet<FName> States;
-
-	// Mapping of EventName -> TransitionData.
-	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetValueOptions = "StateOptions"))
-	TMap<FName, FTransitionData> Transitions;
 };
 
 UCLASS(Blueprintable, CollapseCategories, Category = "StateMachine")
@@ -178,7 +144,53 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE UStateNode* GetNode() const { return this->Node; }
-	const TMap<FName, FTransitionData>& GetTransitions() const { return Transitions; }
+	FORCEINLINE const TMap<FName, FTransitionData>& GetTransitions() const { return Transitions; }
+};
+
+UCLASS(BlueprintType, Abstract, Category = "StateMachine")
+class CRABTOOLSUE5_API UTransitionCondition : public UObject
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	TObjectPtr<UStateMachine> Owner;
+
+public:
+
+	void Initialize(UStateMachine* NewOwner);
+	virtual bool Check() const { return false; }
+
+	UFUNCTION(BlueprintCallable, Category="StateMachine|Transition")
+	FORCEINLINE UStateMachine* GetOwner() const { return this->Owner; }
+
+protected:
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine|Transition")
+	void Initialize_Inner();
+	virtual void Initialize_Inner_Implementation() {}
+};
+
+UCLASS(BlueprintType, Abstract, Category = "StateMachine")
+class CRABTOOLSUE5_API UTransitionDataCondition : public UObject
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	TObjectPtr<UStateMachine> Owner;
+
+public:
+
+	void Initialize(UStateMachine* Owner);
+	virtual bool Check(UObject* Data) const { return false; }
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine|Transition")
+	FORCEINLINE UStateMachine* GetOwner() const { return this->Owner; }
+
+protected:
+
+	UFUNCTION(BlueprintNativeEvent, Category="StateMachine|Transition")
+	void Initialize_Inner();
+	virtual void Initialize_Inner_Implementation() {}
 };
 
 /**
@@ -196,7 +208,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 		meta=(AllowPrivateAccess=true))
 	bool bRequiresTick = false;
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TObjectPtr<UStateMachine> Owner;
 	bool bActive = false;
 
@@ -215,7 +227,7 @@ public:
 	 * manually initialize a state machine.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void Initialize_Internal(UStateMachine* POwner);
+	void Initialize(UStateMachine* POwner);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	virtual void SetOwner(UStateMachine* Parent);
@@ -226,10 +238,10 @@ public:
 	AActor* GetOwner();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
-	UStateMachine* GetMachine();
+	UStateMachine* GetMachine() const;
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
-	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result);
+	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void EmitEvent(FName EName);
@@ -253,14 +265,14 @@ public:
 		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 	#endif
 
-	void Event_Internal(FName EName);
-	void EventWithData_Internal(FName EName, UObject* Data);
-	void Enter_Internal();
-	void EnterWithData_Internal(UObject* Data);
-	void Tick_Internal(float DeltaTime);
-	void Exit_Internal();
-	void ExitWithData_Internal(UObject* Data);
-	void PostTransition_Internal();
+	void Event(FName EName);
+	void EventWithData(FName EName, UObject* Data);
+	void Enter();
+	void EnterWithData(UObject* Data);
+	void Tick(float DeltaTime);
+	void Exit();
+	void ExitWithData(UObject* Data);
+	void PostTransition();
 	void SetActive(bool bNewActive) { this->bActive = bNewActive; }
 
 	/* Runs a verification check on the node. Returns true if no error, false if an error happened. */
@@ -270,48 +282,43 @@ protected:
 
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void Initialize();
-	virtual void Initialize_Implementation();
+	void Initialize_Inner();
+	virtual void Initialize_Inner_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void Event(FName EName);	
-	virtual void Event_Implementation(FName EName);
+	void Event_Inner(FName EName);	
+	virtual void Event_Inner_Implementation(FName EName);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void EventWithData(FName EName, UObject* Data);
-	
-	virtual void EventWithData_Implementation(FName EName, UObject* Data);
-
-	/* Call the _Internal Version. */
-	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void Enter();	
-	virtual void Enter_Implementation() {}
+	void EventWithData_Inner(FName EName, UObject* Data);
+	virtual void EventWithData_Inner_Implementation(FName EName, UObject* Data);
 
 	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void EnterWithData(UObject* Data);	
-	virtual void EnterWithData_Implementation(UObject* Data);
+	void Enter_Inner();	
+	virtual void Enter_Inner_Implementation() {}
 
 	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void Tick(float DeltaTime);	
-	virtual void Tick_Implementation(float DeltaTime) {}
+	void EnterWithData_Inner(UObject* Data);	
+	virtual void EnterWithData_Inner_Implementation(UObject* Data);
 
-	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void Exit();
-	/* Call the _Internal Version. */
-	virtual void Exit_Implementation() {}
+	void Tick_Inner(float DeltaTime);	
+	virtual void Tick_Inner_Implementation(float DeltaTime) {}
 
-	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void PostTransition();
-	virtual void PostTransition_Implementation() {}
+	void Exit_Inner();
+	virtual void Exit_Inner_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	void PostTransition_Inner();
+	virtual void PostTransition_Inner_Implementation() {}
 
 	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
-	void ExitWithData(UObject* Data);	
-	virtual void ExitWithData_Implementation(UObject* Data);
+	void ExitWithData_Inner(UObject* Data);	
+	virtual void ExitWithData_Inner_Implementation(UObject* Data);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void RenameEvent(FName Old, FName New);
@@ -327,9 +334,16 @@ protected:
 
 		UFUNCTION()
 		TArray<FString> GetMachineOptions() const;
-	#endif
 
-protected:
+		UFUNCTION()
+		TArray<FString> GetStateOptions() const;
+
+		UFUNCTION()
+		TArray<FString> GetIncomingStateOptions() const;
+
+		UFUNCTION()
+		TArray<FString> GetOutgoingStateOptions() const;
+	#endif
 
 	void AddEmittedEvent(FName Event)
 	{
@@ -378,34 +392,34 @@ private:
 	bool bIsTransitioning = false;
 
 	/* The Graph of the state machine. */
-	UPROPERTY()
+	UPROPERTY(meta=(IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UState>> Graph;
 
 	/* Nodes to be substituted into the graph later. */
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true"))
+		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateNode>> SharedNodes;
 
 	/* State Machines to be substituted into the graph later. */
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true"))
+		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateNode>> SharedMachines;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true"))
+		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	FName CurrentStateName;
 
 	/* How many previous states to remember. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true",
+		meta = (AllowPrivateAccess, IgnorePropertySearch,
 			ClampMin = "2", ClampMax = "1000", UIMin = "2", UIMax = "1000"))
 	int MaxStackSize = 5;
 
-	UPROPERTY()
+	UPROPERTY(meta=(IgnorePropertySearch))
 	TObjectPtr<AActor> Owner;
 
 	/* Map of SubMachines. Do not change the root value of the SM, only its subproperties. */
-	UPROPERTY()
+	UPROPERTY(meta=(IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 	/* Reference to a parent which uses this state machine as a sub machine. */
@@ -417,13 +431,13 @@ private:
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(meta=(IgnorePropertySearch))
 	FName StartState;
 
-	UPROPERTY(BlueprintAssignable, Category="StateMachine")
+	UPROPERTY(BlueprintAssignable, Category="StateMachine", meta = (IgnorePropertySearch))
 	FStateChangedEvent OnStateChanged;
 
-	UPROPERTY(BlueprintAssignable, Category = "StateMachine")
+	UPROPERTY(BlueprintAssignable, Category = "StateMachine", meta = (IgnorePropertySearch))
 	FTransitionFinishedEvent OnTransitionFinished;
 
 public:
@@ -435,7 +449,7 @@ public:
 	 * state machine.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	void Initialize_Internal(AActor* POwner);
+	void Initialize(AActor* POwner);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void SetActive(bool bNewActive);
@@ -478,11 +492,8 @@ public:
 	UFUNCTION()
 	TArray<FString> ConditionDataOptions();
 
-	
-
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	FName GetPreviousState() const;
-
 
 	/* Condition function that always returns true. */
 	UFUNCTION(meta = (IsDefaultCondition))
@@ -511,9 +522,9 @@ public:
 	TSet<FName> GetEvents() const;
 	TMap<FName, TObjectPtr<UStateNode>> GetSharedNodes() { return this->SharedNodes; }
 
-	// Procedural constructions functions.
+	// Procedural construction functions.
 	void AddState(FName StateName);
-	void AddTransition(FName State, FName Event, FName Destination, FName Condition, FName DataCondition);
+	void AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition);
 	void AddTransition(FName State, FName Event, FTransitionData Data);
 	void ClearStates() { this->Graph.Empty(); }
 
@@ -534,17 +545,22 @@ public:
 	// IStateMachineLike interface
 	virtual TArray<FString> GetStateOptions(const UObject* Asker) const override;
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
-	virtual FProperty* GetStateMachineProperty(FString& Address) const override;
+	virtual FSMPropertyReference GetStateMachineProperty(FString& Address) const override;
 	virtual IStateMachineLike* GetSubMachine(FString& Address) const override;
 
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	bool IsTransitioning() const { return this->bIsTransitioning; }
 
+	/* Used to bind transition delegates. */
+	void BindConditionAt(FString& Address, FTransitionDelegate& Condition);
+	/* Used to bind transition delegates. */
+	void BindDataConditionAt(FString& Address, FTransitionDataDelegate& Condition);
+
 protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
-	void Initialize();
-	virtual void Initialize_Implementation();
+	void Initialize_Inner();
+	virtual void Initialize_Inner_Implementation();
 
 private:
 
@@ -555,7 +571,4 @@ private:
 	void UpdateState(FName Name);
 	void UpdateStateWithData(FName Name, UObject* Data);	
 	void InitSubMachines();
-	void BindCondition(FTransitionData& Data);
-	void BindConditionAt(FString& Address, FTransitionData& Data);
-	void BindDataConditionAt(FString& Address, FTransitionData& Data);
 };

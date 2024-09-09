@@ -1,7 +1,7 @@
 #include "StateMachine/General/EventMapNode.h"
 #include "Utils/UtilsLibrary.h"
 
-void UEventMapNode::Event_Implementation(FName Event)
+void UEventMapNode::Event_Inner_Implementation(FName Event)
 {
 	if (this->EventMapInternal.Contains(Event))
 	{
@@ -14,7 +14,7 @@ void UEventMapNode::Event_Implementation(FName Event)
 	}
 }
 
-void UEventMapNode::EventWithData_Implementation(FName Event, UObject* Data)
+void UEventMapNode::EventWithData_Inner_Implementation(FName Event, UObject* Data)
 {
 	if (this->EventWithDataMapInternal.Contains(Event))
 	{
@@ -27,7 +27,7 @@ void UEventMapNode::EventWithData_Implementation(FName Event, UObject* Data)
 	}
 }
 
-void UEventMapNode::Initialize_Implementation() 
+void UEventMapNode::Initialize_Inner_Implementation() 
 {
 	/*
 	for (const auto& Pair : this->EventMap) 

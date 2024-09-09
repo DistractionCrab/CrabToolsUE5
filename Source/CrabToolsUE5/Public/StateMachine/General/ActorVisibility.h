@@ -12,12 +12,11 @@ class CRABTOOLSUE5_API UActorVisibilityNode : public UStateNode
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_DELEGATE(FEventHandler);
-	DECLARE_DYNAMIC_DELEGATE_OneParam(FEventWithDataHandler, UObject*, Data);
-
+	/* The name of the property to retrieve the actor from. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", 
-		meta = (AllowPrivateAccess, GetKeyOptions="GetPropertyOptions"))
-	FName ActorProperty;
+		meta = (AllowPrivateAccess, GetOptions="GetPropertyOptions"))
+	FName PropertyName;
+	FSMPropertyReference PropertyRef;
 
 	/* Whether to show or hide the actor on entering this node. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess))
@@ -29,12 +28,14 @@ class CRABTOOLSUE5_API UActorVisibilityNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation() override;
-	virtual void Enter_Implementation() override;
-	virtual void Exit_Implementation() override;	
+	virtual void Initialize_Inner_Implementation() override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void Exit_Inner_Implementation() override;	
 
 private:
 
 	UFUNCTION()
 	TArray<FString> GetPropertyOptions() const;
+
+	AActor* GetActor() const;
 };

@@ -55,12 +55,11 @@ private:
 
 	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineEditor",
 		meta = (AllowPrivateAccess, 
-			EditCondition = "!bIsMainGraph && OverridenMachine == NAME_None", 
+			EditCondition = "!bIsMainGraph",
 			EditConditionHides))
 	TObjectPtr<UStateMachine> MachineArchetype;
 
-	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor",
-		meta=(ShowInnerProperties, ShowOnlyInnerProperties))
+	UPROPERTY()
 	TArray<TObjectPtr<UEdEventObject>> EventObjects;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Events", meta=(RowType = "FEventSetRow"))
@@ -68,7 +67,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
 		meta = (AllowPrivateAccess, 
-			EditCondition = "!bIsMainGraph && OverridenMachine == NAME_None", 
+			EditCondition = "!bIsMainGraph", 
 			EditConditionHides))
 	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
 
@@ -167,5 +166,5 @@ public:
 	virtual TArray<FString> GetConditionOptions() const override;
 	virtual TArray<FString> GetDataConditionOptions() const override;
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
-	virtual FProperty* GetStateMachineProperty(FString& Address) const override { return nullptr; }
+	//virtual FProperty* GetStateMachineProperty(FString& Address) const override { return nullptr; }
 };

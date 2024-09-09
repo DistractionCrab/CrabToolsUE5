@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/StateMachine.h"
+#include "StateMachine/DataStructures.h"
 #include "HierarchyNode.generated.h"
 
 UENUM(BlueprintType)
@@ -25,7 +26,6 @@ struct FHierarchyEventValue
 	UPROPERTY(EditDefaultsOnly, Category="StateMachine|Events",
 		meta=(EditCondition="EventType == EHierarchyInputType::INLINED", EditConditionHides))
 	FName InlinedEvent;
-
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|Events",
 		meta = (EditCondition = "EventType == EHierarchyInputType::DEFINED", EditConditionHides,
@@ -83,13 +83,13 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 
 public:
 
-	virtual void Initialize_Implementation() override;
-	virtual void Event_Implementation(FName EName) override;
-	virtual void EventWithData_Implementation(FName EName, UObject* Data) override;
-	virtual void Enter_Implementation() override;
-	virtual void Tick_Implementation(float DeltaTime) override;
-	virtual void Exit_Implementation() override;
-	virtual void PostTransition_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
+	virtual void Event_Inner_Implementation(FName EName) override;
+	virtual void EventWithData_Inner_Implementation(FName EName, UObject* Data) override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void Tick_Inner_Implementation(float DeltaTime) override;
+	virtual void Exit_Inner_Implementation() override;
+	virtual void PostTransition_Inner_Implementation() override;
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

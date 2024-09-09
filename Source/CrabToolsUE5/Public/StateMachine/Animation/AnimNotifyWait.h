@@ -24,7 +24,7 @@ public:
 
 	UAnimNotifyWaitNode();
 
-	virtual void Initialize_Implementation() override;
+	virtual void Initialize_Inner_Implementation() override;
 
 private:
 	UFUNCTION()

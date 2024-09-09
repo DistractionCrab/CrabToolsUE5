@@ -177,6 +177,7 @@ FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
 	if (Path)
 	{
 		auto PointCount = Path->Num();
+		
 		if (PointCount > 0)
 		{
 			this->PathIndex %= PointCount;

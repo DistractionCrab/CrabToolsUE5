@@ -7,6 +7,7 @@
 #include "StateMachine/Utils.h"
 #include "StateMachine/Logging.h"
 #include "StateMachine/IStateMachineLike.h"
+#include "StateMachine/Transitions/BaseTransitions.h"
 #include "Utils/UtilsLibrary.h"
 
 #pragma region StateMachine Code
@@ -31,30 +32,31 @@ void UStateMachine::InitSubMachines()
 	{
 		if (SubMachine.Value)
 		{
-			SubMachine.Value->Initialize_Internal(this->Owner);
+			SubMachine.Value->Initialize(this->Owner);
 		}
 	}
 }
 
-void UStateMachine::Initialize_Internal(AActor* POwner)
+void UStateMachine::Initialize(AActor* POwner)
 {
 	this->Owner = POwner;	
 	this->InitFromArchetype();	
-	this->Initialize();
+	this->Initialize_Inner();
 	this->InitSubMachines();	
 
 	// Shared nodes always exist, and should be initialize from the beginning.
 	for (auto& Node : this->SharedNodes)
 	{
-		Node.Value->Initialize_Internal(this);
+		Node.Value->Initialize(this);
 	}
 
 	this->UpdateState(this->StartState);	
 }
 
-void UStateMachine::Initialize_Implementation() {}
+void UStateMachine::Initialize_Inner_Implementation() {}
 
-UStateMachine* UStateNode::GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) {
+UStateMachine* UStateNode::GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) const
+{
 	auto Class = SClass.Get();
 	auto Machine = this->GetMachine();
 	if (Class && Machine) {
@@ -78,7 +80,7 @@ void UStateMachine::AddState(FName StateName)
 	this->Graph.Add(StateName, State);
 }
 
-void UStateMachine::AddTransition(FName State, FName Event, FName Destination, FName Condition, FName DataCondition)
+void UStateMachine::AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition)
 {
 	if (auto StateData = this->Graph.Find(State))
 	{
@@ -120,7 +122,7 @@ void UStateMachine::UpdateState(FName Name)
 
 		if (ValidState)
 		{
-			CurrentState->Node->Exit_Internal();
+			CurrentState->Node->Exit();
 			StateChangedData.FromState = CurrentState;
 		}
 
@@ -134,7 +136,7 @@ void UStateMachine::UpdateState(FName Name)
 		if (ValidState)
 		{
 			StateChangedData.ToState = CurrentState;
-			CurrentState->Node->Enter_Internal();
+			CurrentState->Node->Enter();
 		}
 
 		this->OnStateChanged.Broadcast(StateChangedData);
@@ -143,7 +145,7 @@ void UStateMachine::UpdateState(FName Name)
 
 		if (ValidState)
 		{
-			CurrentState->Node->PostTransition_Internal();
+			CurrentState->Node->PostTransition();
 		}
 		
 		this->OnTransitionFinished.Broadcast(this);
@@ -171,7 +173,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		if (CurrentState && CurrentState->Node)
 		{
 			StateChangedData.FromState = CurrentState;
-			CurrentState->Node->ExitWithData_Internal(Data);
+			CurrentState->Node->ExitWithData(Data);
 		}
 
 		this->CurrentStateName = Name;
@@ -183,7 +185,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		if (ValidState)
 		{
 			StateChangedData.ToState = CurrentState;
-			CurrentState->Node->EnterWithData_Internal(Data);
+			CurrentState->Node->EnterWithData(Data);
 		}
 
 		this->OnStateChanged.Broadcast(StateChangedData);
@@ -191,7 +193,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 
 		if (ValidState)
 		{
-			CurrentState->Node->PostTransition_Internal();
+			CurrentState->Node->PostTransition();
 		}
 
 		this->OnTransitionFinished.Broadcast(this);
@@ -202,7 +204,7 @@ void UStateMachine::Tick(float DeltaTime) {
 	if (this->CurrentStateName != NAME_None) {
 		auto State = this->GetCurrentState();
 		if (State && State->Node) {
-			State->Node->Tick(DeltaTime);	
+			State->Node->Tick(DeltaTime);
 		}		
 	}
 }
@@ -218,21 +220,23 @@ void UStateMachine::SendEvent(FName EName)
 
 	auto CurrentState = this->GetCurrentState();
 
-	if (CurrentState) {
+	if (CurrentState)
+	{
+		auto TID = this->GetStateID();
+
 		// First we check if there are any declarative events to handle for this state.
-		if (CurrentState->Transitions.Contains(EName)) {
+		if (CurrentState->Transitions.Contains(EName))
+		{
 			auto TData = CurrentState->Transitions[EName];
-			if (TData.ConditionCallback.IsBound()) {
-				if (TData.ConditionCallback.Execute()) {
-					this->UpdateState(TData.Destination);
-				}
-			}
-			else {
-				UE_LOGFMT(LogStateMachine, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
+
+			if (TData.Condition->Check())
+			{
+				this->UpdateState(TData.Destination);
+				return;
 			}
 		}
 		
-		if (CurrentState->Node) CurrentState->Node->Event_Internal(EName);
+		if (CurrentState->Node) CurrentState->Node->Event(EName);
 	}	
 }
 
@@ -243,21 +247,21 @@ void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 
 	auto CurrentState = this->GetCurrentState();
 
-	if (CurrentState) {
+	if (CurrentState)
+	{
 		// First we check if there are any declarative events to handle for this state.
-		if (CurrentState->Transitions.Contains(EName)) {
+		if (CurrentState->Transitions.Contains(EName))
+		{
 			auto TData = CurrentState->Transitions[EName];
-			if (TData.DataConditionCallback.IsBound()) {
-				if (TData.DataConditionCallback.Execute(Data)) {
-					this->UpdateStateWithData(TData.Destination, Data);
-				}
-			}
-			else {
-				UE_LOGFMT(LogStateMachine, Error, "Condition Delegate Unbound? Condition Name: {0}", TData.Condition);
+
+			if (TData.DataCondition->Check(Data))
+			{
+				this->UpdateStateWithData(TData.Destination, Data);
+				return;
 			}
 		}
 
-		if (CurrentState->Node) CurrentState->Node->EventWithData_Internal(EName, Data);
+		if (CurrentState->Node) CurrentState->Node->EventWithData(EName, Data);
 	}
 }
 
@@ -314,6 +318,7 @@ void UStateMachine::InitFromArchetype()
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
 		StartStateDefault = BPGC->StateMachineArchetype->StartState;
+		
 	}
 
 	if (IsValid(this->ParentMachine))
@@ -329,6 +334,10 @@ void UStateMachine::InitFromArchetype()
 				}
 			}
 		}
+	}
+	else
+	{
+		this->StartState = StartStateDefault;
 	}
 }
 
@@ -522,26 +531,36 @@ UState* UStateMachine::GetCurrentState()
 			}
 		}
 
-		if (IsValid(BuiltState))
+		if (BuiltState)
 		{
-			this->Graph.Add(this->CurrentStateName, BuiltState);
-
 			for (auto& tpairs : BuiltState->Transitions)
 			{
-				this->BindCondition(tpairs.Value);
+				if (!IsValid(tpairs.Value.Condition))
+				{
+					tpairs.Value.Condition = NewObject<UTrueTransitionCondition>(this);
+				}
+
+				if (!IsValid(tpairs.Value.DataCondition))
+				{
+					tpairs.Value.DataCondition = NewObject<UTrueTransitionDataCondition>(this);
+				}
+
+				tpairs.Value.Condition->Initialize(this);
+				tpairs.Value.DataCondition->Initialize(this);
 			}			
 
 			if (IsValid(BuiltState->Node))
 			{
-				BuiltState->Node->Initialize_Internal(this);
+				BuiltState->Node->Initialize(this);
 			}
-
-			return BuiltState;
 		}
 		else
 		{
-			this->Graph.Add(this->CurrentStateName, NewObject<UState>());
+			BuiltState = NewObject<UState>();			
 		}
+
+		this->Graph.Add(this->CurrentStateName, BuiltState);
+		return BuiltState;
 	}
 	
 
@@ -628,7 +647,7 @@ IStateMachineLike* UStateMachine::GetSubMachine(FString& Address) const
 	}
 }
 
-FProperty* UStateMachine::GetStateMachineProperty(FString& Address) const
+FSMPropertyReference UStateMachine::GetStateMachineProperty(FString& Address) const
 {
 	FString Base;
 	FString Target;
@@ -649,32 +668,26 @@ FProperty* UStateMachine::GetStateMachineProperty(FString& Address) const
 			}
 			else
 			{
-				return nullptr;
+				return FSMPropertyReference();
 			}
 		}
 		else
 		{
-			return nullptr;
+			return FSMPropertyReference();
 		}
 	}
 	else
 	{
-		return this->GetClass()->FindPropertyByName(FName(Address));
+		return FSMPropertyReference
+		{
+			this->GetClass()->FindPropertyByName(FName(Address)),
+			(UObject*) this
+		};
+		//return this->GetClass()->FindPropertyByName(FName(Address));
 	}
 }
 
-void UStateMachine::BindCondition(FTransitionData& Data)
-{
-	FString ConditionAddress = Data.Condition.ToString();
-	FString DataConditionAddress = Data.DataCondition.ToString();
-	this->BindConditionAt(ConditionAddress, Data);
-	this->BindDataConditionAt(DataConditionAddress, Data);
-
-
-
-}
-
-void UStateMachine::BindConditionAt(FString& Address, FTransitionData& Data)
+void UStateMachine::BindConditionAt(FString& Address, FTransitionDelegate& Condition)
 {
 	FString RootPath;
 	FString ConditionPath;
@@ -685,12 +698,15 @@ void UStateMachine::BindConditionAt(FString& Address, FTransitionData& Data)
 		{
 			if (this->ParentMachine)
 			{
-				this->ParentMachine->BindConditionAt(ConditionPath, Data);
+				this->ParentMachine->BindConditionAt(ConditionPath, Condition);
 			}
 			else
 			{
-				UE_LOG(LogStateMachine, Error, TEXT("Found Condition for parent machine with null parent: %s"),
-					*Data.Condition.ToString());
+				UE_LOG(
+					LogStateMachine, 
+					Error, 
+					TEXT("Found Condition for parent machine with null parent: %s"),
+					*Address);
 			}
 		}
 		else
@@ -699,18 +715,18 @@ void UStateMachine::BindConditionAt(FString& Address, FTransitionData& Data)
 			{
 				if (auto SubMachine = SubPtr->Get())
 				{
-					SubMachine->BindConditionAt(ConditionPath, Data);
+					SubMachine->BindConditionAt(ConditionPath, Condition);
 				}
 			}
 		}
 	}
 	else
 	{
-		Data.ConditionCallback.BindUFunction(this, FName(Address));
+		Condition.BindUFunction(this, FName(Address));
 	}
 }
 
-void UStateMachine::BindDataConditionAt(FString& Address, FTransitionData& Data)
+void UStateMachine::BindDataConditionAt(FString& Address, FTransitionDataDelegate& Condition)
 {
 	FString RootPath;
 	FString ConditionPath;
@@ -721,12 +737,15 @@ void UStateMachine::BindDataConditionAt(FString& Address, FTransitionData& Data)
 		{
 			if (this->ParentMachine)
 			{
-				this->ParentMachine->BindDataConditionAt(ConditionPath, Data);
+				this->ParentMachine->BindDataConditionAt(ConditionPath, Condition);
 			}
 			else
 			{
-				UE_LOG(LogStateMachine, Error, TEXT("Found Condition for parent machine with null parent: %s"),
-					*Data.Condition.ToString());
+				UE_LOG(
+					LogStateMachine,
+					Error,
+					TEXT("Found Condition for parent machine with null parent: %s"),
+					*Address);
 			}
 		}
 		else
@@ -735,14 +754,14 @@ void UStateMachine::BindDataConditionAt(FString& Address, FTransitionData& Data)
 			{
 				if (auto SubMachine = SubPtr->Get())
 				{
-					SubMachine->BindDataConditionAt(ConditionPath, Data);
+					SubMachine->BindDataConditionAt(ConditionPath, Condition);
 				}
 			}
 		}
 	}
 	else
 	{
-		Data.DataConditionCallback.BindUFunction(this, FName(Address));
+		Condition.BindUFunction(this, FName(Address));
 	}
 }
 
@@ -832,7 +851,7 @@ TArray<FString> UStateMachine::GetStatesWithAccessibility(EStateMachineAccessibi
 {
 	TArray<FString> Names;
 
-	for (auto State : this->Graph)
+	for (auto& State : this->Graph)
 	{
 		if (State.Value->Access == Access)
 		{
@@ -852,22 +871,23 @@ UStateNode::UStateNode()
 
 }
 
-void UStateNode::Initialize_Internal(UStateMachine* POwner) {
+void UStateNode::Initialize(UStateMachine* POwner) {
 	if (POwner)
 	{
 		this->Owner = POwner;
-		this->Initialize();
+		this->Initialize_Inner();
 	}
 	else
 	{
-		UE_LOG(LogStateMachine, Error, TEXT(""));
+		UE_LOG(LogStateMachine, Error, TEXT("Given owner for %s was null"), *this->GetName());
 	}
 }
 
-void UStateNode::Initialize_Implementation() {}
+void UStateNode::Initialize_Inner_Implementation() {}
 
 
-UStateMachine* UStateNode::GetMachine() {
+UStateMachine* UStateNode::GetMachine() const
+{
 	return this->Owner;
 }
 
@@ -875,24 +895,25 @@ AActor* UStateNode::GetOwner() {
 	return this->Owner->GetOwner();
 }
 
-void UStateNode::Event_Internal(FName EName) {
+void UStateNode::Event(FName EName) {
 	if (this->bActive) {
-		this->Event(EName);
+		this->Event_Inner(EName);
 	}
 }
 
-void UStateNode::Event_Implementation(FName EName) {
+void UStateNode::Event_Inner_Implementation(FName EName) {
 	// Does Nothing by default.
 }
 
-void UStateNode::EventWithData_Internal(FName EName, UObject* Data) {
-	if (this->bActive) {
-		this->EventWithData(EName, Data);
+void UStateNode::EventWithData(FName EName, UObject* Data) {
+	if (this->bActive)
+	{
+		this->EventWithData_Inner(EName, Data);
 	}
 }
 
-void UStateNode::EventWithData_Implementation(FName EName, UObject* Data) {
-	this->Event(EName);
+void UStateNode::EventWithData_Inner_Implementation(FName EName, UObject* Data) {
+	this->Event_Inner(EName);
 }
 
 void UStateNode::SetOwner(UStateMachine* Parent) {
@@ -900,54 +921,54 @@ void UStateNode::SetOwner(UStateMachine* Parent) {
 }
 
 
-void UStateNode::Tick_Internal(float DeltaTime) {
+void UStateNode::Tick(float DeltaTime) {
 	if (this->bActive) {
-		this->Tick(DeltaTime);
+		this->Tick_Inner(DeltaTime);
 	}
 }
 
-void UStateNode::PostTransition_Internal()
+void UStateNode::PostTransition()
 {
 	if (this->bActive)
 	{
-		this->PostTransition();
+		this->PostTransition_Inner();
 	}
 }
 
-void UStateNode::Exit_Internal() {
+void UStateNode::Exit() {
 	if (this->bActive) {
 		this->bActive = false;
-		this->Exit();
+		this->Exit_Inner();
 	}	
 }
 
-void UStateNode::ExitWithData_Internal(UObject* Data) {
+void UStateNode::ExitWithData(UObject* Data) {
 	if (this->bActive) {
 		this->bActive = false;
-		this->ExitWithData(Data);
+		this->ExitWithData_Inner(Data);
 	}
 }
 
-void UStateNode::ExitWithData_Implementation(UObject* Data) {
-	this->Exit();
+void UStateNode::ExitWithData_Inner_Implementation(UObject* Data) {
+	this->Exit_Inner();
 }
 
-void UStateNode::Enter_Internal() {
+void UStateNode::Enter() {
 	if (!this->bActive) {
 		this->bActive = true;
-		this->Enter();
+		this->Enter_Inner();
 	}
 }
 
-void UStateNode::EnterWithData_Internal(UObject* Data) {
+void UStateNode::EnterWithData(UObject* Data) {
 	if (!this->bActive) {
 		this->bActive = true;
-		this->EnterWithData(Data);
+		this->EnterWithData_Inner(Data);
 	}
 }
 
-void UStateNode::EnterWithData_Implementation(UObject* Data) {
-	this->Enter();
+void UStateNode::EnterWithData_Inner_Implementation(UObject* Data) {
+	this->Enter_Inner();
 }
 
 void UStateNode::DeleteEvent_Implementation(FName Event)
@@ -996,6 +1017,20 @@ bool UStateNode::Verify(FNodeVerificationContext& Context) const
 
 			if (f->Struct == FEventSlot::StaticStruct())
 			{
+				FEventSlot Value;
+				f->GetValue_InContainer(this, &Value);
+
+				auto Options = SMLike->GetEventOptions();
+
+				if (!(Value.EventName.IsNone() || Options.Contains(Value.EventName)))
+				{
+					FString Msg = FString::Printf(TEXT("Could not find Event for slot %s: %s"),
+						*f->GetName(),
+						*this->GetName());
+					Context.Error(Msg, this);
+
+					bErrorFree = false;
+				}
 
 			}
 			else if (f->Struct == FSubMachineSlot::StaticStruct())
@@ -1042,7 +1077,8 @@ void UStateNode::EmitEventWithData(FName EName, UObject* Data) {
 	this->GetMachine()->SendEventWithData(EName, Data);
 }
 
-void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data) {
+void UStateNode::EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data)
+{
 	this->GetMachine()->SendEventWithData(ESlot.EventName, Data);
 }
 
@@ -1077,9 +1113,6 @@ TArray<FString> UStateNode::GetMachineOptions() const
 	return { };
 }
 
-#endif
-
-#if WITH_EDITORONLY_DATA
 TArray<FString> UStateNode::GetEventOptions() const
 {
 	if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
@@ -1090,11 +1123,46 @@ TArray<FString> UStateNode::GetEventOptions() const
 	return { FName(NAME_None).ToString() };
 }
 
+TArray<FString> UStateNode::GetStateOptions() const
+{
+	if (auto StateLike = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
+	{
+		return StateLike->GetStateOptions(this);
+	}
+
+	return { FName(NAME_None).ToString() };
+}
+
+TArray<FString> UStateNode::GetIncomingStateOptions() const
+{
+	if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
+	{
+		return StateLike->GetEnterStates();
+	}
+
+	return { FName(NAME_None).ToString() };
+}
+
+TArray<FString> UStateNode::GetOutgoingStateOptions() const
+{
+	if (auto StateLike = UtilsFunctions::GetOuterAs<IStateLike>(this))
+	{
+		return StateLike->GetExitStates();
+	}
+
+	return { FName(NAME_None).ToString() };
+}
+
+#endif // WITH_EDITOR
+
+#if WITH_EDITORONLY_DATA
+
 void UStateNode::GetEmittedEvents(TSet<FName>& Events) const 
 {
 	Events.Append(this->EmittedEvents); 
 }
-#endif
+
+#endif // WITH_EDITORONLY_DATA
 
 #pragma endregion
 
@@ -1164,4 +1232,16 @@ void UState::AppendNodeCopy(UStateNode* ANode)
 		auto NewNode = DuplicateObject(ANode, this);
 		this->AppendNode(NewNode);
 	}
+}
+
+void UTransitionCondition::Initialize(UStateMachine* NewOwner)
+{
+	this->Owner = NewOwner;
+	this->Initialize_Inner();
+}
+
+void UTransitionDataCondition::Initialize(UStateMachine* NewOwner)
+{
+	this->Owner = NewOwner;
+	this->Initialize_Inner();
 }

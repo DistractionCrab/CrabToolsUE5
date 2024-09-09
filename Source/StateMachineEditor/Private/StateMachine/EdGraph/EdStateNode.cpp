@@ -86,6 +86,15 @@ UState* UEdStateNode::GenerateState(FNodeVerificationContext& Context, UObject* 
 		BuiltState->AppendNode(ArrayNode);
 	}
 
+	if (BuiltState->GetNode())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found Node for compiled state %s, Node=%s"), *this->GetStateName().ToString(), *BuiltState->GetNode()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found Node for compiled state %s, Node=null"), *this->GetStateName().ToString());
+	}
+
 	return BuiltState;
 }
 
@@ -209,10 +218,6 @@ TArray<FString> UEdStateNode::GetExitStates() const
 	return Names;
 }
 
-TArray<FString> UEdStateNode::GetStateClassesOptions() const
-{
-	return this->GetStateGraph()->GetBlueprintOwner()->GetStateClassesOptions();
-}
 
 #if WITH_EDITOR
 

@@ -5,25 +5,22 @@
 #include "StateMachine/IStateMachineLike.h"
 #include "StateMachine/AI/Events.h"
 
-UAISimpleMoveToNode::UAISimpleMoveToNode(): DataPropRef(nullptr)
+UAISimpleMoveToNode::UAISimpleMoveToNode()
 {
 	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
 	this->AddEmittedEvent(AI_Events::AI_LOST);
 }
 
-void UAISimpleMoveToNode::Initialize_Implementation()
+void UAISimpleMoveToNode::Initialize_Inner_Implementation()
 {
-	Super::Initialize_Implementation();
+	Super::Initialize_Inner_Implementation();
 
-	FString Address = this->DestinationData.ToString();
-
-	if (auto Prop = this->GetMachine()->GetStateMachineProperty(Address))
-	{
-		this->DataPropRef = (FStructProperty*) Prop;
-	}
+	FString Address = this->PropertyName.ToString();
+	FSMPropertySearch Params = FSMPropertySearch::StructProperty(FMoveToData::StaticStruct());
+	this->PropertyRef = Params.GetProperty<FStructProperty>(this->GetMachine(), Address);
 }
 
-void UAISimpleMoveToNode::Exit_Implementation()
+void UAISimpleMoveToNode::Exit_Inner_Implementation()
 {
 	this->UnbindCallback();
 
@@ -33,13 +30,13 @@ void UAISimpleMoveToNode::Exit_Implementation()
 	}
 }
 
-void UAISimpleMoveToNode::EnterWithData_Implementation(UObject* Data)
+void UAISimpleMoveToNode::EnterWithData_Inner_Implementation(UObject* Data)
 {
 	this->BindCallback();
 	this->MoveTo(Data);
 }
 
-void UAISimpleMoveToNode::EventWithData_Implementation(FName EName, UObject* Data)
+void UAISimpleMoveToNode::EventWithData_Inner_Implementation(FName EName, UObject* Data)
 {
 	this->MoveTo(Data);
 }
@@ -68,13 +65,11 @@ void UAISimpleMoveToNode::MoveTo(UObject* Data)
 	}
 }
 
-void UAISimpleMoveToNode::Enter_Implementation()
+void UAISimpleMoveToNode::Enter_Inner_Implementation()
 {
 	this->BindCallback();
-	if (this->DataPropRef)
-	{
-		auto Value = this->DataPropRef->ContainerPtrToValuePtr<FMoveToData>(this->GetMachine());
-
+	if (auto Value = this->PropertyRef.GetValue<FMoveToData>())
+	{	
 		if (auto Ctrl = this->GetAIController())
 		{
 			if (Value->DestinationActor)
@@ -131,10 +126,7 @@ TArray<FString> UAISimpleMoveToNode::GetPropertyOptions() const
 
 	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
 	{
-		FSMPropertySearch Params;
-
-		Params.FClass = FStructProperty::StaticClass();
-		Params.Struct = FMoveToData::StaticStruct();
+		FSMPropertySearch Params = FSMPropertySearch::StructProperty(FMoveToData::StaticStruct());
 
 		Props.Append(Outer->GetPropertiesOptions(Params));
 	}
@@ -149,23 +141,5 @@ TArray<FString> UAISimpleMoveToNode::GetPropertyOptions() const
 void UAISimpleMoveToNode::PostLinkerChange()
 {
 	Super::PostLinkerChange();
-
-	if (this->DestinationData != NAME_None)
-	{
-		// Otherwise, make sure the property exists, and is of the correct type.
-		if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
-		{
-			FString Address = this->DestinationData.ToString();
-
-			if (Outer->GetStateMachineProperty(Address))
-			{
-				return;
-			}
-
-			UE_LOG(LogTemp, Warning, TEXT("SimpleMoveTo: Movement Property no longer exists: %s"),
-				*this->DestinationData.ToString());
-			this->DestinationData = NAME_None;
-		}
-	}
 }
 #endif

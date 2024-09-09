@@ -24,6 +24,8 @@ public:
 	void Skip();
 
 	void Reset() { this->PathIndex = 0; }
+
+	int GetIndex() const { return this->PathIndex; }
 };
 
 

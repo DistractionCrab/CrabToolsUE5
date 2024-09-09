@@ -66,8 +66,6 @@ public:
 	#endif
 
 private:
-	void UpdateEmittedEvents();
 
-	UFUNCTION()
-	TArray<FString> GetStateClassesOptions() const;
+	void UpdateEmittedEvents();
 };

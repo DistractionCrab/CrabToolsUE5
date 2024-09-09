@@ -20,8 +20,8 @@ public:
 
 	UAIWaitNode();
 
-	virtual void Enter_Implementation() override;
-	virtual void Exit_Implementation() override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void Exit_Inner_Implementation() override;
 
 	void OnWaitEnd();
 };
