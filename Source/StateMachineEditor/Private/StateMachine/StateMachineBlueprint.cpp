@@ -72,29 +72,48 @@ FName UStateMachineBlueprint::GetNewGraphName()
 	FString DefaultName(DEFAULT_STATEMACHINE_NAME);
 	int index = 0;
 
-	for (auto Graph : this->SubGraphs)
+	bool IsAvailable = false;
+
+	while (!IsAvailable)
 	{
-		FString GraphName = Graph->GetFName().ToString();
+		index += 1;
 
-		if (GraphName.StartsWith(DEFAULT_STATEMACHINE_NAME))
-		{
-			FString EndName = GraphName.RightChop(DefaultName.Len());
+		FString NameCheck(DefaultName);
+		NameCheck.AppendInt(index);
 
-			if (EndName.IsNumeric())
-			{
-				int check = FCString::Atoi(*EndName);
-
-				if (check >= index)
-				{
-					index = check + 1;
-				}
-			}
-		}
+		IsAvailable = this->IsGraphNameAvailable(NameCheck);		
 	}
 
 	DefaultName.AppendInt(index);
 
 	return FName(DefaultName);
+}
+
+bool UStateMachineBlueprint::IsGraphNameAvailable(FString& Name) const
+{
+	if (Name == this->MainGraph->GetName())
+	{
+		return false;
+	}
+	else
+	{
+		for (auto& SubGraph : this->SubGraphs)
+		{
+			if (SubGraph->GetName() == Name)
+			{
+				return false;
+			}
+		}
+
+		if (auto BPGC = this->GetStateMachineGeneratedClass())
+		{
+			return !BPGC->IsSubMachineNameInUse(Name);
+		}
+		else
+		{
+			return true;
+		}
+	}
 }
 
 bool UStateMachineBlueprint::IsMainGraph(const UEdStateGraph* Graph) const
@@ -128,6 +147,18 @@ void UStateMachineBlueprint::SelectGraph(UEdStateGraph* Graph)
 	{
 		this->Events.OnGraphSelected.Broadcast(Graph);
 	}
+}
+
+TArray<FString> UStateMachineBlueprint::GetDefinedSubMachines() const
+{
+	TArray<FString> Names;
+
+	for (auto& SubM : this->SubGraphs)
+	{
+		Names.Add(SubM->GetName());
+	}
+
+	return Names;
 }
 
 void UStateMachineBlueprint::InspectObject(UObject* Obj)

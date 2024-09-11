@@ -55,6 +55,7 @@ public:
 	UEdStateGraph* GetMainGraph();
 	UEdStateGraph* AddSubGraph();
 
+	bool IsGraphNameAvailable(FString& Name) const;
 	bool IsMainGraph(const UEdStateGraph* Graph) const;
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
 	void DeleteGraph(UEdStateGraph* Graph);
@@ -68,6 +69,9 @@ public:
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
 
 	UStateMachineBlueprintGeneratedClass* GetStateMachineGeneratedClass() const;
+
+	/* Returns the submachines that explicitly defined in this blueprint. */
+	TArray<FString> GetDefinedSubMachines() const;
 
 private:
 

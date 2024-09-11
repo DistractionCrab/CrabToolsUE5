@@ -67,4 +67,6 @@ public:
 	{
 		return Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass());
 	}
+
+	bool IsSubMachineNameInUse(FString& Name) const;
 };

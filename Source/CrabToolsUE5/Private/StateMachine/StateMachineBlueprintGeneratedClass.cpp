@@ -207,3 +207,23 @@ UStateMachine* UStateMachineBlueprintGeneratedClass::DuplicateSubMachineArchetyp
 
 	return nullptr;
 }
+
+bool UStateMachineBlueprintGeneratedClass::IsSubMachineNameInUse(FString& Name) const
+{
+	for (auto& SubGraph : this->SubStateMachineArchetypes)
+	{
+		if (SubGraph.Key == Name)
+		{
+			return true;
+		}
+	}
+
+	if (auto Parent = this->GetParent())
+	{
+		return Parent->IsSubMachineNameInUse(Name);
+	}
+	else
+	{
+		return false;
+	}
+}

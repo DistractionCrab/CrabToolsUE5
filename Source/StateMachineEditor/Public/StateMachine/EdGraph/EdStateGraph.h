@@ -25,6 +25,15 @@ enum class EStateMachineGraphType : uint8
 	MAIN_GRAPH        UMETA(DisplayName = "MainGraph", Hidden),
 };
 
+USTRUCT(BlueprintType)
+struct FStateMachineArchetypeOverrideContainer
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Override", meta=(ShowInnerProperties, NoResetToDefault))
+	TObjectPtr<UStateMachine> Value;
+};
+
 UCLASS(MinimalAPI)
 class UEdStateGraph : public UEdGraph, public IStateMachineLike
 {
@@ -32,59 +41,58 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 
 private:
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine",
-		meta=(AllowPrivateAccess,
-			EditCondition="GraphType != EStateMachineGraphType::MAIN_GRAPH"))
-	EStateMachineGraphType GraphType = EStateMachineGraphType::MAIN_GRAPH;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess, 
-			EditCondition="Accessibility == EStateMachineAccessibility::PUBLIC && GraphType == EStateMachineGraphType::SUB_GRAPH",
-			EditConditionHides))
-	bool bIsVariable = false;
-
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
-		meta = (AllowPrivateAccess, 
-			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH",
-			EditConditionHides))
-	TObjectPtr<UStateMachine> MachineArchetype;
-
-	/* Reference to a copy of the parent machine archetype, allows for changing variables. */
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "Override",
-		meta = (AllowPrivateAccess,
-			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
-			EditConditionHides))
-	TObjectPtr<UStateMachine> MachineArchetypeOverride;
-
-	UPROPERTY()
-	TArray<TObjectPtr<UEdEventObject>> EventObjects;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Events", meta=(RowType = "FEventSetRow"))
-	TSet<TObjectPtr<UDataTable>> EventSets;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess, 
-			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH", 
-			EditConditionHides))
-	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
-
-	/* Events which can be emitted to parent machines. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess))
-	TSet<FName> EmittedEvents;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
 		meta = (AllowPrivateAccess,
 			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH || GraphType == EStateMachineGraphType::SUB_GRAPH",
 			EditConditionHides))
 	FName Category;
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
+		meta=(AllowPrivateAccess,
+			EditCondition="GraphType != EStateMachineGraphType::MAIN_GRAPH"))
+	EStateMachineGraphType GraphType = EStateMachineGraphType::MAIN_GRAPH;
+
+	/* Whether or not a Blueprint Class variable should be made for this submachine. */
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
+		meta = (AllowPrivateAccess, 
+			EditCondition="Accessibility == EStateMachineAccessibility::PUBLIC && GraphType == EStateMachineGraphType::SUB_GRAPH",
+			EditConditionHides))
+	bool bIsVariable = false;
+
+	/* The state machine this graph is utilizing to store its states other data. */
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineClass",
+		meta = (AllowPrivateAccess, 
+			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH",
+			EditConditionHides))
+	TObjectPtr<UStateMachine> MachineArchetype;
+
+	/* For extended graphs, the name of the submachine in the parent to override internal data. */
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
 		meta = (AllowPrivateAccess,
-			GetOptions="GetOverrideableMachines",
-			EditCondition="GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
+			GetOptions = "GetOverrideableMachines",
+			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
 			EditConditionHides))
 	FName OverridenMachine;
+
+	/* Reference to a copy of the parent machine archetype, allows for changing variables. */
+	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
+		meta = (AllowPrivateAccess,
+			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
+			EditConditionHides))
+	FStateMachineArchetypeOverrideContainer MachineArchetypeOverride;
+
+	/* Event sets to be added to this submachine. */
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass", meta=(RowType = "FEventSetRow"))
+	TSet<TObjectPtr<UDataTable>> EventSets;
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
+		meta = (AllowPrivateAccess, 
+			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH", 
+			EditConditionHides))
+	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UEdEventObject>> EventObjects;
 
 public:
 

@@ -306,7 +306,7 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 	{
 		if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
 		{
-			StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetypeOverride, StateMachine);
+			StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetypeOverride.Value.Get(), StateMachine);
 		}
 		else
 		{
@@ -643,21 +643,18 @@ void UEdStateGraph::UpdateOverrideData()
 		if (this->OverridenMachine.IsNone())
 		{
 			this->Accessibility = EStateMachineAccessibility::PRIVATE;
-			this->MachineArchetypeOverride = nullptr;
+			this->MachineArchetypeOverride.Value = nullptr;
 		}
-		else
+		else if (!this->IsMainGraph()) // Sanity Check.
 		{
-			if (!this->IsMainGraph())
-			{
-				this->RenameGraph(this->OverridenMachine);
+			this->RenameGraph(this->OverridenMachine);
 
-				if (auto BPObj = this->GetBlueprintOwner())
+			if (auto BPObj = this->GetBlueprintOwner())
+			{
+				if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
 				{
-					if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
-					{
-						this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
-						this->MachineArchetypeOverride = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
-					}
+					this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
+					this->MachineArchetypeOverride.Value = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
 				}
 			}
 		}
@@ -665,7 +662,7 @@ void UEdStateGraph::UpdateOverrideData()
 	else
 	{
 		this->OverridenMachine = NAME_None;
-		this->MachineArchetypeOverride = nullptr;
+		this->MachineArchetypeOverride.Value = nullptr;
 	}
 }
 
@@ -715,6 +712,14 @@ void UEdStateGraph::PostEditChangeProperty(
 	{
 		this->UpdateOverrideData();
 	}
+	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, MachineArchetypeOverride))
+	{
+		// Only do this if the value of this was reset to null.
+		if (this->MachineArchetypeOverride.Value == nullptr)
+		{
+			this->UpdateOverrideData();
+		}
+	}
 }
 
 TArray<FString> UEdStateGraph::GetOverrideableMachines() const
@@ -727,8 +732,13 @@ TArray<FString> UEdStateGraph::GetOverrideableMachines() const
 		{
 			if (auto Class = Cast<UStateMachineBlueprintGeneratedClass>(BPObj->GetStateMachineGeneratedClass()->GetSuperClass()))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Requested Child Accessible SubMachines"));
 				Names.Append(Class->GetChildAccessibleSubMachines());
+
+				// Remove any that have been extended.
+				for (auto& SubMachine : BPObj->GetDefinedSubMachines())
+				{
+					Names.Remove(SubMachine);
+				}
 			}
 		}
 	}
