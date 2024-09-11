@@ -95,7 +95,7 @@ UEdStartStateNode* UEdStateGraph::GetStartNode() const
 
 FName UEdStateGraph::GetClassPrefix() const
 {
-	if (this->bIsMainGraph)
+	if (this->IsMainGraph())
 	{
 		return this->GetBlueprintOwner()->GeneratedClass->GetFName();
 	}
@@ -302,12 +302,21 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 
 	UStateMachineArchetype* StateMachine = NewObject<UStateMachineArchetype>(Outer);
 
-	if (!this->bIsMainGraph)
+	if (!this->IsMainGraph())
 	{
-		StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, StateMachine);
+		if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+		{
+			StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetypeOverride, StateMachine);
+		}
+		else
+		{
+			StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, StateMachine);
+		}
+		
 	}
 
 	StateMachine->bIsVariable = this->bIsVariable;
+	StateMachine->Accessibility = this->Accessibility;
 
 	for (auto State : this->GetStates())
 	{
@@ -331,12 +340,10 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 
 	StateMachine->StartState = this->GetStartStateName();
 
-	UE_LOG(LogTemp, Warning, TEXT("Start state on compile found to be: %s "), *StateMachine->StartState.ToString());
-
 	return StateMachine;
 }
 
-bool UEdStateGraph::IsMainGraph()
+bool UEdStateGraph::IsMainGraph() const
 {
 	if (auto BP = this->GetBlueprintOwner())
 	{
@@ -404,7 +411,7 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 
 	UClass* ClassBase = nullptr;
 
-	if (this->bIsMainGraph)
+	if (this->IsMainGraph())
 	{
 		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
 	}
@@ -434,7 +441,7 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 	}
 
 	// If it's a submachine, allow binding to parent functions.
-	if (!this->bIsMainGraph)
+	if (!this->IsMainGraph())
 	{
 		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
 		FnArchetype = ClassBase->FindFunctionByName("TrueCondition");
@@ -461,7 +468,7 @@ TArray<FString> UEdStateGraph::GetDataConditionOptions() const
 
 	UClass* ClassBase = nullptr;
 
-	if (this->bIsMainGraph)
+	if (this->IsMainGraph())
 	{
 		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
 	}
@@ -491,7 +498,7 @@ TArray<FString> UEdStateGraph::GetDataConditionOptions() const
 	}
 
 	// If it's a submachine, allow binding to parent functions.
-	if (!this->bIsMainGraph)
+	if (!this->IsMainGraph())
 	{
 		ClassBase = this->GetBlueprintOwner()->GeneratedClass;
 		FnArchetype = ClassBase->FindFunctionByName("TrueDataCondition");
@@ -516,7 +523,7 @@ TArray<FString> UEdStateGraph::GetMachineOptions() const
 {
 	TArray<FString> Names = this->GetBlueprintOwner()->GetMachineOptions();
 
-	if (!this->bIsMainGraph)
+	if (!this->IsMainGraph())
 	{
 		// Need to make sure the references are to the parent machine.
 		TArray<FString> NewNames;
@@ -543,7 +550,7 @@ TArray<FString> UEdStateGraph::GetPropertiesOptions(FSMPropertySearch& SearchPar
 {
 	TArray<FString> Names = this->GetBlueprintOwner()->GetPropertiesOptions(SearchParam);
 
-	if (!this->bIsMainGraph)
+	if (!this->IsMainGraph())
 	{
 		TArray<FString> NewNames;
 
@@ -617,7 +624,57 @@ FName UEdStateGraph::GetCategoryName() const
 	}
 }
 
+void UEdStateGraph::CollectExtendibleStates(TSet<FString>& StateNames) const
+{
+	if (this->IsMainGraph())
+	{
+		this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->CollectExtendibleStates(StateNames);
+	}
+	else
+	{
+		this->MachineArchetype->CollectExtendibleStates(StateNames);
+	}
+}
+
+void UEdStateGraph::UpdateOverrideData()
+{
+	if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+	{
+		if (this->OverridenMachine.IsNone())
+		{
+			this->Accessibility = EStateMachineAccessibility::PRIVATE;
+			this->MachineArchetypeOverride = nullptr;
+		}
+		else
+		{
+			if (!this->IsMainGraph())
+			{
+				this->RenameGraph(this->OverridenMachine);
+
+				if (auto BPObj = this->GetBlueprintOwner())
+				{
+					if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
+					{
+						this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
+						this->MachineArchetypeOverride = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		this->OverridenMachine = NAME_None;
+		this->MachineArchetypeOverride = nullptr;
+	}
+}
+
 #if WITH_EDITOR
+
+void UEdStateGraph::PostLoad()
+{
+	Super::PostLoad();
+}
 
 void UEdStateGraph::PostEditUndo()
 {
@@ -630,8 +687,6 @@ void UEdStateGraph::PostEditChangeProperty(
 	FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	UE_LOG(LogTemp, Warning, TEXT("Updated EdStateGraphProperty, attempting modify."));
 
 	this->Modify();
 
@@ -658,23 +713,7 @@ void UEdStateGraph::PostEditChangeProperty(
 	}
 	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, OverridenMachine))
 	{
-		if (this->OverridenMachine.IsNone())
-		{
-			this->Accessibility = EStateMachineAccessibility::PRIVATE;
-		}
-		else
-		{
-			if (!this->bIsMainGraph)
-			{
-				if (auto BPObj = this->GetBlueprintOwner())
-				{
-					if (auto Class = BPObj->GetStateMachineGeneratedClass())
-					{
-						this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
-					}
-				}
-			}
-		}
+		this->UpdateOverrideData();
 	}
 }
 
@@ -682,12 +721,13 @@ TArray<FString> UEdStateGraph::GetOverrideableMachines() const
 {
 	TArray<FString> Names;
 
-	if (!this->bIsMainGraph)
+	if (!this->IsMainGraph())
 	{
 		if (auto BPObj = this->GetBlueprintOwner())
 		{
-			if (auto Class = BPObj->GetStateMachineGeneratedClass())
+			if (auto Class = Cast<UStateMachineBlueprintGeneratedClass>(BPObj->GetStateMachineGeneratedClass()->GetSuperClass()))
 			{
+				UE_LOG(LogTemp, Warning, TEXT("Requested Child Accessible SubMachines"));
 				Names.Append(Class->GetChildAccessibleSubMachines());
 			}
 		}

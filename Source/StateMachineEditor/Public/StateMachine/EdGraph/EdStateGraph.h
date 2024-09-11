@@ -17,28 +17,12 @@ class UStateMachineArchetype;
 class UStateMachineBlueprint;
 class UDataTable;
 
-class FGraphActionEvents
+UENUM(BlueprintType)
+enum class EStateMachineGraphType : uint8
 {
-public:
-
-	DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdGraphNode*>&)
-	FNodeSelected OnNodeSelected;
-
-	DECLARE_MULTICAST_DELEGATE_OneParam(FEventCreated, UEdEventObject*)
-	FEventCreated OnEventCreated;
-
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FNameChanged, FName, FName)
-	FNameChanged OnNameChanged;
-
-	DECLARE_MULTICAST_DELEGATE(FGraphDeleted)
-	FGraphDeleted OnGraphDeleted;
-
-	DECLARE_MULTICAST_DELEGATE_OneParam(FStateAdded, UEdStateNode*)
-	FStateAdded OnStateAdded;
-
-	/* Called when undo and redos happen. */
-	DECLARE_MULTICAST_DELEGATE(FGraphDataReverted)
-	FGraphDataReverted OnGraphDataReverted;
+	EXTENDED_GRAPH    UMETA(DisplayName = "Extends"),
+	SUB_GRAPH         UMETA(DisplayName = "Subgraph"),
+	MAIN_GRAPH        UMETA(DisplayName = "MainGraph", Hidden),
 };
 
 UCLASS(MinimalAPI)
@@ -48,16 +32,29 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 
 private:
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
-		meta = (AllowPrivateAccess, EditCondition="Accessibility == EStateMachineAccessibility::PUBLIC",
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
+		meta=(AllowPrivateAccess,
+			EditCondition="GraphType != EStateMachineGraphType::MAIN_GRAPH"))
+	EStateMachineGraphType GraphType = EStateMachineGraphType::MAIN_GRAPH;
+
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess, 
+			EditCondition="Accessibility == EStateMachineAccessibility::PUBLIC && GraphType == EStateMachineGraphType::SUB_GRAPH",
 			EditConditionHides))
 	bool bIsVariable = false;
 
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineEditor",
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
 		meta = (AllowPrivateAccess, 
-			EditCondition = "!bIsMainGraph",
+			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH",
 			EditConditionHides))
 	TObjectPtr<UStateMachine> MachineArchetype;
+
+	/* Reference to a copy of the parent machine archetype, allows for changing variables. */
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Override",
+		meta = (AllowPrivateAccess,
+			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
+			EditConditionHides))
+	TObjectPtr<UStateMachine> MachineArchetypeOverride;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UEdEventObject>> EventObjects;
@@ -65,35 +62,57 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Events", meta=(RowType = "FEventSetRow"))
 	TSet<TObjectPtr<UDataTable>> EventSets;
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineEditor",
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, 
-			EditCondition = "!bIsMainGraph", 
+			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH", 
 			EditConditionHides))
 	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
 
 	/* Events which can be emitted to parent machines. */
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true"))
+		meta = (AllowPrivateAccess))
 	TSet<FName> EmittedEvents;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true"))
+		meta = (AllowPrivateAccess,
+			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH || GraphType == EStateMachineGraphType::SUB_GRAPH",
+			EditConditionHides))
 	FName Category;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess = "true",
+		meta = (AllowPrivateAccess,
 			GetOptions="GetOverrideableMachines",
-			EditCondition="!bIsMainGraph",
+			EditCondition="GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
 			EditConditionHides))
 	FName OverridenMachine;
 
 public:
 
 	/* Events that are used by the Graph Editor to communicate. */
-	FGraphActionEvents Events;
+	class FEditorEvents
+	{
+	public:
 
-	UPROPERTY(VisibleAnywhere, Category="StateMachineEditor")
-	bool bIsMainGraph = false;
+		DECLARE_MULTICAST_DELEGATE_OneParam(FNodeSelected, TArray<class UEdGraphNode*>&)
+		FNodeSelected OnNodeSelected;
+
+		DECLARE_MULTICAST_DELEGATE_OneParam(FEventCreated, UEdEventObject*)
+		FEventCreated OnEventCreated;
+
+		DECLARE_MULTICAST_DELEGATE_TwoParams(FNameChanged, FName, FName)
+		FNameChanged OnNameChanged;
+
+		DECLARE_MULTICAST_DELEGATE(FGraphDeleted)
+		FGraphDeleted OnGraphDeleted;
+
+		DECLARE_MULTICAST_DELEGATE_OneParam(FStateAdded, UEdStateNode*)
+		FStateAdded OnStateAdded;
+
+		/* Called when undo and redos happen. */
+		DECLARE_MULTICAST_DELEGATE(FGraphDataReverted)
+		FGraphDataReverted OnGraphDataReverted;
+	}
+	Events;
 
 public:
 
@@ -139,7 +158,7 @@ public:
 	bool HasEvent(FName EName) const;
 	EStateMachineAccessibility GetAccessibility() const { return this->Accessibility; }
 	void Inspect();
-	bool IsMainGraph();
+	bool IsMainGraph() const;
 	UStateMachineBlueprint* GetBlueprintOwner() const;
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
@@ -150,8 +169,14 @@ public:
 	FName GetCategoryName() const;
 	const UStateMachine* GetMarchineArchetype() const { return this->MachineArchetype; }
 	FName GetClassPrefix() const;
+	void SetGraphType(EStateMachineGraphType GType) { this->GraphType = GType; }
 
-	#if WITH_EDITOR	
+	bool CanRename() const { return this->GraphType != EStateMachineGraphType::MAIN_GRAPH; }
+
+	void CollectExtendibleStates(TSet<FString>& StateNames) const;
+
+	#if WITH_EDITOR
+		virtual void PostLoad() override;
 		virtual void PostEditUndo() override;
 		virtual void PostEditChangeProperty(
 			FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -166,5 +191,8 @@ public:
 	virtual TArray<FString> GetConditionOptions() const override;
 	virtual TArray<FString> GetDataConditionOptions() const override;
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
-	//virtual FProperty* GetStateMachineProperty(FString& Address) const override { return nullptr; }
+	
+private:
+
+	void UpdateOverrideData();
 };

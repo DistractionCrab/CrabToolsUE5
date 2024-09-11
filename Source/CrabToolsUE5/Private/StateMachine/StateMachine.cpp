@@ -296,7 +296,25 @@ void UStateMachine::PostLinkerChange()
 {
 	Super::PostLinkerChange();
 }
-#endif
+
+void UStateMachine::CollectExtendibleStates(TSet<FString>& StateNames) const
+{
+
+	if (auto BPGC = this->GetGeneratedClass())
+	{
+		BPGC->CollectExtendibleStates(StateNames);
+	}
+
+	for (auto& States : this->Graph)
+	{
+		if (StateMachineAccessibility::IsChildVisible(States.Value->Access))
+		{
+			StateNames.Add(States.Key.ToString());
+		}
+	}
+}
+
+#endif // WITH_EDITOR
 
 UState* UStateMachine::GetStateData(FName Name)
 {
@@ -339,11 +357,6 @@ void UStateMachine::InitFromArchetype()
 	{
 		this->StartState = StartStateDefault;
 	}
-}
-
-FName UStateMachine::GetCurrentStateName()
-{
-	return this->CurrentStateName;
 }
 
 TArray<FString> UStateMachine::StateOptions()
@@ -433,41 +446,7 @@ TSet<FName> UStateMachine::GetEvents() const {
 	return List;
 }
 
-bool UStateMachine::HasEventVariable(FName VName) const {
-	auto Prop = this->GetClass()->FindPropertyByName(VName);
 
-	if (Prop) {
-		auto StructProp = CastField<FStructProperty>(Prop);
-
-		if (StructProp->Struct == FStateMachineEventRef::StaticStruct()) {
-			return true;
-		}
-		else {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-FName UStateMachine::GetEventVarName(FName EName) {
-	return FName(EName.ToString() + FString("_SM_EVENT"));
-}
-
-UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches) {
-	auto Node = this->GetCurrentState();
-
-	if (Class.Get() && Node) {		
-		if (Node->Node && Node->Node->IsA(Class.Get()->StaticClass())) {
-			Branches = ESearchResult::Found;
-
-			return Node->Node;
-		}
-	}
-
-	Branches = ESearchResult::NotFound;
-	return nullptr;
-}
 
 void UStateMachine::AddStateData(FName StateName, UState* Data)
 {
@@ -489,6 +468,40 @@ void UStateMachine::AddStateWithNode(FName StateName, UStateNode* Node)
 	this->Graph.Add(StateName, Data);
 }
 
+UState* UStateMachine::GetCurrentStateData() const
+{
+	if (auto Data = this->Graph.Find(this->CurrentStateName))
+	{
+		return Data->Get();
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+FName UStateMachine::GetCurrentStateName()
+{
+	return this->CurrentStateName;
+}
+
+UStateNode* UStateMachine::GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches)
+{
+	auto Node = this->GetCurrentState();
+
+	if (Class.Get() && Node)
+	{
+		if (Node->Node && Node->Node->IsA(Class.Get()->StaticClass()))
+		{
+			Branches = ESearchResult::Found;
+
+			return Node->Node;
+		}
+	}
+
+	Branches = ESearchResult::NotFound;
+	return nullptr;
+}
 
 UState* UStateMachine::GetCurrentState()
 {
@@ -787,6 +800,8 @@ FName UStateMachine::GetPreviousState() const
 	}
 }
 
+
+
 void UStateMachine::SetParentData(UStateMachine* Parent, FName NewParentKey)
 {
 	this->ParentMachine = Parent;
@@ -1060,7 +1075,7 @@ bool UStateNode::Verify(FNodeVerificationContext& Context) const
 		bErrorFree = false;
 	}
 
-	return bErrorFree;
+	return bErrorFree && this->Verify_Inner(Context);
 }
 
 void UStateNode::EmitEvent(FName EName)
@@ -1165,19 +1180,6 @@ void UStateNode::GetEmittedEvents(TSet<FName>& Events) const
 #endif // WITH_EDITORONLY_DATA
 
 #pragma endregion
-
-
-void FStateMachineEventRef::Activate() {
-	if (this->Owner.IsValid()) {
-		this->Owner->Event(this->EventName);
-	}
-}
-
-void FStateMachineEventRef::ActivateWithData(UObject* Data) {
-	if (this->Owner.IsValid()) {
-		this->Owner->EventWithData(this->EventName, Data);
-	}
-}
 
 void UState::Append(UState* Data)
 {

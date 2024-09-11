@@ -2,11 +2,63 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
+#include "StateMachine/EdGraph/EdStateExtensionNode.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/StateConnectionDrawingPolicy.h"
 
 #define LOCTEXT_NAMESPACE "StateMachineSchema"
 
 int32 UStateMachineSchema::CurrentCacheRefreshID = 0;
+
+UEdGraphNode* FSMSchemaAction_NewExtensionNode::PerformAction(
+	class UEdGraph* ParentGraph,
+	UEdGraphPin* FromPin,
+	const FVector2D Location,
+	bool bSelectNewNode)
+{
+	UEdStateExtensionNode* ResultNode = nullptr;
+	UEdStateGraph* StateGraph = Cast<UEdStateGraph>(ParentGraph);
+
+	if (NodeTemplate != nullptr)
+	{
+		const FScopedTransaction Transaction(
+			LOCTEXT("StateMachineEditorNewExtensionNode", "State Machine Editor: New Extension Node"));
+
+		ParentGraph->Modify();
+		if (FromPin != nullptr)
+			FromPin->Modify();
+
+		NodeTemplate->Rename(nullptr, ParentGraph);
+
+		ParentGraph->AddNode(NodeTemplate, true, bSelectNewNode);
+
+		NodeTemplate->CreateNewGuid();
+		NodeTemplate->PostPlacedNewNode();
+		NodeTemplate->AllocateDefaultPins();
+		NodeTemplate->AutowireNewNode(FromPin);
+
+		NodeTemplate->NodePosX = Location.X;
+		NodeTemplate->NodePosY = Location.Y;
+
+		NodeTemplate->SetFlags(RF_Transactional);
+
+		ResultNode = NodeTemplate;
+	}
+
+	return ResultNode;
+}
+
+void FSMSchemaAction_NewExtensionNode::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	FEdGraphSchemaAction::AddReferencedObjects(Collector);
+	Collector.AddReferencedObject(NodeTemplate);
+}
+
+FString FSMSchemaAction_NewExtensionNode::GetReferencerName() const
+{
+	return "FSMSchemaAction_NewExtensionNode";
+}
 
 UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
 	class UEdGraph* ParentGraph, 
@@ -200,6 +252,22 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 			Visited.Add(NodeType);
 		}
 	}
+
+	this->AddExtensionAction(ContextMenuBuilder);
+}
+
+void UStateMachineSchema::AddExtensionAction(FGraphContextMenuBuilder& ContextMenuBuilder) const
+{
+	const FText Desc = LOCTEXT("NewStateGraphExtensionNodeMenuText", "Extend an existing node...");
+	const FText MenuText = FText::FromString("");
+	const FText ToolTip = LOCTEXT("NewStateGraphNodeTooltip", "Add extension node here");
+
+	TSharedPtr<FSMSchemaAction_NewExtensionNode> ExtendAction(
+		new FSMSchemaAction_NewExtensionNode(MenuText, Desc, ToolTip, 0));
+	
+	ExtendAction->SetNodeTemplate(NewObject<UEdStateExtensionNode>(ContextMenuBuilder.OwnerOfTemporaries));
+
+	ContextMenuBuilder.AddAction(ExtendAction);
 }
 
 FConnectionDrawingPolicy* UStateMachineSchema::CreateConnectionDrawingPolicy(

@@ -40,7 +40,8 @@ UEdStateGraph* UStateMachineBlueprint::GetMainGraph()
 			UEdStateGraph::StaticClass(),
 			UStateMachineSchema::StaticClass()));
 
-		this->MainGraph->bIsMainGraph = true;
+		//this->MainGraph->bIsMainGraph = true;
+		this->MainGraph->SetGraphType(EStateMachineGraphType::MAIN_GRAPH);
 		const UEdGraphSchema* Schema = this->MainGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*this->MainGraph);
 	}
@@ -55,6 +56,8 @@ UEdStateGraph* UStateMachineBlueprint::AddSubGraph()
 		this->GetNewGraphName(),
 		UEdStateGraph::StaticClass(),
 		UStateMachineSchema::StaticClass()));
+
+	NewGraph->SetGraphType(EStateMachineGraphType::SUB_GRAPH);
 
 	const UEdGraphSchema* Schema = NewGraph->GetSchema();
 	Schema->CreateDefaultNodesForGraph(*NewGraph);
@@ -94,7 +97,7 @@ FName UStateMachineBlueprint::GetNewGraphName()
 	return FName(DefaultName);
 }
 
-bool UStateMachineBlueprint::IsMainGraph(UEdStateGraph* Graph)
+bool UStateMachineBlueprint::IsMainGraph(const UEdStateGraph* Graph) const
 {
 	return this->MainGraph == Graph;
 }

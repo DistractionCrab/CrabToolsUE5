@@ -9,16 +9,6 @@
 
 class UEdStateGraph;
 
-class FEdNodeEvents
-{
-public:
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FNameChanged, FName, FName)
-	FNameChanged OnNameChanged;
-
-	DECLARE_MULTICAST_DELEGATE(FNodeDeleted)
-	FNodeDeleted OnNodeDeleted;
-};
-
 /* Base Graph Node for both states and edges. */
 UCLASS(MinimalAPI)
 class UEdBaseNode : public UEdGraphNode
@@ -26,8 +16,18 @@ class UEdBaseNode : public UEdGraphNode
 	GENERATED_BODY()
 
 public:
+
 	/* Events for changes to this node. */
-	FEdNodeEvents Events;
+	class FEditorEvents
+	{
+	public:
+		DECLARE_MULTICAST_DELEGATE_TwoParams(FNameChanged, FName, FName)
+		FNameChanged OnNameChanged;
+
+		DECLARE_MULTICAST_DELEGATE(FNodeDeleted)
+		FNodeDeleted OnNodeDeleted;
+	} 
+	Events;
 
 	virtual void ClearEvents();
 	UEdStateGraph* GetStateGraph() const;
@@ -37,11 +37,12 @@ public:
 
 /* Base State node to be used for states in the State Machine Graph. */
 UCLASS(MinimalAPI)
-class UEdBaseStateNode : public UEdBaseNode
+class UEdBaseStateNode : public UEdBaseNode, public IStateLike
 {
 	GENERATED_BODY()
 
 public:
+
 	UEdBaseStateNode() {}
 	virtual ~UEdBaseStateNode() {}
 
@@ -55,4 +56,9 @@ public:
 	/* Returns the name displayed for graph nodes and UI purposes. */
 	virtual FName GetNodeName() const { return NAME_None; }
 	virtual bool HasEvent(FName EName) { return false; }
+
+	/* Begin IStateLike Interface */
+	virtual TArray<FString> GetEnterStates() const override;
+	virtual TArray<FString> GetExitStates() const override;
+	/* End IStateLike Interface */
 };

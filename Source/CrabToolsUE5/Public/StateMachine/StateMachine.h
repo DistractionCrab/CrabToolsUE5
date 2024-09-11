@@ -78,13 +78,6 @@ struct FTransitionData
 public:
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "StateOptions"))
 	FName Destination;
-	//UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionOptions"))
-	//FName Condition = "TrueCondition";
-	//UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (GetOptions = "ConditionDataOptions"))
-	//FName DataCondition = "TrueDataCondition";
-	
-	//FTransitionDelegate ConditionCallback;
-	//FTransitionDataDelegate DataConditionCallback;
 
 	UPROPERTY(EditAnywhere, Category = "StateMachine")
 	TObjectPtr<UTransitionCondition> Condition;
@@ -93,6 +86,7 @@ public:
 	TObjectPtr<UTransitionDataCondition> DataCondition;
 };
 
+/*
 USTRUCT(BlueprintType, meta = (DisableSplitPin))
 struct FStateMachineEventRef
 {
@@ -111,6 +105,7 @@ public:
 	void Activate();
 	void ActivateWithData(UObject* Data);
 };
+*/
 
 UCLASS(Blueprintable, CollapseCategories, Category = "StateMachine")
 class CRABTOOLSUE5_API UState : public UObject
@@ -119,15 +114,18 @@ class CRABTOOLSUE5_API UState : public UObject
 
 	friend class UStateMachine;
 
-	UPROPERTY()
+	UPROPERTY(DuplicateTransient)
 	TObjectPtr<UStateNode> Node;
 
 	// Map from Event Name to StateName
-	UPROPERTY()
+	UPROPERTY(DuplicateTransient)
 	TMap<FName, FTransitionData> Transitions;
 
 	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
 	EStateMachineAccessibility Access = EStateMachineAccessibility::PRIVATE;
+
+	UPROPERTY()
+	bool bIsOverride = false;
 
 public:
 
@@ -145,6 +143,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE UStateNode* GetNode() const { return this->Node; }
 	FORCEINLINE const TMap<FName, FTransitionData>& GetTransitions() const { return Transitions; }
+
+	FORCEINLINE void SetOverride(bool bNewOverride) { this->bIsOverride = bNewOverride; }
+	FORCEINLINE bool GetOverride() const { return this->bIsOverride; }
 };
 
 UCLASS(BlueprintType, Abstract, Category = "StateMachine")
@@ -276,9 +277,12 @@ public:
 	void SetActive(bool bNewActive) { this->bActive = bNewActive; }
 
 	/* Runs a verification check on the node. Returns true if no error, false if an error happened. */
-	virtual bool Verify(FNodeVerificationContext& Context) const;
+	bool Verify(FNodeVerificationContext& Context) const;
 
 protected:
+
+	/* Override this with your verification code. */
+	virtual bool Verify_Inner(FNodeVerificationContext& Context) const { return true; }
 
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
@@ -405,7 +409,7 @@ private:
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateNode>> SharedMachines;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine",
+	UPROPERTY(BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	FName CurrentStateName;
 
@@ -477,6 +481,9 @@ public:
 	*/
 	void Tick(float DeltaTime);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
+	UState* GetCurrentStateData() const;
+
 	UState* GetCurrentState();
 	UState* GetStateData(FName Name);
 
@@ -540,6 +547,7 @@ public:
 		virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 		virtual void PostLinkerChange() override;
+		void CollectExtendibleStates(TSet<FString>& StateNames) const;
 	#endif
 
 	// IStateMachineLike interface
@@ -564,8 +572,6 @@ protected:
 
 private:
 
-	bool HasEventVariable(FName VName) const;
-	FName GetEventVarName(FName EName);
 	void InitFromArchetype();
 	void PushStateToStack(FName EName);
 	void UpdateState(FName Name);

@@ -1,29 +1,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "StateMachine/IStateMachineLike.h"
-#include "SGraphNode.h"
-#include "EdGraph/EdGraphNode.h"
-#include "SGraphPin.h"
-#include "StateMachine/StateMachine.h"
 #include "StateMachine/EdGraph/EdBaseNode.h"
-#include "EdStateNode.generated.h"
+#include "EdStateExtensionNode.generated.h"
 
+class UState;
+class UStateNode;
 
 UCLASS(CollapseCategories, MinimalAPI)
-class UEdStateNode : public UEdBaseStateNode
+class UEdStateExtensionNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
-	/* Whether or not a blueprint variable should be generated for this state. */
-	UPROPERTY(EditDefaultsOnly, Category="StateMachineGraph")
-	bool bIsVariable;
-
-	UPROPERTY(VisibleAnywhere, Category = "StateMachineGraph")
+	UPROPERTY(EditAnywhere, Category = "StateMachineGraph",
+		meta=(GetOptions="GetExtendibleStates"))
 	FName StateName;
-
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineGraph")
-	FName StateCategory;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
 	TArray<TObjectPtr<UStateNode>> Nodes;
@@ -31,28 +22,35 @@ class UEdStateNode : public UEdBaseStateNode
 	UPROPERTY(VisibleAnywhere, Category="StateMachineGraph|Events")
 	TSet<FName> NodeEmittedEvents;
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "StateMachineGraph",
+		meta=(ShowInnerProperties))
 	TObjectPtr<UState> StateClass;
+
+	UPROPERTY(EditAnywhere, Category = "StateMachineGraph")
+	bool bOverrideParent = false;
 
 public:
 
-	UEdStateNode();
-	virtual ~UEdStateNode();
+	UEdStateExtensionNode();
+	virtual ~UEdStateExtensionNode();
 	virtual TSubclassOf<UStateNode> GetNodeClass() const;
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
+	/* Returns the name which is actually stored in compilation */
 	virtual FName GetStateName() const override;
 	/* Returns the name which should appear on graph nodes. */
 	virtual FName GetNodeName() const override { return this->StateName; }
-	FName GetStateCategory() const { return this->StateCategory; }
-	FName SetStateName(FName NewName);
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
 	UState* GenerateState(FNodeVerificationContext& Context, UObject* Outer);
 	void Delete();
 	virtual bool HasEvent(FName EName) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
+	/* Returns true if the inherited node is overrideable, otherwise is protected. */
+	bool IsOverride() const;
 
 	/* Begin IStateLike Interface */
 	virtual TArray<FString> GetEventOptions() const override;
+	virtual TArray<FString> GetEnterStates() const override;
+	virtual TArray<FString> GetExitStates() const override;
 	/* End IStateLike Interface */
 
 	#if WITH_EDITOR
@@ -61,6 +59,10 @@ public:
 	#endif
 
 private:
+
+	#if WITH_EDITOR
+		TArray<FString> GetExtendibleStates() const;
+	#endif // WITH_EDITOR
 
 	void UpdateEmittedEvents();
 };

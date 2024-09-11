@@ -3,10 +3,37 @@
 #include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "EdGraphSchema_K2.h"
-#include "StateMachine/EdGraph/EdStateNode.h"
-#include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachineSchema.generated.h"
 
+class UEdStateNode;
+class UEdStateExtensionNode;
+class UEdExtension;
+
+USTRUCT()
+struct STATEMACHINEEDITOR_API FSMSchemaAction_NewExtensionNode
+	: public FEdGraphSchemaAction, public FGCObject
+{
+	GENERATED_USTRUCT_BODY();
+
+private:
+
+	TObjectPtr<UEdStateExtensionNode> NodeTemplate;
+
+public:
+	FSMSchemaAction_NewExtensionNode() : NodeTemplate(nullptr) {}
+
+	FSMSchemaAction_NewExtensionNode(const FText& InNodeCategory, const FText& InMenuDesc, const FText& InToolTip, const int32 InGrouping)
+		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping), NodeTemplate(nullptr)
+	{
+	}
+
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
+
+	void SetNodeTemplate(UEdStateExtensionNode* Template) { this->NodeTemplate = Template; }
+
+	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	virtual FString GetReferencerName() const override;
+};
 
 USTRUCT()
 struct STATEMACHINEEDITOR_API FSMSchemaAction_NewNode
@@ -115,4 +142,8 @@ public:
 	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
 	virtual int32 GetCurrentVisualizationCacheID() const override;
 	virtual void ForceVisualizationCacheClear() const override;
+
+private:
+
+	void AddExtensionAction(FGraphContextMenuBuilder& ContextMenuBuilder) const;
 };

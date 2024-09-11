@@ -20,33 +20,38 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 	UStateMachineArchetype* Machine = nullptr;
 	UState* BuiltState = nullptr;
 
+	if (StateName.IsNone())
+	{
+		return nullptr;
+	}
+
 	if (MachineName == NAME_None)
 	{
 		Machine = this->StateMachineArchetype;
-
-		if (auto ParentClass = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
-		{
-			BuiltState = ParentClass->GetStateData(Outer, NAME_None, StateName);
-		}
-		else
-		{
-			BuiltState = NewObject<UState>(Outer);
-		}
 	}
 	else if (this->SubStateMachineArchetypes.Contains(MachineName)) 
 	{
-		BuiltState = NewObject<UState>(Outer);
 		Machine = this->SubStateMachineArchetypes[MachineName];
 	}
 
 	if (Machine)
 	{
-		auto ArchData = DuplicateObject(Machine->GetStateData(StateName), Outer);
-		
-		if (IsValid(ArchData))
+		auto DefaultState = Machine->GetStateData(StateName);
+
+		if (DefaultState)
 		{
-			BuiltState->AppendCopy(ArchData);
-		}		
+			BuiltState = DuplicateObject(DefaultState, Outer);
+			// Need to append the state data, as those are not duplicated.
+			BuiltState->Append(DefaultState);
+
+			if (!BuiltState->GetOverride())
+			{
+				if (auto ParentClass = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
+				{
+					BuiltState->Append(ParentClass->GetStateData(Outer, NAME_None, StateName));
+				}
+			}
+		}
 	}	
 
 	return BuiltState;
@@ -80,14 +85,16 @@ TArray<FString> UStateMachineBlueprintGeneratedClass::GetChildAccessibleSubMachi
 {
 	TArray<FString> Names;
 
-	for (auto SubMachine : this->SubStateMachineArchetypes)
+	for (auto& SubMachine : this->SubStateMachineArchetypes)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("- Found SubMachines: %s"), *SubMachine.Key.ToString());
 		bool Check = SubMachine.Value->Accessibility == EStateMachineAccessibility::PUBLIC
 			|| SubMachine.Value->Accessibility == EStateMachineAccessibility::PROTECTED
 			|| SubMachine.Value->Accessibility == EStateMachineAccessibility::OVERRIDEABLE;
 
 		if (Check)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("- Added SubMachines: %s"), *SubMachine.Key.ToString());
 			Names.Add(SubMachine.Key.ToString());
 		}
 	}
@@ -172,4 +179,31 @@ EStateMachineAccessibility UStateMachineBlueprintGeneratedClass::GetSubMachineAc
 	{
 		return EStateMachineAccessibility::PRIVATE;
 	}
+}
+
+void UStateMachineBlueprintGeneratedClass::CollectExtendibleStates(
+	TSet<FString>& StateNames,
+	FName SubMachineName) const
+{
+	if (SubMachineName.IsNone())
+	{
+		this->StateMachineArchetype->CollectExtendibleStates(StateNames);
+	}
+	else
+	{
+		if (auto SubM = this->SubStateMachineArchetypes.Find(SubMachineName))
+		{
+			SubM->Get()->CollectExtendibleStates(StateNames);
+		}
+	}
+}
+
+UStateMachine* UStateMachineBlueprintGeneratedClass::DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const
+{
+	if (auto Machine = this->SubStateMachineArchetypes.Find(SubMachineName))
+	{
+		return DuplicateObject(Machine->Get()->ArchetypeObject, Outer);
+	}
+
+	return nullptr;
 }

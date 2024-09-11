@@ -1,4 +1,5 @@
-#include "StateMachine/EdGraph/EdStateNode.h"
+#include "StateMachine/EdGraph/EdStateExtensionNode.h"
+#include "StateMachine/StateMachine.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
@@ -8,21 +9,21 @@
 
 #define LOCTEXT_NAMESPACE "EdStateNode"
 
-UEdStateNode::UEdStateNode() {
+UEdStateExtensionNode::UEdStateExtensionNode() {
 	this->bCanRenameNode = true;
 
 	this->StateClass = CreateDefaultSubobject<UState>(TEXT("DefaultStateClass"));
 }
 
-UEdStateNode::~UEdStateNode() {
+UEdStateExtensionNode::~UEdStateExtensionNode() {
 
 }
 
-TSubclassOf<UStateNode> UEdStateNode::GetNodeClass() const {
+TSubclassOf<UStateNode> UEdStateExtensionNode::GetNodeClass() const {
 	return UStateNode::StaticClass();
 }
 
-FName UEdStateNode::GetStateName() const
+FName UEdStateExtensionNode::GetStateName() const
 { 
 	if (this->StateClass->GetAccess() == EStateMachineAccessibility::PRIVATE)
 	{
@@ -39,25 +40,7 @@ FName UEdStateNode::GetStateName() const
 	}
 }
 
-FName UEdStateNode::SetStateName(FName NewName)
-{
-	if (UEdStateGraph* Graph = Cast<UEdStateGraph>(this->GetGraph()))
-	{
-		if (Graph->IsStateNameAvilable(NewName))
-		{
-			const FScopedTransaction Transaction(LOCTEXT("SetStateName", "Set State Name"));
-			this->Modify();
-
-			FName OldName = this->StateName;
-			this->StateName = NewName;
-			this->Events.OnNameChanged.Broadcast(OldName, this->StateName);
-		}
-	}
-
-	return this->StateName;
-}
-
-UState* UEdStateNode::GenerateState(FNodeVerificationContext& Context, UObject* Outer)
+UState* UEdStateExtensionNode::GenerateState(FNodeVerificationContext& Context, UObject* Outer)
 {
 	if (!IsValid(this->StateClass.Get()))
 	{
@@ -86,12 +69,21 @@ UState* UEdStateNode::GenerateState(FNodeVerificationContext& Context, UObject* 
 		BuiltState->AppendNode(ArrayNode);
 	}
 
+	if (BuiltState->GetNode())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found Node for compiled state %s, Node=%s"), *this->GetStateName().ToString(), *BuiltState->GetNode()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found Node for compiled state %s, Node=null"), *this->GetStateName().ToString());
+	}
+
 	return BuiltState;
 }
 
 
 
-TArray<FString> UEdStateNode::GetEventOptions() const
+TArray<FString> UEdStateExtensionNode::GetEventOptions() const
 {
 	TSet<FName> EventsSet;
 
@@ -110,7 +102,7 @@ TArray<FString> UEdStateNode::GetEventOptions() const
 	return EventArray;
 }
 
-void UEdStateNode::Delete()
+void UEdStateExtensionNode::Delete()
 {
 	this->Modify();
 
@@ -123,18 +115,18 @@ void UEdStateNode::Delete()
 	this->DestroyNode();
 }
 
-bool UEdStateNode::Modify(bool bAlwaysMarkDirty)
+bool UEdStateExtensionNode::Modify(bool bAlwaysMarkDirty)
 {
 	Super::Modify(bAlwaysMarkDirty);
 	return this->GetGraph()->Modify(bAlwaysMarkDirty);
 }
 
-bool UEdStateNode::HasEvent(FName EName)
+bool UEdStateExtensionNode::HasEvent(FName EName)
 {
 	return this->NodeEmittedEvents.Contains(EName) || this->GetStateGraph()->HasEvent(EName);
 }
 
-void UEdStateNode::UpdateEmittedEvents()
+void UEdStateExtensionNode::UpdateEmittedEvents()
 {
 	this->NodeEmittedEvents.Empty();
 
@@ -151,19 +143,47 @@ void UEdStateNode::UpdateEmittedEvents()
 	}
 }
 
+TArray<FString> UEdStateExtensionNode::GetEnterStates() const
+{
+	TArray<FString> Names = UEdBaseStateNode::GetEnterStates();
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UEdStateExtensionNode::GetExitStates() const
+{
+	TArray<FString> Names = UEdBaseStateNode::GetExitStates();
+
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+bool UEdStateExtensionNode::IsOverride() const
+{
+	return this->bOverrideParent;
+}
 
 #if WITH_EDITOR
 
-void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UEdStateExtensionNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	this->UpdateEmittedEvents();
 
-	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateNode, Nodes))
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateExtensionNode, Nodes))
 	{
 		this->Modify();
 	}
+	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateExtensionNode, StateName))
+	{
+
+	}
+
 
 	if (!IsValid(this->StateClass))
 	{
@@ -171,10 +191,20 @@ void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 	}
 }
 
-void UEdStateNode::PostLinkerChange()
+void UEdStateExtensionNode::PostLinkerChange()
 {
 	this->UpdateEmittedEvents();
 }
-#endif
+
+TArray<FString> UEdStateExtensionNode::GetExtendibleStates() const
+{
+	TSet<FString> Names;
+
+	this->GetStateGraph()->CollectExtendibleStates(Names);
+
+	return Names.Array();
+}
+
+#endif // WITH_EDITOR
 
 #undef LOCTEXT_NAMESPACE

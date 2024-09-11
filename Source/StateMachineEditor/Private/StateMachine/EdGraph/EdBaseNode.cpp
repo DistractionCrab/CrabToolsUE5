@@ -1,7 +1,7 @@
 #include "StateMachine/EdGraph/EdBaseNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
+#include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
-
 
 void UEdBaseNode::Inspect()
 {
@@ -39,4 +39,62 @@ void UEdBaseNode::ClearEvents()
 UEdStateGraph* UEdBaseNode::GetStateGraph() const
 { 
 	return Cast<UEdStateGraph>(this->GetGraph());
+}
+
+TArray<FString> UEdBaseStateNode::GetEnterStates() const
+{
+	TArray<FString> Names;
+
+	for (auto Pin : this->Pins)
+	{
+		if (Pin->LinkedTo.Num() > 0)
+		{
+			for (auto LinkedTo : Pin->LinkedTo)
+			{
+				if (auto CastNode = Cast<UEdTransition>(LinkedTo->GetOwningNode()))
+				{
+					if (CastNode->GetEndNode() == this)
+					{
+						if (auto CastStateNode = Cast<UEdStateNode>(CastNode->GetStartNode()))
+						{
+							Names.Add(CastStateNode->GetStateName().ToString());
+						}
+					}
+				}
+			}
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UEdBaseStateNode::GetExitStates() const
+{
+	TArray<FString> Names;
+
+	for (auto Pin : this->Pins)
+	{
+		if (Pin->LinkedTo.Num() > 0)
+		{
+			for (auto LinkedTo : Pin->LinkedTo)
+			{
+				if (auto CastNode = Cast<UEdTransition>(LinkedTo->GetOwningNode()))
+				{
+					if (CastNode->GetStartNode() == this)
+					{
+						if (auto CastStateNode = Cast<UEdStateNode>(CastNode->GetEndNode()))
+						{
+							Names.Add(CastStateNode->GetStateName().ToString());
+						}
+					}
+				}
+			}
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
 }

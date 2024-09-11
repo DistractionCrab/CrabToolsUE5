@@ -9,17 +9,6 @@
 
 class UDataTable;
 
-class FStateMachineBlueprintEditorEvents
-{
-public:
-
-	DECLARE_MULTICAST_DELEGATE_OneParam(FGraphSelected, UEdStateGraph*)
-	FGraphSelected OnGraphSelected;
-
-	DECLARE_MULTICAST_DELEGATE_OneParam(FObjectInspected, UObject* Obj)
-	FObjectInspected OnObjectInspected;
-};
-
 UCLASS(BlueprintType)
 class STATEMACHINEEDITOR_API UStateMachineBlueprint
 : public UBlueprint, 
@@ -38,7 +27,17 @@ private:
 public:
 
 	/* Editor Events when this object is changed. */
-	FStateMachineBlueprintEditorEvents Events;
+	class FStateMachineBlueprintEditorEvents
+	{
+	public:
+
+		DECLARE_MULTICAST_DELEGATE_OneParam(FGraphSelected, UEdStateGraph*)
+		FGraphSelected OnGraphSelected;
+
+		DECLARE_MULTICAST_DELEGATE_OneParam(FObjectInspected, UObject* Obj)
+		FObjectInspected OnObjectInspected;
+	}
+	Events;
 
 public:
 
@@ -56,7 +55,7 @@ public:
 	UEdStateGraph* GetMainGraph();
 	UEdStateGraph* AddSubGraph();
 
-	bool IsMainGraph(UEdStateGraph* Graph);
+	bool IsMainGraph(const UEdStateGraph* Graph) const;
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
 	void DeleteGraph(UEdStateGraph* Graph);
 	void ClearDelegates();

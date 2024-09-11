@@ -58,4 +58,13 @@ public:
 	EStateMachineAccessibility GetSubMachineAccessibility(FName Key) const;
 	TArray<FName> GetSubMachineOptions() const;
 	UStateMachine* ConstructSubMachine(UStateMachine* Outer, FName Key) const;
+
+	void CollectExtendibleStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
+
+	UStateMachine* DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const;
+
+	UStateMachineBlueprintGeneratedClass* GetParent() const
+	{
+		return Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass());
+	}
 };
