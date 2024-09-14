@@ -39,18 +39,27 @@ void UStateMachine::InitSubMachines()
 
 void UStateMachine::Initialize(AActor* POwner)
 {
-	this->Owner = POwner;	
-	this->InitFromArchetype();	
-	this->Initialize_Inner();
-	this->InitSubMachines();	
-
-	// Shared nodes always exist, and should be initialize from the beginning.
-	for (auto& Node : this->SharedNodes)
+	if (IsValid(POwner))
 	{
-		Node.Value->Initialize(this);
+		this->Owner = POwner;	
+		this->InitFromArchetype();	
+		this->Initialize_Inner();
+		this->InitSubMachines();
+	
+		// Shared nodes always exist, and should be initialize from the beginning.
+		for (auto& Node : this->SharedNodes)
+		{
+			Node.Value->Initialize(this);
+		}
+
+		this->UpdateState(this->StartState);
+	}
+	else
+	{
+		UE_LOG(LogStateMachine, Error, TEXT("Invalid Owner passed to Initialize in %s"), *this->GetClass()->GetName());
 	}
 
-	this->UpdateState(this->StartState);	
+	
 }
 
 void UStateMachine::Initialize_Inner_Implementation() {}

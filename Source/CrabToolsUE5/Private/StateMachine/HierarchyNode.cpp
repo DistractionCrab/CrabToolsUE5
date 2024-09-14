@@ -12,6 +12,11 @@ void UHierarchyNode::Initialize_Inner_Implementation()
 	{
 		this->SubMachine = Machine;
 		this->SubMachine->Initialize(this->GetMachine()->GetOwner());
+
+		FScriptDelegate f;
+		f.BindUFunction(this, "StateChangedCallback");
+
+		Machine->OnStateChanged.Add(f);
 	}
 }
 
@@ -89,6 +94,16 @@ FName FHierarchyEventValue::GetEvent() const
 	}
 }
 
+void UHierarchyNode::StatechangedCallback(FStateChangedEventData& Data)
+{
+	if (this->Active())
+	{
+		if (this->ExitStates.Contains(Data.To))
+		{
+			this->EmitEvent(this->ExitStates[Data.To].GetEvent());
+		}
+	}
+}
 
 
 // Editor helper functions.

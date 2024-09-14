@@ -233,7 +233,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	virtual void SetOwner(UStateMachine* Parent);
 
-	FORCEINLINE bool Active() { return this->bActive; }
+	FORCEINLINE bool Active() const { return this->bActive; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner();
