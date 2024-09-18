@@ -96,12 +96,9 @@ FName FHierarchyEventValue::GetEvent() const
 
 void UHierarchyNode::StatechangedCallback(FStateChangedEventData& Data)
 {
-	if (this->Active())
+	if (this->ExitStates.Contains(Data.To))
 	{
-		if (this->ExitStates.Contains(Data.To))
-		{
-			this->EmitEvent(this->ExitStates[Data.To].GetEvent());
-		}
+		this->EmitEvent(this->ExitStates[Data.To].GetEvent());
 	}
 }
 

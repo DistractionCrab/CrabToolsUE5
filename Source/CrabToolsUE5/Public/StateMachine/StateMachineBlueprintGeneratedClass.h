@@ -17,6 +17,9 @@ class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
 
 public:
 	UPROPERTY()
+	bool bInstanceEditable = false;
+
+	UPROPERTY()
 	bool bIsVariable = false;
 
 	UPROPERTY()
@@ -69,4 +72,6 @@ public:
 	}
 
 	bool IsSubMachineNameInUse(FString& Name) const;
+
+	UStateMachine* GetMostRecentParentArchetype(FName SubMachineKey) const;
 };

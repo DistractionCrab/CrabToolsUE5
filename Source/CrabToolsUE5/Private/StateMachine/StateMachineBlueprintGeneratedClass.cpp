@@ -227,3 +227,22 @@ bool UStateMachineBlueprintGeneratedClass::IsSubMachineNameInUse(FString& Name) 
 		return false;
 	}
 }
+
+UStateMachine* UStateMachineBlueprintGeneratedClass::GetMostRecentParentArchetype(FName SubMachineKey) const
+{
+	if (this->SubStateMachineArchetypes.Contains(SubMachineKey))
+	{
+		return this->SubStateMachineArchetypes[SubMachineKey]->ArchetypeObject;
+	}
+	else
+	{
+		if (auto Parent = this->GetParent())
+		{
+			return Parent->GetMostRecentParentArchetype(SubMachineKey);
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+}

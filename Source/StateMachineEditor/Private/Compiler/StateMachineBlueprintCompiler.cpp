@@ -309,7 +309,17 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 			{
 				auto SubSM = SubGraph->GenerateStateMachine(Context);
 
-				BPGClass->SubStateMachineArchetypes.Add(SubGraph->GetFName(), SubSM);
+				if (SubSM)
+				{					
+					BPGClass->SubStateMachineArchetypes.Add(SubGraph->GetFName(), SubSM);
+				}
+				else
+				{
+					FString ErrorMessage = FString::Printf(
+						TEXT("Subgraph %s could not be compiled."),
+						*SubGraph->GetName());
+					Context.Error(ErrorMessage, nullptr);
+				}
 			}
 
 			BPGClass->EventSet.Append(SMBP->GetEventSet());

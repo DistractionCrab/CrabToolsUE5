@@ -11,6 +11,7 @@
 #include "StateMachine/IStateMachineLike.h"
 #include "StateMachine/StateMachineEnum.h"
 #include "Containers/List.h"
+#include "StateMachine/Emitters/EventEmitter.h"
 #include "StateMachine.generated.h"
 
 class UStateNode;
@@ -413,6 +414,10 @@ private:
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	FName CurrentStateName;
 
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess, IgnorePropertySearch))
+	TArray<UEventEmitter*> EventEmitters;
+
 	/* How many previous states to remember. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, IgnorePropertySearch,
@@ -447,6 +452,8 @@ public:
 public:
 
 	UStateMachine(const FObjectInitializer& ObjectInitializer);
+
+	const TArray<UEventEmitter*>& GetEmitters() const { return this->EventEmitters; }
 
 	/**
 	 * Function used to ensure proper state setup happens. Only call this if you need to manually initialize a

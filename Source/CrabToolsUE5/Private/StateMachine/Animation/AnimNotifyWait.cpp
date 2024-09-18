@@ -5,6 +5,7 @@
 UAnimNotifyWaitNode::UAnimNotifyWaitNode()
 {
 	this->AddEmittedEvent(Animation_Events::ANIM_NOTIFY_FINISH_WAIT);
+	this->ActorClass = ACharacter::StaticClass();
 }
 
 void UAnimNotifyWaitNode::Initialize_Inner_Implementation()

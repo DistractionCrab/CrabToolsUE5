@@ -32,6 +32,10 @@ struct FStateMachineArchetypeOverrideContainer
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "Override", meta=(ShowInnerProperties, NoResetToDefault))
 	TObjectPtr<UStateMachine> Value;
+
+	/* This object is used to compare overriden variables when Linking changes. */
+	UPROPERTY()
+	TObjectPtr<UStateMachine> DefaultObject;
 };
 
 UCLASS(MinimalAPI)
@@ -49,8 +53,15 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
 		meta=(AllowPrivateAccess,
-			EditCondition="GraphType != EStateMachineGraphType::MAIN_GRAPH"))
+			EditCondition="GraphType != EStateMachineGraphType::MAIN_GRAPH",
+			EditConditionHides))
 	EStateMachineGraphType GraphType = EStateMachineGraphType::MAIN_GRAPH;
+
+	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
+		meta = (AllowPrivateAccess,
+			EditCondition = "GraphType != EStateMachineGraphType::MAIN_GRAPH",
+			EditConditionHides))
+	bool bInstanceEditable = false;
 
 	/* Whether or not a Blueprint Class variable should be made for this submachine. */
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
@@ -203,4 +214,13 @@ public:
 private:
 
 	void UpdateOverrideData();
+
+	/* Checks whether or not an emitter attached to this graph has an event. */
+	bool DoesEmitterHaveEvent(FName EName) const;
+	void AppendEmitterEvents(TArray<FString>& Names) const;
+
+	/* Returns the "default" state machine for this graph. */
+	UStateMachine* GetSourceMachine() const;
+
+	void VerifyMarchineArchetypes(FNodeVerificationContext& Context) const;
 };

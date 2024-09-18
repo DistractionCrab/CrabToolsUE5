@@ -162,15 +162,28 @@ bool UEdStateGraph::HasEvent(FName EName) const
 	}
 	else
 	{
-		for (auto DT : this->EventSets)
+		if (this->DoesEmitterHaveEvent(EName))
 		{
-			if (DT->FindRow<FEventSetRow>(EName, ""))
-			{
-				return true;
-			}
-		}
-		return false;
+			return true;
+		}		
 	}	
+
+	return false;
+}
+
+bool UEdStateGraph::DoesEmitterHaveEvent(FName EName) const
+{
+	auto SourceMachine = this->GetSourceMachine();
+
+	for (auto& Emitter : SourceMachine->GetEmitters())
+	{
+		if (Emitter->GetEmittedEvents().Contains(EName))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool UEdStateGraph::IsStateNameAvilable(FName Name) const
@@ -298,6 +311,7 @@ TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start)
 
 UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationContext& Context)
 {
+	this->VerifyMarchineArchetypes(Context);
 	UObject* Outer = Context.GetOuter();
 
 	UStateMachineArchetype* StateMachine = NewObject<UStateMachineArchetype>(Outer);
@@ -306,6 +320,15 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 	{
 		if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
 		{
+			if (this->OverridenMachine.IsNone() || this->MachineArchetypeOverride.Value == nullptr)
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("Subgraph %s specified as extended, but no parent submachine specified to be extended."),
+					*this->GetName());
+				Context.Error(ErrorMessage, this);
+
+				return nullptr;
+			}
 			StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetypeOverride.Value.Get(), StateMachine);
 		}
 		else
@@ -313,6 +336,7 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 			StateMachine->ArchetypeObject = DuplicateObject<UStateMachine>(this->MachineArchetype, StateMachine);
 		}
 		
+		StateMachine->bInstanceEditable = this->bInstanceEditable;
 	}
 
 	StateMachine->bIsVariable = this->bIsVariable;
@@ -331,7 +355,7 @@ UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationCon
 		{
 			auto TData = Transition->GetTransitionData(Context);
 
-			for (auto Values : TData)
+			for (auto& Values : TData)
 			{
 				StateMachine->AddTransition(State->GetStateName(), Values.Key, Values.Value);
 			}
@@ -400,9 +424,45 @@ TArray<FString> UEdStateGraph::GetEventOptions() const
 		Names.Add(Ev->GetEventName().ToString());
 	}
 
+	this->AppendEmitterEvents(Names);
+
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
 
 	return Names;
+}
+
+void UEdStateGraph::AppendEmitterEvents(TArray<FString>& Names) const
+{
+	auto SourceMachine = this->GetSourceMachine();
+
+	for (auto& Emitter : SourceMachine->GetEmitters())
+	{		
+		for (auto& EName : Emitter->GetEmittedEvents())
+		{
+			Names.Add(EName.ToString());
+		}
+	}
+}
+
+UStateMachine* UEdStateGraph::GetSourceMachine() const
+{
+	if (this->IsMainGraph())
+	{
+		return Cast<UStateMachine>(this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->GetDefaultObject());
+	}
+	else
+	{
+		if (this->GraphType == EStateMachineGraphType::SUB_GRAPH)
+		{
+			return this->MachineArchetype;
+		}
+		else if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+		{
+			return this->MachineArchetypeOverride.Value;
+		}
+	}
+
+	return nullptr;
 }
 
 TArray<FString> UEdStateGraph::GetConditionOptions() const
@@ -654,6 +714,7 @@ void UEdStateGraph::UpdateOverrideData()
 				if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
 				{
 					this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
+					this->MachineArchetypeOverride.DefaultObject = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
 					this->MachineArchetypeOverride.Value = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
 				}
 			}
@@ -663,6 +724,35 @@ void UEdStateGraph::UpdateOverrideData()
 	{
 		this->OverridenMachine = NAME_None;
 		this->MachineArchetypeOverride.Value = nullptr;
+	}
+}
+
+void UEdStateGraph::VerifyMarchineArchetypes(FNodeVerificationContext& Context) const
+{
+	if (!this->IsMainGraph())
+	{
+		if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+		{
+			if (auto Overriden = this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->GetParent()->GetMostRecentParentArchetype(this->GetFName()))
+			{
+				auto SourceMachine = this->GetSourceMachine();
+				if (!SourceMachine->IsA(Overriden->GetClass()))
+				{
+					FString ErrorMessage = FString::Printf(
+						TEXT("Overriding Archetype is not a subclass of the parent graph's archetype. Parent Class: %s, Overriding Type: %s"),
+						*Overriden->GetClass()->GetName(),
+						*SourceMachine->GetClass()->GetName());
+					Context.Error(ErrorMessage, this);
+				}
+			}
+			else
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("Overriding null parent machine archetype in SubGraph %s (Internal Error to be reported)."), 
+					*this->GetName());
+				Context.Error(ErrorMessage, this);
+			}
+		}
 	}
 }
 

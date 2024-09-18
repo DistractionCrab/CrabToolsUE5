@@ -1089,7 +1089,10 @@ bool UStateNode::Verify(FNodeVerificationContext& Context) const
 
 void UStateNode::EmitEvent(FName EName)
 {
-	this->GetMachine()->SendEvent(EName); 
+	if (this->Active())
+	{
+		this->GetMachine()->SendEvent(EName);
+	}
 }
 
 void UStateNode::EmitEventSlot(const FEventSlot& ESlot)
