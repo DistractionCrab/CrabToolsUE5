@@ -65,6 +65,7 @@ public:
 	void CollectExtendibleStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
 
 	UStateMachine* DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const;
+	const UStateMachine* GetSubMachineArchetype(FName SubMachineName) const;
 
 	UStateMachineBlueprintGeneratedClass* GetParent() const
 	{

@@ -8,11 +8,13 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "KismetCompiler.h"
 #include "Engine/DataTable.h"
+#include "Utils/PropertyManagement.h"
 #include "StateMachine/DataStructures.h"
 
 #define LOCTEXT_NAMESPACE "EdStateGraph"
-#define DEFAULT_NODE_NAME "NewState"
-#define DEFAULT_EVENT_NAME "NewEvent"
+
+constexpr char DEFAULT_NODE_NAME[] = "NewState";
+constexpr char DEFAULT_EVENT_NAME[] = "NewEvent";
 
 UEdStateGraph::UEdStateGraph(): Accessibility(EStateMachineAccessibility::PRIVATE)
 {
@@ -56,7 +58,7 @@ FName UEdStateGraph::GetNewStateName()
 	FString DefaultName(DEFAULT_NODE_NAME);
 	int index = 0;
 
-	for (auto Node : this->Nodes)
+	for (auto& Node : this->Nodes)
 	{
 		if (UEdStateNode* CastNode = Cast<UEdStateNode>(Node))
 		{
@@ -208,7 +210,7 @@ void UEdStateGraph::ClearDelegates()
 	this->Events.OnNodeSelected.Clear();
 	this->Events.OnEventCreated.Clear();
 
-	for (auto Node : this->Nodes)
+	for (auto& Node : this->Nodes)
 	{
 		if (auto StateNode = Cast<UEdBaseStateNode>(Node))
 		{
@@ -222,7 +224,7 @@ UEdEventObject* UEdStateGraph::CreateEvent()
 	FString DefaultName(DEFAULT_EVENT_NAME);
 	int index = 0;
 
-	for (auto Event : this->EventObjects)
+	for (auto& Event : this->EventObjects)
 	{
 		FString EventName = Event->GetEventName().ToString();
 
@@ -259,7 +261,7 @@ UEdEventObject* UEdStateGraph::CreateEvent()
 
 bool UEdStateGraph::IsEventNameAvilable(FName Name) const
 {
-	for (auto EventObj : this->EventObjects)
+	for (auto& EventObj : this->EventObjects)
 	{
 		if (EventObj->GetEventName() == Name)
 		{
@@ -283,7 +285,7 @@ FName UEdStateGraph::RenameEvent(UEdEventObject* EventObj, FName To)
 	}
 }
 
-TArray<UEdStateNode*> UEdStateGraph::GetStates()
+TArray<UEdStateNode*> UEdStateGraph::GetStates() const
 {
 	TArray<UEdStateNode*> StateNodes;
 	this->GetNodesOfClass<UEdStateNode>(StateNodes);
@@ -291,7 +293,7 @@ TArray<UEdStateNode*> UEdStateGraph::GetStates()
 	return StateNodes;
 }
 
-TArray<UEdTransition*> UEdStateGraph::GetTransitions()
+TArray<UEdTransition*> UEdStateGraph::GetTransitions() const
 {
 	TArray<UEdTransition*> Transitions;
 	this->GetNodesOfClass<UEdTransition>(Transitions);
@@ -299,7 +301,7 @@ TArray<UEdTransition*> UEdStateGraph::GetTransitions()
 	return Transitions;
 }
 
-TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start)
+TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start) const
 {
 	TArray<UEdTransition*> Transitions;
 	this->GetNodesOfClass<UEdTransition>(Transitions);
@@ -311,6 +313,15 @@ TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start)
 
 UStateMachineArchetype* UEdStateGraph::GenerateStateMachine(FNodeVerificationContext& Context)
 {
+	if (this->UpdateOverrideData())
+	{
+		FString ErrorMessage = FString::Printf(
+			TEXT("Subgraph %s:%s overriden statemachine is out of sync with its parent and has been modified."),
+			*this->GetBlueprintOwner()->GetName(),
+			*this->GetName());
+		Context.Warning(ErrorMessage, this);
+	}
+
 	this->VerifyMarchineArchetypes(Context);
 	UObject* Outer = Context.GetOuter();
 
@@ -402,7 +413,7 @@ TArray<FString> UEdStateGraph::GetStateOptions(const UObject* Asker) const
 {
 	TArray<FString> Names;
 
-	for (auto Node : this->Nodes)
+	for (auto& Node : this->Nodes)
 	{
 		if (auto StateNode = Cast<UEdStateNode>(Node))
 		{
@@ -419,7 +430,7 @@ TArray<FString> UEdStateGraph::GetEventOptions() const
 {
 	TArray<FString> Names;
 
-	for (auto Ev : this->EventObjects)
+	for (auto& Ev : this->EventObjects)
 	{
 		Names.Add(Ev->GetEventName().ToString());
 	}
@@ -662,7 +673,7 @@ bool UEdStateGraph::Modify(bool bAlwaysMarkDirty)
 
 void UEdStateGraph::GetEventEntries(TMap<FName, FEventSetRow>& Entries)
 {
-	for (auto EventObj : this->EventObjects)
+	for (auto& EventObj : this->EventObjects)
 	{
 		Entries.Add(EventObj->GetEventName(), EventObj->GetDescription());
 	}
@@ -696,8 +707,10 @@ void UEdStateGraph::CollectExtendibleStates(TSet<FString>& StateNames) const
 	}
 }
 
-void UEdStateGraph::UpdateOverrideData()
+bool UEdStateGraph::UpdateOverrideData()
 {
+	bool bOverrideWasModified = false;
+
 	if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
 	{
 		if (this->OverridenMachine.IsNone())
@@ -707,15 +720,34 @@ void UEdStateGraph::UpdateOverrideData()
 		}
 		else if (!this->IsMainGraph()) // Sanity Check.
 		{
-			this->RenameGraph(this->OverridenMachine);
-
-			if (auto BPObj = this->GetBlueprintOwner())
+			if (this->GetFName() != this->OverridenMachine)
 			{
-				if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
+				this->RenameGraph(this->OverridenMachine);
+			}
+
+			if (!IsValid(this->MachineArchetypeOverride.DefaultObject))
+			{
+				if (auto BPObj = this->GetBlueprintOwner())
 				{
-					this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
-					this->MachineArchetypeOverride.DefaultObject = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
-					this->MachineArchetypeOverride.Value = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
+					if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
+					{
+						this->Accessibility = Class->GetSubMachineAccessibility(this->OverridenMachine);
+						this->MachineArchetypeOverride.DefaultObject = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
+						this->MachineArchetypeOverride.Value = Class->DuplicateSubMachineArchetype(this->OverridenMachine, this);
+					}
+				}
+			}
+			else
+			{
+				if (auto BPObj = this->GetBlueprintOwner())
+				{
+					if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
+					{
+						bOverrideWasModified = UPropertyManagementLibrary::UpdateObjectInheritanceProperties<UStateMachine>(
+							Class->GetSubMachineArchetype(this->OverridenMachine),
+							this->MachineArchetypeOverride.DefaultObject,
+							this->MachineArchetypeOverride.Value);
+					}
 				}
 			}
 		}
@@ -724,7 +756,10 @@ void UEdStateGraph::UpdateOverrideData()
 	{
 		this->OverridenMachine = NAME_None;
 		this->MachineArchetypeOverride.Value = nullptr;
+		this->MachineArchetypeOverride.DefaultObject = nullptr;
 	}
+
+	return bOverrideWasModified;
 }
 
 void UEdStateGraph::VerifyMarchineArchetypes(FNodeVerificationContext& Context) const
@@ -781,7 +816,7 @@ void UEdStateGraph::PostEditChangeProperty(
 	{
 		TSet<TObjectPtr<UDataTable>> FilteredEventSets;
 
-		for (auto DT : this->EventSets)
+		for (auto& DT : this->EventSets)
 		{
 			if (DT->GetRowStruct() == FEventSetRow::StaticStruct())
 			{
@@ -836,6 +871,11 @@ TArray<FString> UEdStateGraph::GetOverrideableMachines() const
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
 
 	return Names;
+}
+
+void UEdStateGraph::PostLinkerChange()
+{
+	
 }
 
 #endif // WITH_EDITOR

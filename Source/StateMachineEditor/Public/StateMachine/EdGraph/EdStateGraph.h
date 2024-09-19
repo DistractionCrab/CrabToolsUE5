@@ -167,9 +167,9 @@ public:
 		return this->EventObjects; 
 	}
 
-	TArray<class UEdStateNode*> GetStates();
-	TArray<class UEdTransition*> GetTransitions();
-	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start);
+	TArray<class UEdStateNode*> GetStates() const;
+	TArray<class UEdTransition*> GetTransitions() const;
+	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start) const;
 	UStateMachineArchetype* GenerateStateMachine(FNodeVerificationContext& Context);
 	FName GetStartStateName() const;
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
@@ -199,6 +199,8 @@ public:
 		virtual void PostEditUndo() override;
 		virtual void PostEditChangeProperty(
 			FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PostLinkerChange() override;
+
 		UFUNCTION()
 		TArray<FString> GetOverrideableMachines() const;
 	#endif	
@@ -213,7 +215,7 @@ public:
 	
 private:
 
-	void UpdateOverrideData();
+	bool UpdateOverrideData();
 
 	/* Checks whether or not an emitter attached to this graph has an event. */
 	bool DoesEmitterHaveEvent(FName EName) const;
