@@ -137,6 +137,22 @@ void SEdStateNode::UpdateGraphNode()
 
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 {
+	if (auto Node = this->GetStateNode())
+	{
+		if (Node->GetNodeType() == EStateNodeType::INLINE_NODE)
+		{
+			return GenericGraphColors::NodeBorder::Root;
+		}
+		else if (Node->GetNodeType() == EStateNodeType::EXTENDED_NODE)
+		{
+			return GenericGraphColors::NodeBorder::ExtensionProtected;
+		}
+		else if (Node->GetNodeType() == EStateNodeType::OVERRIDE_NODE)
+		{
+			return GenericGraphColors::NodeBorder::ExtensionOverride;
+		}
+	}
+
 	return GenericGraphColors::NodeBorder::Root;
 }
 
@@ -147,7 +163,15 @@ const FSlateBrush* SEdStateNode::GetNameIcon() const
 
 bool SEdStateNode::IsNameReadOnly() const
 {
-	return false;
+	if (auto StateNode = this->GetStateNode())
+	{
+		if (StateNode->GetNodeType() == EStateNodeType::INLINE_NODE)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo)
@@ -163,10 +187,9 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 		
 		if (UEdStateNode* CastNode = Cast<UEdStateNode>(this->GraphNode))
 		{
-			CastNode->SetStateName(FName(InText.ToString()));
+			CastNode->Modify();
+			CastNode->RenameNode(FName(InText.ToString()));
 		}
-
-		this->GraphNode->Modify();
 	}
 }
 

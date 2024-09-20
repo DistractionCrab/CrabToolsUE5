@@ -9,6 +9,7 @@
 
 struct FStateData;
 class UStateMachine;
+class UState;
 
 UCLASS(NotBlueprintable, HideDropdown, Hidden)
 class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
@@ -23,6 +24,9 @@ public:
 	bool bIsVariable = false;
 
 	UPROPERTY()
+	bool bCanOverrideStart = false;
+
+	UPROPERTY()
 	TObjectPtr<UStateMachine> ArchetypeObject;
 
 	UPROPERTY()
@@ -31,6 +35,24 @@ public:
 	UStateMachine* CreateStateMachine(UStateMachine* Parent, FName ParentKey);
 };
 
+UCLASS(NotBlueprintable, HideDropdown, Hidden)
+class CRABTOOLSUE5_API UStateArchetype : public UState
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	bool bIsOverride = false;
+
+	UPROPERTY()
+	bool bIsExtension = false;
+
+	TObjectPtr<UState> StateArchetype;
+
+	UPROPERTY()
+	EStateMachineAccessibility Access = EStateMachineAccessibility::PRIVATE;
+};
 
 
 UCLASS()
@@ -65,7 +87,10 @@ public:
 	void CollectExtendibleStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
 
 	UStateMachine* DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const;
+	UState* DuplicateStateArchetype(FName MachineName, FName StateName, UObject* Outer) const;
+	const UState* GetStateArchetype(FName MachineName, FName StateName) const;
 	const UStateMachine* GetSubMachineArchetype(FName SubMachineName) const;
+	const UStateMachineArchetype* GetSubMachineArchetypeData(FName SubMachineName = NAME_None) const;
 
 	UStateMachineBlueprintGeneratedClass* GetParent() const
 	{

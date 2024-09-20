@@ -134,6 +134,7 @@ private:
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 	void OnNameChanged(FName Old, FName Name);
 	void OnNodeDeleted();
+	bool IsReadOnly();
 
 	void Select() override { this->NodeRef->Inspect(); }
 
@@ -165,6 +166,8 @@ private:
 	void OnGraphDeleted();
 	void OnEventCreated(UEdEventObject* Event, bool DeferRefresh);
 	void OnGraphChanged(const FEdGraphEditAction& Action);
+
+	bool IsReadOnly();
 
 	void Select() override;
 	virtual void Delete(bool DeferRefresh = false) override;

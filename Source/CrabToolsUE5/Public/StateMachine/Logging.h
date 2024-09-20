@@ -2,4 +2,4 @@
 
 #include "Logging/LogMacros.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogStateMachine, Log, All);
+CRABTOOLSUE5_API DECLARE_LOG_CATEGORY_EXTERN(LogStateMachine, Log, All);

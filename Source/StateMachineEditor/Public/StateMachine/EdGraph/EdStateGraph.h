@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 #include "EdGraph/EdGraph.h"
+#include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/StateMachine.h"
 #include "StateMachine/IStateMachineLike.h"
 #include "GraphEditAction.h"
@@ -45,40 +46,40 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 
 private:
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess,
 			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH || GraphType == EStateMachineGraphType::SUB_GRAPH",
 			EditConditionHides))
 	FName Category;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
 		meta=(AllowPrivateAccess,
 			EditCondition="GraphType != EStateMachineGraphType::MAIN_GRAPH",
 			EditConditionHides))
 	EStateMachineGraphType GraphType = EStateMachineGraphType::MAIN_GRAPH;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
 		meta = (AllowPrivateAccess,
 			EditCondition = "GraphType != EStateMachineGraphType::MAIN_GRAPH",
 			EditConditionHides))
 	bool bInstanceEditable = false;
 
 	/* Whether or not a Blueprint Class variable should be made for this submachine. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, 
 			EditCondition="Accessibility == EStateMachineAccessibility::PUBLIC && GraphType == EStateMachineGraphType::SUB_GRAPH",
 			EditConditionHides))
 	bool bIsVariable = false;
 
 	/* The state machine this graph is utilizing to store its states other data. */
-	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachineClass",
+	UPROPERTY(EditAnywhere, Instanced, Category = "StateMachine",
 		meta = (AllowPrivateAccess, 
 			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH",
 			EditConditionHides))
 	TObjectPtr<UStateMachine> MachineArchetype;
 
 	/* For extended graphs, the name of the submachine in the parent to override internal data. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess,
 			GetOptions = "GetOverrideableMachines",
 			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
@@ -86,17 +87,17 @@ private:
 	FName OverridenMachine;
 
 	/* Reference to a copy of the parent machine archetype, allows for changing variables. */
-	UPROPERTY(EditAnywhere, Category = "StateMachineClass",
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
 		meta = (AllowPrivateAccess,
 			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
 			EditConditionHides))
 	FStateMachineArchetypeOverrideContainer MachineArchetypeOverride;
 
 	/* Event sets to be added to this submachine. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass", meta=(RowType = "FEventSetRow"))
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine", meta=(RowType = "FEventSetRow"))
 	TSet<TObjectPtr<UDataTable>> EventSets;
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineClass",
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, 
 			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH", 
 			EditConditionHides))
@@ -138,8 +139,7 @@ public:
 	UEdStateGraph();
 	virtual ~UEdStateGraph() {}
 
-	FName GetNewStateName();
-	bool IsStateNameAvilable(FName Name) const;	
+	FName GetNewStateName();	
 	void ClearDelegates();
 	void Select();
 
@@ -154,6 +154,7 @@ public:
 
 	/* Returns whether or not the event name is available for a new event. */
 	bool IsEventNameAvilable(FName Name) const;
+	bool IsStateNameAvilable(FName Name) const;
 
 	/* Removes the event from this graph. */
 	void RemoveEvent(UEdEventObject* EventObj);
@@ -167,6 +168,7 @@ public:
 		return this->EventObjects; 
 	}
 
+	bool CanOverrideStart() const;
 	TArray<class UEdStateNode*> GetStates() const;
 	TArray<class UEdTransition*> GetTransitions() const;
 	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start) const;
@@ -179,8 +181,6 @@ public:
 	void Inspect();
 	bool IsMainGraph() const;
 	UStateMachineBlueprint* GetBlueprintOwner() const;
-	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
-	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	UStateMachine* GetMachineArchetype() const { return this->MachineArchetype; }
 	void Delete();
 	void RenameGraph(FName NewName);
@@ -188,7 +188,12 @@ public:
 	FName GetCategoryName() const;
 	const UStateMachine* GetMarchineArchetype() const { return this->MachineArchetype; }
 	FName GetClassPrefix() const;
-	void SetGraphType(EStateMachineGraphType GType) { this->GraphType = GType; }
+	FName RenameNode(UEdStateNode* Node, FName NewName);
+	FORCEINLINE void SetGraphType(EStateMachineGraphType GType) { this->GraphType = GType; }
+	FORCEINLINE EStateMachineGraphType GetGraphType() const { return this->GraphType; }
+
+	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
 	bool CanRename() const { return this->GraphType != EStateMachineGraphType::MAIN_GRAPH; }
 
@@ -213,6 +218,10 @@ public:
 	virtual TArray<FString> GetDataConditionOptions() const override;
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
 	
+	const UStateMachineArchetype* GetParentArchetypeData() const;
+
+	TArray<FString> GetInheritableStates(EStateNodeType NodeType) const;
+
 private:
 
 	bool UpdateOverrideData();

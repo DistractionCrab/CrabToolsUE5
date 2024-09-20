@@ -809,7 +809,51 @@ FName UStateMachine::GetPreviousState() const
 	}
 }
 
+UState* UStateMachine::DuplicateStateObject(FName StateName, UObject* NewOuter) const
+{
+	if (auto Data = this->Graph.Find(StateName))
+	{
+		return DuplicateObject(Data->Get(), NewOuter);
+	}
+	else
+	{
+		return nullptr;
+	}
+}
 
+TArray<FString> UStateMachine::GetExtendibleStates() const
+{
+	TArray<FString> Names;
+
+	for (auto& Data : this->Graph)
+	{
+		if (StateMachineAccessibility::IsExtendible(Data.Value->Access))
+		{
+			Names.Add(Data.Key.ToString());
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TArray<FString> UStateMachine::GetOverrideableStates() const
+{
+	TArray<FString> Names;
+
+	for (auto& Data : this->Graph)
+	{
+		if (StateMachineAccessibility::IsOverrideable(Data.Value->Access))
+		{
+			Names.Add(Data.Key.ToString());
+		}
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
 
 void UStateMachine::SetParentData(UStateMachine* Parent, FName NewParentKey)
 {

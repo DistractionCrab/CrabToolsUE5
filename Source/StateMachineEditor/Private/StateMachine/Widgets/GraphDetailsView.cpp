@@ -351,6 +351,7 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 				.IsSelected(
 					TableRow, 
 					&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
+				.IsReadOnly(&FStateItem::IsReadOnly)
 		];
 	}
 	
@@ -391,10 +392,23 @@ bool FStateItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMes
 	return false;
 }
 
+bool FStateItem::IsReadOnly()
+{
+	if (this->NodeRef.IsValid())
+	{
+		if (this->NodeRef->GetNodeType() == EStateNodeType::INLINE_NODE)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 void FStateItem::OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo)
 {
 	FName NewName(InText.ToString());
-	this->NodeRef->SetStateName(NewName);
+	this->NodeRef->RenameNode(NewName);
 }
 
 void FStateItem::OnNameChanged(FName Old, FName Name)
@@ -465,7 +479,8 @@ TSharedRef<ITableRow> FStateMachineItem::GetEntryWidget(
 					.IsSelected(
 						TableRow,
 						&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
-					.IsReadOnly(this->GraphRef.Get()->IsMainGraph())
+					//.IsReadOnly(this->GraphRef.Get()->IsMainGraph())
+					.IsReadOnly(&FStateMachineItem::IsReadOnly)
 			];
 	}
 
@@ -478,6 +493,20 @@ void FStateMachineItem::OnEventCreated(UEdEventObject* EventObject, bool DeferRe
 {
 	/*this->EventRoot->AddChild(
 		MakeShareable(new FEventItem(EventObject)), DeferRefresh);*/
+}
+
+bool FStateMachineItem::IsReadOnly()
+{
+	if (this->GraphRef.Get()->IsMainGraph())
+	{
+		return true;
+	}
+	else if (this->GraphRef.Get()->GetGraphType() != EStateMachineGraphType::SUB_GRAPH)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void FStateMachineItem::OnGraphChanged(const FEdGraphEditAction& Action)

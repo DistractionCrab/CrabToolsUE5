@@ -73,8 +73,10 @@ public:
 	/* Returns the submachines that explicitly defined in this blueprint. */
 	TArray<FString> GetDefinedSubMachines() const;
 
+	FName GetNewGraphName() const;
+
 private:
 
 	void InspectObject(UObject* Obj);
-	FName GetNewGraphName();
+	
 };

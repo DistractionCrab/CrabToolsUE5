@@ -4,6 +4,7 @@
 bool StateMachineAccessibility::IsChildVisible(EStateMachineAccessibility Access)
 {
 	return Access == EStateMachineAccessibility::PUBLIC ||
+		Access == EStateMachineAccessibility::PUBLIC_CONST ||
 		Access == EStateMachineAccessibility::PROTECTED ||
 		Access == EStateMachineAccessibility::OVERRIDEABLE;
 }
@@ -11,4 +12,17 @@ bool StateMachineAccessibility::IsChildVisible(EStateMachineAccessibility Access
 bool StateMachineAccessibility::IsPublic(EStateMachineAccessibility Access)
 {
 	return Access == EStateMachineAccessibility::PUBLIC;
+}
+
+bool StateMachineAccessibility::IsExtendible(EStateMachineAccessibility Access)
+{
+	return Access == EStateMachineAccessibility::PUBLIC ||
+		Access == EStateMachineAccessibility::PROTECTED ||
+		Access == EStateMachineAccessibility::OVERRIDEABLE;
+}
+
+bool StateMachineAccessibility::IsOverrideable(EStateMachineAccessibility Access)
+{
+	return Access == EStateMachineAccessibility::PUBLIC ||
+		Access == EStateMachineAccessibility::OVERRIDEABLE;
 }

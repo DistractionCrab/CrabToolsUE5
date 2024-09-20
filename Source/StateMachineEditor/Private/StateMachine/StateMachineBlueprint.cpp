@@ -67,7 +67,7 @@ UEdStateGraph* UStateMachineBlueprint::AddSubGraph()
 	return NewGraph;
 }
 
-FName UStateMachineBlueprint::GetNewGraphName()
+FName UStateMachineBlueprint::GetNewGraphName() const
 {
 	FString DefaultName(DEFAULT_STATEMACHINE_NAME);
 	int index = 0;

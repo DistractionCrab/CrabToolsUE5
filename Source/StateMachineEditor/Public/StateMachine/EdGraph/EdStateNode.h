@@ -9,45 +9,99 @@
 #include "StateMachine/EdGraph/EdBaseNode.h"
 #include "EdStateNode.generated.h"
 
+UENUM(BlueprintType)
+enum class EStateNodeType : uint8
+{
+	/* Will add nodes to the parent state when instantiated. */
+	EXTENDED_NODE    UMETA(DisplayName = "Extends"),
+	/* Will override the nodes in the parent state when instantiated. Can also override State Data. */
+	OVERRIDE_NODE    UMETA(DisplayName = "Override"),
+	/* Will add nodes to the parent state when instantiated. Can also override State Data. */
+	OVERRIDE_EXTENDED_NODE    UMETA(DisplayName = "OverrideExtend"),
+	/* Base definition of a state in an SMGraph. */
+	INLINE_NODE      UMETA(DisplayName = "Inline"),
+};
+
+USTRUCT(BlueprintType)
+struct FStateNodeOverrideContainer
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Override",
+		meta = (ShowInnerProperties, NoResetToDefault))
+	TObjectPtr<UState> Value;
+
+	/* This object is used to compare overriden variables when Linking changes. */
+	UPROPERTY()
+	TObjectPtr<UState> DefaultObject;
+};
 
 UCLASS(CollapseCategories, MinimalAPI)
 class UEdStateNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
-	/* Whether or not a blueprint variable should be generated for this state. */
-	UPROPERTY(EditDefaultsOnly, Category="StateMachineGraph")
-	bool bIsVariable;
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
+	EStateNodeType NodeType = EStateNodeType::INLINE_NODE;
 
-	UPROPERTY(VisibleAnywhere, Category = "StateMachineGraph")
+	/* Whether or not a blueprint variable should be generated for this state. */
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine",
+		meta = (EditCondition = "NodeType == EStateNodeType::INLINE_NODE", EditConditionHides))
+	bool bIsVariable = false;
+
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine",
+		meta = (EditCondition = "NodeType == EStateNodeType::INLINE_NODE", EditConditionHides))
+	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
+
+	UPROPERTY(VisibleAnywhere, Category = "StateMachine")
 	FName StateName;
 
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachineGraph")
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+		meta = (EditCondition = "NodeType == EStateNodeType::INLINE_NODE", EditConditionHides))
 	FName StateCategory;
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachine")
 	TArray<TObjectPtr<UStateNode>> Nodes;
 
-	UPROPERTY(VisibleAnywhere, Category="StateMachineGraph|Events")
+	UPROPERTY(VisibleAnywhere, Category="StateMachine|Events")
 	TSet<FName> NodeEmittedEvents;
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachineGraph")
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachine",
+		meta=(EditCondition="NodeType == EStateNodeType::INLINE_NODE", EditConditionHides))
 	TObjectPtr<UState> StateClass;
+
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
+		meta = (EditCondition = "NodeType != EStateNodeType::INLINE_NODE", EditConditionHides,
+			GetOptions="GetInheritableStates"))
+	FName StateExtension;
+
+	UPROPERTY(EditAnywhere, Category = "StateMachine",
+		meta = (
+			EditCondition = "(NodeType != EStateNodeType::INLINE_NODE) && (NodeType != EStateNodeType::EXTENDED_NODE)",
+			EditConditionHides,
+			ShowOnlyInnerProperties))
+	 FStateNodeOverrideContainer StateClassOverride;
 
 public:
 
 	UEdStateNode();
 	virtual ~UEdStateNode();
-	virtual TSubclassOf<UStateNode> GetNodeClass() const;
+	
 	void SetNodeTemplate(UStateNode* NewNode) { this->Nodes.Add(NewNode); }
-	virtual FName GetStateName() const override;
-	/* Returns the name which should appear on graph nodes. */
-	virtual FName GetNodeName() const override { return this->StateName; }
+	
+	FORCEINLINE void SetNodeType(EStateNodeType NewType) { this->NodeType = NewType; }
+	FORCEINLINE EStateNodeType GetNodeType() const { return this->NodeType; }
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
 	UState* GenerateState(FNodeVerificationContext& Context, UObject* Outer);
 	void Delete();
+	void RenameNode(FName Name);
+
+	virtual TSubclassOf<UStateNode> GetNodeClass() const;	
+	virtual FName GetStateName() const override;
+	/* Returns the name which should appear on graph nodes. */
+	virtual FName GetNodeName() const override { return this->StateName; }
 	virtual bool HasEvent(FName EName) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
@@ -63,4 +117,8 @@ public:
 private:
 
 	void UpdateEmittedEvents();
+	bool UpdateStateArchetypeOverride();
+
+	UFUNCTION()
+	TArray<FString> GetInheritableStates() const;
 };

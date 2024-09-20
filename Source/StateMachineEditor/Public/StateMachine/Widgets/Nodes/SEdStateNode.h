@@ -26,7 +26,10 @@ public:
 	virtual void UpdateGraphNode() override;
 	virtual const FSlateBrush* GetNameIcon() const;	
 
+	void IsNameReadOnly();
+
 	FName GetStateName() const;
+	UEdStateNode* GetStateNode() const { return Cast<UEdStateNode>(this->GraphNode); }
 
 private:
 	//bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);

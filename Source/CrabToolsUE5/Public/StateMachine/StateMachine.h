@@ -122,12 +122,6 @@ class CRABTOOLSUE5_API UState : public UObject
 	UPROPERTY(DuplicateTransient)
 	TMap<FName, FTransitionData> Transitions;
 
-	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
-	EStateMachineAccessibility Access = EStateMachineAccessibility::PRIVATE;
-
-	UPROPERTY()
-	bool bIsOverride = false;
-
 public:
 
 	/* Only use to build states. Do not use for currently in use States/State Machines */
@@ -139,14 +133,9 @@ public:
 	/* Only use to build states. Do not use for currently in use States/State Machines */
 	void AppendNodeCopy(UStateNode* Node);
 
-	FORCEINLINE EStateMachineAccessibility GetAccess() const { return this->Access; }
-
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE UStateNode* GetNode() const { return this->Node; }
 	FORCEINLINE const TMap<FName, FTransitionData>& GetTransitions() const { return Transitions; }
-
-	FORCEINLINE void SetOverride(bool bNewOverride) { this->bIsOverride = bNewOverride; }
-	FORCEINLINE bool GetOverride() const { return this->bIsOverride; }
 };
 
 UCLASS(BlueprintType, Abstract, Category = "StateMachine")
@@ -570,6 +559,14 @@ public:
 	void BindConditionAt(FString& Address, FTransitionDelegate& Condition);
 	/* Used to bind transition delegates. */
 	void BindDataConditionAt(FString& Address, FTransitionDataDelegate& Condition);
+
+	UState* DuplicateStateObject(FName StateName, UObject* NewOuter) const;
+
+	/* Returns the names of states that can be extended, but not overwritten. */
+	TArray<FString> GetExtendibleStates() const;
+
+	/* Returns the names of states that can be extended, but not overwritten. */
+	TArray<FString> GetOverrideableStates() const;
 
 protected:
 

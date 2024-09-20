@@ -15,8 +15,8 @@ class UEdStartStateNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere)
-	FText Description;
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
+	bool bCanOverride = false;
 
 public:
 	UEdStartStateNode();
@@ -26,4 +26,6 @@ public:
 	virtual FName GetNodeName() const override { return FName("~Start~"); }
 	virtual bool CanUserDeleteNode() const override { return false; }
 	virtual bool CanDuplicateNode() const override { return false; }
+
+	bool CanOverride() const { return this->bCanOverride; }
 };

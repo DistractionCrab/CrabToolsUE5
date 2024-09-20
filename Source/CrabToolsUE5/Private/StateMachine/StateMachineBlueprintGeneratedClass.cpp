@@ -38,13 +38,22 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 	{
 		auto DefaultState = Machine->GetStateData(StateName);
 
+		if (DefaultState->GetAccess() == EStateMachineAccessibility::PRIVATE)
+		{
+			BuiltState = DuplicateObject(DefaultState, Outer);
+		}
+		else if (DefaultState->GetAccess() == EStateMachineAccessibility::PROTECTED)
+		{
+
+		}
+
 		if (DefaultState)
 		{
 			BuiltState = DuplicateObject(DefaultState, Outer);
 			// Need to append the state data, as those are not duplicated.
 			BuiltState->Append(DefaultState);
 
-			if (!BuiltState->GetOverride())
+			if (BuiltState->GetAccess() != EStateMachineAccessibility::OVERRIDEABLE)
 			{
 				if (auto ParentClass = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
 				{
@@ -202,8 +211,140 @@ UStateMachine* UStateMachineBlueprintGeneratedClass::DuplicateSubMachineArchetyp
 	{
 		return DuplicateObject(Machine->Get()->ArchetypeObject, Outer);
 	}
+	else if (auto Parent = this->GetParent())
+	{
+		return Parent->DuplicateSubMachineArchetype(SubMachineName, Outer);
+	}
 
 	return nullptr;
+}
+
+UState* UStateMachineBlueprintGeneratedClass::DuplicateStateArchetype(FName MachineName, FName StateName, UObject* Outer) const
+{
+	/* The machine to check for in this class level. */
+	UStateMachineArchetype* Machine = nullptr;
+	UState* CopiedState = nullptr;
+
+	if (MachineName.IsNone())
+	{
+		Machine = this->StateMachineArchetype;
+	}
+	else
+	{
+		Machine = this->SubStateMachineArchetypes.Find(MachineName)->Get();
+	}	
+
+	if (Machine == nullptr)
+	{
+		if (auto Parent = this->GetParent())
+		{
+			CopiedState = Parent->DuplicateStateArchetype(MachineName, StateName, Outer);
+		}
+	}
+	else
+	{
+		UState* Check = Machine->GetStateData(StateName);
+
+		if (Check)
+		{
+			if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDEABLE)
+			{
+				CopiedState = DuplicateObject(Check, Outer);
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::PROTECTED)
+			{
+				CopiedState = this->GetParent()->DuplicateStateArchetype(MachineName, StateName, Outer);
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::PUBLIC)
+			{
+				CopiedState = DuplicateObject(Check, Outer);
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDE_EXTEND)
+			{
+				CopiedState = DuplicateObject(Check, Outer);
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::PRIVATE)
+			{
+				CopiedState = DuplicateObject(Check, Outer);
+			}
+			else
+			{
+				UE_LOG(LogStateMachine, Error, TEXT("Invalid inheritance access for state: %s found %s"),
+					*StateName.ToString(),
+					*UEnum::GetValueAsString(Check->GetAccess()));
+			}
+		}
+		else if (auto Parent = this->GetParent())
+		{
+			CopiedState = Parent->DuplicateStateArchetype(MachineName, StateName, Outer);
+		}
+	}
+
+	return CopiedState;
+}
+
+const UState* UStateMachineBlueprintGeneratedClass::GetStateArchetype(FName MachineName, FName StateName) const
+{
+	/* The machine to check for in this class level. */
+	UStateMachineArchetype* Machine = nullptr;
+	const UState* CopiedState = nullptr;
+
+	if (MachineName.IsNone())
+	{
+		Machine = this->StateMachineArchetype;
+	}
+	else
+	{
+		Machine = this->SubStateMachineArchetypes.Find(MachineName)->Get();
+	}
+
+	if (Machine == nullptr)
+	{
+		if (auto Parent = this->GetParent())
+		{
+			CopiedState = Parent->GetStateArchetype(MachineName, StateName);
+		}
+	}
+	else
+	{
+		const UState* Check = Machine->GetStateData(StateName);
+
+		if (Check)
+		{
+			if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDEABLE)
+			{
+				CopiedState = Check;
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::PROTECTED)
+			{
+				CopiedState = this->GetParent()->GetStateArchetype(MachineName, StateName);
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::PUBLIC)
+			{
+				CopiedState = Check;
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDE_EXTEND)
+			{
+				CopiedState = Check;
+			}
+			else if (Check->GetAccess() == EStateMachineAccessibility::PRIVATE)
+			{
+				CopiedState = Check;
+			}
+			else
+			{
+				UE_LOG(LogStateMachine, Error, TEXT("Invalid inheritance access for state: %s found %s"),
+					*StateName.ToString(),
+					*UEnum::GetValueAsString(Check->GetAccess()));
+			}
+		}
+		else if (auto Parent = this->GetParent())
+		{
+			CopiedState = Parent->GetStateArchetype(MachineName, StateName);
+		}
+	}
+
+	return CopiedState;
 }
 
 const UStateMachine* UStateMachineBlueprintGeneratedClass::GetSubMachineArchetype(FName SubMachineName) const
@@ -211,6 +352,27 @@ const UStateMachine* UStateMachineBlueprintGeneratedClass::GetSubMachineArchetyp
 	if (auto Machine = this->SubStateMachineArchetypes.Find(SubMachineName))
 	{
 		return Machine->Get()->ArchetypeObject;
+	}
+	else if (auto Parent = this->GetParent())
+	{
+		return Parent->GetSubMachineArchetype(SubMachineName);
+	}
+
+	return nullptr;
+}
+
+const UStateMachineArchetype* UStateMachineBlueprintGeneratedClass::GetSubMachineArchetypeData(FName SubMachineName) const
+{
+	if (SubMachineName.IsNone())
+	{
+		return this->StateMachineArchetype;
+	}
+	else
+	{
+		if (auto Machine = this->SubStateMachineArchetypes.Find(SubMachineName))
+		{
+			return Machine->Get();
+		}
 	}
 
 	return nullptr;

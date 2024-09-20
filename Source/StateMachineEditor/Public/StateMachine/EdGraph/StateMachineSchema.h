@@ -6,7 +6,6 @@
 #include "StateMachineSchema.generated.h"
 
 class UEdStateNode;
-class UEdStateExtensionNode;
 class UEdExtension;
 
 USTRUCT()
@@ -17,10 +16,13 @@ struct STATEMACHINEEDITOR_API FSMSchemaAction_NewExtensionNode
 
 private:
 
-	TObjectPtr<UEdStateExtensionNode> NodeTemplate;
+	TObjectPtr<UEdStateNode> NodeTemplate;
 
 public:
-	FSMSchemaAction_NewExtensionNode() : NodeTemplate(nullptr) {}
+	FSMSchemaAction_NewExtensionNode() : NodeTemplate(nullptr)
+	{
+		this->Grouping = -100;
+	}
 
 	FSMSchemaAction_NewExtensionNode(const FText& InNodeCategory, const FText& InMenuDesc, const FText& InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping), NodeTemplate(nullptr)
@@ -29,7 +31,7 @@ public:
 
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 
-	void SetNodeTemplate(UEdStateExtensionNode* Template) { this->NodeTemplate = Template; }
+	void SetNodeTemplate(UEdStateNode* Template) { this->NodeTemplate = Template; }
 
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	virtual FString GetReferencerName() const override;

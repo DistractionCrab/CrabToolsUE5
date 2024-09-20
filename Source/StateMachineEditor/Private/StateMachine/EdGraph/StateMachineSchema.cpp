@@ -3,7 +3,6 @@
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
-#include "StateMachine/EdGraph/EdStateExtensionNode.h"
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/StateConnectionDrawingPolicy.h"
 
@@ -11,13 +10,33 @@
 
 int32 UStateMachineSchema::CurrentCacheRefreshID = 0;
 
+namespace Helpers
+{
+	// Helper function to format the right-click context menu of the graph editor.
+	static FText GetFormattedMenuText(TSubclassOf<UStateNode> NodeType)
+	{
+		FString ClassString = NodeType->GetMetaData("Category");
+
+		if (ClassString.StartsWith("StateMachine|"))
+		{
+			ClassString.RightChopInline(13);
+		}
+		else if (ClassString.StartsWith("StateMachine"))
+		{
+			ClassString.RightChopInline(12);
+		}
+
+		return FText::Format(LOCTEXT("StateMAchineGraphNodeAction", "{0}"), FText::FromString(ClassString));
+	}
+}
+
 UEdGraphNode* FSMSchemaAction_NewExtensionNode::PerformAction(
 	class UEdGraph* ParentGraph,
 	UEdGraphPin* FromPin,
 	const FVector2D Location,
 	bool bSelectNewNode)
 {
-	UEdStateExtensionNode* ResultNode = nullptr;
+	UEdStateNode* ResultNode = nullptr;
 	UEdStateGraph* StateGraph = Cast<UEdStateGraph>(ParentGraph);
 
 	if (NodeTemplate != nullptr)
@@ -181,17 +200,7 @@ UStateMachineSchema::UStateMachineSchema(
 
 void UStateMachineSchema::BackwardCompatibilityNodeConversion(UEdGraph* Graph, bool bOnlySafeChanges) const
 {
-	/*
-	if (Graph)
-	{
-		if (UStateMachineBlueprint* ProcStateMachineBlueprint = Cast<UStateMachineBlueprint>(Graph->GetOuter()))
-		{
-			const int32 ProcStateMachineBPVersion = ProcStateMachineBlueprint->GetLinkerCustomVersion(FFortniteMainBranchObjectVersion::GUID);
-		}
-	}
 
-	Super::BackwardCompatibilityNodeConversion(Graph, bOnlySafeChanges);
-	*/
 }
 
 EGraphType UStateMachineSchema::GetGraphType(const UEdGraph* TestEdGraph) const
@@ -199,20 +208,7 @@ EGraphType UStateMachineSchema::GetGraphType(const UEdGraph* TestEdGraph) const
 	return GT_StateMachine;
 }
 
-// Helper function to format the right-click context menu of the graph editor.
-FText GetFormattedMenuText(TSubclassOf<UStateNode> NodeType) 
-{
-	FString ClassString = NodeType->GetMetaData("Category");
 
-	if (ClassString.StartsWith("StateMachine|")) {
-		ClassString.RightChopInline(13);
-	}
-	else if (ClassString.StartsWith("StateMachine")) {
-		ClassString.RightChopInline(12);
-	}
-
-	return FText::Format(LOCTEXT("StateMAchineGraphNodeAction", "{0}"), FText::FromString(ClassString));
-}
 
 void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
@@ -239,7 +235,7 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 			Title.RemoveFromEnd("_C");
 			FText Desc = FText::FromString(Title);
 			
-			FText MenuText = GetFormattedMenuText(NodeType);
+			FText MenuText = Helpers::GetFormattedMenuText(NodeType);
 			
 			TSharedPtr<FSMSchemaAction_NewNode> Action(
 				new FSMSchemaAction_NewNode(MenuText, Desc, AddToolTip, 0));
@@ -263,9 +259,11 @@ void UStateMachineSchema::AddExtensionAction(FGraphContextMenuBuilder& ContextMe
 	const FText ToolTip = LOCTEXT("NewStateGraphNodeTooltip", "Add extension node here");
 
 	TSharedPtr<FSMSchemaAction_NewExtensionNode> ExtendAction(
-		new FSMSchemaAction_NewExtensionNode(MenuText, Desc, ToolTip, 0));
+		new FSMSchemaAction_NewExtensionNode(MenuText, Desc, ToolTip, -100));
 	
-	ExtendAction->SetNodeTemplate(NewObject<UEdStateExtensionNode>(ContextMenuBuilder.OwnerOfTemporaries));
+	auto StateNode = NewObject<UEdStateNode>(ContextMenuBuilder.OwnerOfTemporaries);
+	StateNode->SetNodeType(EStateNodeType::EXTENDED_NODE);
+	ExtendAction->SetNodeTemplate(StateNode);
 
 	ContextMenuBuilder.AddAction(ExtendAction);
 }
@@ -293,15 +291,11 @@ bool UStateMachineSchema::CreateAutomaticConversionNodeAndConnections(UEdGraphPi
 	{
 		return false;
 	}
-		
-
-	//UGenericGraph* Graph = NodeA->GenericGraphNode->GetGraph();
-
+	
 	FVector2D InitPos((NodeA->NodePosX + NodeB->NodePosX) / 2, (NodeA->NodePosY + NodeB->NodePosY) / 2);
 
 	FSMSchemaAction_NewEdge Action;
 	Action.SetNodeTemplate(NewObject<UEdTransition>(NodeA->GetGraph()));
-	//Action.NodeTemplate->SetEdge(NewObject<UGenericGraphEdge>(Action.NodeTemplate, Graph->EdgeType));
 	UEdTransition* EdgeNode = Cast<UEdTransition>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
 
 	// Always create connections from node A to B, don't allow adding in reverse
@@ -337,17 +331,26 @@ const FPinConnectionResponse UStateMachineSchema::CanCreateConnection(const UEdG
 	{
 		auto Destinations = EdGraph->GetDestinations(EdNode_Out);
 
-		if (Destinations.Num() > 0)
+		if (EdGraph->CanOverrideStart())
 		{
-			return FPinConnectionResponse(
-				CONNECT_RESPONSE_DISALLOW, 
-				LOCTEXT("PinError", "Cannot link Start State to multiple other nodes."));
+			if (Destinations.Num() > 0)
+			{
+				return FPinConnectionResponse(
+					CONNECT_RESPONSE_DISALLOW,
+					LOCTEXT("PinError", "Cannot link Start State to multiple other nodes."));
+			}
+			else
+			{
+				return FPinConnectionResponse(
+					CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE,
+					LOCTEXT("PinConnect", "Connect nodes with edge"));
+			}
 		}
 		else
 		{
 			return FPinConnectionResponse(
-				CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, 
-				LOCTEXT("PinConnect", "Connect nodes with edge"));
+				CONNECT_RESPONSE_DISALLOW,
+				LOCTEXT("PinError", "Overriding of Starting State is not allowed for this graph."));
 		}
 	}
 	else if (Cast<UEdStartStateNode>(EdNode_In))
@@ -402,7 +405,6 @@ void UStateMachineSchema::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 	NodeCreator.Finalize();
 
 	this->SetNodeMetaData(ResultStartNode, FNodeMetadata::DefaultGraphNode);
-
 }
 
 bool UStateMachineSchema::SupportsDropPinOnNode(
