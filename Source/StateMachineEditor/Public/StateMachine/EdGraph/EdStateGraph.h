@@ -14,9 +14,9 @@ class UEdEventObject;
 class UEdBaseNode;
 class UEdStartStateNode;
 class UEdStateNode;
-class UStateMachineArchetype;
 class UStateMachineBlueprint;
 class UDataTable;
+struct FStateMachineArchetypeData;
 
 UENUM(BlueprintType)
 enum class EStateMachineGraphType : uint8
@@ -39,7 +39,7 @@ struct FStateMachineArchetypeOverrideContainer
 	TObjectPtr<UStateMachine> DefaultObject;
 };
 
-UCLASS(MinimalAPI)
+UCLASS(CollapseCategories, MinimalAPI)
 class UEdStateGraph : public UEdGraph, public IStateMachineLike
 {
 	GENERATED_BODY()
@@ -153,8 +153,8 @@ public:
 	FName RenameEvent(UEdEventObject* EventObj, FName To);
 
 	/* Returns whether or not the event name is available for a new event. */
-	bool IsEventNameAvilable(FName Name) const;
-	bool IsStateNameAvilable(FName Name) const;
+	bool IsEventNameAvailable(FName Name) const;
+	bool IsStateNameAvailable(FName Name) const;
 
 	/* Removes the event from this graph. */
 	void RemoveEvent(UEdEventObject* EventObj);
@@ -172,7 +172,7 @@ public:
 	TArray<class UEdStateNode*> GetStates() const;
 	TArray<class UEdTransition*> GetTransitions() const;
 	TArray<class UEdTransition*> GetExitTransitions(UEdStateNode* Start) const;
-	UStateMachineArchetype* GenerateStateMachine(FNodeVerificationContext& Context);
+	FStateMachineArchetypeData CompileStateMachine(FNodeVerificationContext& Context);
 	FName GetStartStateName() const;
 	TArray<UEdBaseNode*> GetDestinations(UEdBaseNode* Node) const;
 	UEdStartStateNode* GetStartNode() const;
@@ -186,9 +186,10 @@ public:
 	void RenameGraph(FName NewName);
 	bool IsVariable() const;
 	FName GetCategoryName() const;
-	const UStateMachine* GetMarchineArchetype() const { return this->MachineArchetype; }
 	FName GetClassPrefix() const;
 	FName RenameNode(UEdStateNode* Node, FName NewName);
+
+	FName GetGraphName() const;
 	FORCEINLINE void SetGraphType(EStateMachineGraphType GType) { this->GraphType = GType; }
 	FORCEINLINE EStateMachineGraphType GetGraphType() const { return this->GraphType; }
 
@@ -197,7 +198,7 @@ public:
 
 	bool CanRename() const { return this->GraphType != EStateMachineGraphType::MAIN_GRAPH; }
 
-	void CollectExtendibleStates(TSet<FString>& StateNames) const;
+	//void CollectExtendibleStates(TSet<FString>& StateNames) const;
 
 	#if WITH_EDITOR
 		virtual void PostLoad() override;
@@ -218,8 +219,6 @@ public:
 	virtual TArray<FString> GetDataConditionOptions() const override;
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
 	
-	const UStateMachineArchetype* GetParentArchetypeData() const;
-
 	TArray<FString> GetInheritableStates(EStateNodeType NodeType) const;
 
 private:
@@ -233,5 +232,7 @@ private:
 	/* Returns the "default" state machine for this graph. */
 	UStateMachine* GetSourceMachine() const;
 
-	void VerifyMarchineArchetypes(FNodeVerificationContext& Context) const;
+	void VerifyMachineArchetypes(FNodeVerificationContext& Context) const;
+	FName GetParentDefinedStartState() const;
+	FName GetLocallyDefinedStartState() const;
 };

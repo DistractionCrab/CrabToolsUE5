@@ -87,27 +87,6 @@ public:
 	TObjectPtr<UTransitionDataCondition> DataCondition;
 };
 
-/*
-USTRUCT(BlueprintType, meta = (DisableSplitPin))
-struct FStateMachineEventRef
-{
-	GENERATED_USTRUCT_BODY()
-
-	TWeakObjectPtr<UStateMachine> Owner;
-
-	UPROPERTY(VisibleAnywhere, Category = "StateMachine|Events")
-	FName EventName;
-
-public:
-
-	FStateMachineEventRef() {}
-	FStateMachineEventRef(FName EName) { this->EventName = EName; }
-
-	void Activate();
-	void ActivateWithData(UObject* Data);
-};
-*/
-
 UCLASS(Blueprintable, CollapseCategories, Category = "StateMachine")
 class CRABTOOLSUE5_API UState : public UObject
 {
@@ -136,6 +115,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE UStateNode* GetNode() const { return this->Node; }
 	FORCEINLINE const TMap<FName, FTransitionData>& GetTransitions() const { return Transitions; }
+
+	void AddTransition(FName EventName, FTransitionData Data) { this->Transitions.Add(EventName, Data); }
 };
 
 UCLASS(BlueprintType, Abstract, Category = "StateMachine")
@@ -386,7 +367,7 @@ private:
 	bool bIsTransitioning = false;
 
 	/* The Graph of the state machine. */
-	UPROPERTY(meta=(IgnorePropertySearch))
+	UPROPERTY(DuplicateTransient, meta=(IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UState>> Graph;
 
 	/* Nodes to be substituted into the graph later. */
@@ -399,7 +380,7 @@ private:
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateNode>> SharedMachines;
 
-	UPROPERTY(BlueprintReadOnly, Category = "StateMachine",
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	FName CurrentStateName;
 
@@ -413,11 +394,11 @@ private:
 			ClampMin = "2", ClampMax = "1000", UIMin = "2", UIMax = "1000"))
 	int MaxStackSize = 5;
 
-	UPROPERTY(meta=(IgnorePropertySearch))
+	UPROPERTY(Transient, meta=(IgnorePropertySearch))
 	TObjectPtr<AActor> Owner;
 
 	/* Map of SubMachines. Do not change the root value of the SM, only its subproperties. */
-	UPROPERTY(meta=(IgnorePropertySearch))
+	UPROPERTY(DuplicateTransient, meta=(IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
 	/* Reference to a parent which uses this state machine as a sub machine. */
@@ -525,17 +506,9 @@ public:
 	TSet<FName> GetEvents() const;
 	TMap<FName, TObjectPtr<UStateNode>> GetSharedNodes() { return this->SharedNodes; }
 
-	// Procedural construction functions.
-	void AddState(FName StateName);
-	void AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition);
-	void AddTransition(FName State, FName Event, FTransitionData Data);
-	void ClearStates() { this->Graph.Empty(); }
-
-	void AddStateData(FName StateName, UState* Data);
-	void AddStateWithNode(FName StateName, UStateNode* Node);
 	void SetParentData(UStateMachine* Parent, FName NewParentKey);
 	UStateMachineBlueprintGeneratedClass* GetGeneratedClass() const;
-	TArray<FString> GetStatesWithAccessibility(EStateMachineAccessibility Access) const;
+	//TArray<FString> GetStatesWithAccessibility(EStateMachineAccessibility Access) const;
 
 
 	#if WITH_EDITOR
@@ -543,7 +516,6 @@ public:
 		virtual void PostEditChangeChainProperty(struct FPropertyChangedChainEvent& PropertyChangedEvent) override;
 		virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 		virtual void PostLinkerChange() override;
-		void CollectExtendibleStates(TSet<FString>& StateNames) const;
 	#endif
 
 	// IStateMachineLike interface
@@ -563,10 +535,20 @@ public:
 	UState* DuplicateStateObject(FName StateName, UObject* NewOuter) const;
 
 	/* Returns the names of states that can be extended, but not overwritten. */
-	TArray<FString> GetExtendibleStates() const;
+	//TArray<FString> GetExtendibleStates() const;
 
 	/* Returns the names of states that can be extended, but not overwritten. */
-	TArray<FString> GetOverrideableStates() const;
+	//TArray<FString> GetOverrideableStates() const;
+
+	// Procedural construction functions.
+	UState* MakeState(FName StateName);
+	UState* MakeStateWithNode(FName StateName, UStateNode* Node);
+	void AddStateData(FName StateName, UState* Data);
+
+	//void AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition);
+	//void AddTransition(FName State, FName Event, FTransitionData Data);
+	//void ClearStates() { this->Graph.Empty(); }
+	// End Procedural Construction functions
 
 protected:
 

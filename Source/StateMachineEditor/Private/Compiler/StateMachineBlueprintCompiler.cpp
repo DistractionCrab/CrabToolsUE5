@@ -197,9 +197,7 @@ void FStateMachineBlueprintCompilerContext::CleanAndSanitizeClass(UBlueprintGene
 
 	if (auto BPGClass = Cast<UStateMachineBlueprintGeneratedClass>(ClassToClean))
 	{
-		BPGClass->SubStateMachineArchetypes.Empty();
-		BPGClass->StateMachineArchetype = nullptr;
-		BPGClass->EventSet.Empty();
+		BPGClass->CleanAndSanitize();
 	}
 
 	if (auto SMObj = Cast<UStateMachine>(InOutOldCDO))
@@ -264,8 +262,6 @@ void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObj
 	{
 		if (auto StateMachine = Cast<UStateMachine>(DefaultObject))
 		{
-			StateMachine->ClearStates();
-
 			if (auto SMBP = this->StateMachineBlueprint())
 			{
 				StateMachine->StartState = SMBP->GetMainGraph()->GetStartStateName();
@@ -303,23 +299,12 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 		{	
 			FStateMachineBlueprintNodeVerificationContext Context(BPGClass, *this);
 
-			BPGClass->StateMachineArchetype = SMBP->GetMainGraph()->GenerateStateMachine(Context);
+			BPGClass->AddStateMachine(SMBP->GetMainGraph()->CompileStateMachine(Context));
 
 			for (auto& SubGraph : SMBP->GetSubgraphs())
 			{
-				auto SubSM = SubGraph->GenerateStateMachine(Context);
-
-				if (SubSM)
-				{					
-					BPGClass->SubStateMachineArchetypes.Add(SubGraph->GetFName(), SubSM);
-				}
-				else
-				{
-					FString ErrorMessage = FString::Printf(
-						TEXT("Subgraph %s could not be compiled."),
-						*SubGraph->GetName());
-					Context.Error(ErrorMessage, nullptr);
-				}
+				auto SubSM = SubGraph->CompileStateMachine(Context);
+				BPGClass->AddStateMachine(SubSM, SubGraph->GetFName());
 			}
 
 			BPGClass->EventSet.Append(SMBP->GetEventSet());

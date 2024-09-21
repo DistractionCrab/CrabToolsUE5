@@ -7,16 +7,59 @@
 #include "StateMachine/StateMachine.h"
 #include "StateMachineBlueprintGeneratedClass.generated.h"
 
-struct FStateData;
-class UStateMachine;
-class UState;
 
-UCLASS(NotBlueprintable, HideDropdown, Hidden)
-class CRABTOOLSUE5_API UStateMachineArchetype : public UStateMachine
+
+USTRUCT()
+struct CRABTOOLSUE5_API FStateArchetypeData
 {
 	GENERATED_BODY()
 
+	friend class UStateMachineBlueprintGeneratedClass;
+
+private:
+
+	UPROPERTY()
+	TObjectPtr<UState> Archetype;
+
 public:
+
+	FStateArchetypeData() {}
+	FStateArchetypeData(UState* Machine) : Archetype(Machine) {}
+
+	UPROPERTY()
+	bool bIsOverride = false;
+
+	UPROPERTY()
+	bool bIsExtension = false;
+
+	UPROPERTY()
+	EStateMachineAccessibility Access = EStateMachineAccessibility::PRIVATE;
+
+	const UState* GetArchetype() const { return this->Archetype; }
+	UState* GetArchetype() { return this->Archetype; }
+	void SetArchetype(UState* NewState) { this->Archetype = NewState; }
+};
+
+USTRUCT()
+struct CRABTOOLSUE5_API FStateMachineArchetypeData
+{
+	GENERATED_BODY()
+
+	friend class UStateMachineBlueprintGeneratedClass;
+
+private:
+
+	UPROPERTY()
+	TObjectPtr<UStateMachine> Archetype;
+
+public:
+
+	FStateMachineArchetypeData() {}
+	FStateMachineArchetypeData(UStateMachine* Machine) : Archetype(Machine) {}
+
+	UPROPERTY()
+	TMap<FName, FStateArchetypeData> StateData;
+
 	UPROPERTY()
 	bool bInstanceEditable = false;
 
@@ -27,33 +70,15 @@ public:
 	bool bCanOverrideStart = false;
 
 	UPROPERTY()
-	TObjectPtr<UStateMachine> ArchetypeObject;
-
-	UPROPERTY()
 	EStateMachineAccessibility Accessibility = EStateMachineAccessibility::PRIVATE;
 
-	UStateMachine* CreateStateMachine(UStateMachine* Parent, FName ParentKey);
+	void AddStateData(FName StateName, FStateArchetypeData Data);
+	const UStateMachine* GetArchetype() const { return this->Archetype; }
+	UStateMachine* GetArchetype() { return this->Archetype; }
+	void SetArchetype(UStateMachine* NewMachine) { this->Archetype = NewMachine; }
+	UStateMachine* CreateStateMachine(UStateMachine* Parent, FName ParentKey) const;
+	void CleanAndSanitize();
 };
-
-UCLASS(NotBlueprintable, HideDropdown, Hidden)
-class CRABTOOLSUE5_API UStateArchetype : public UState
-{
-	GENERATED_BODY()
-
-public:
-
-	UPROPERTY()
-	bool bIsOverride = false;
-
-	UPROPERTY()
-	bool bIsExtension = false;
-
-	TObjectPtr<UState> StateArchetype;
-
-	UPROPERTY()
-	EStateMachineAccessibility Access = EStateMachineAccessibility::PRIVATE;
-};
-
 
 UCLASS()
 class CRABTOOLSUE5_API UStateMachineBlueprintGeneratedClass : public UBlueprintGeneratedClass
@@ -63,10 +88,10 @@ class CRABTOOLSUE5_API UStateMachineBlueprintGeneratedClass : public UBlueprintG
 public:
 
 	UPROPERTY()
-	TObjectPtr<UStateMachineArchetype> StateMachineArchetype;
+	FStateMachineArchetypeData Archetype;
 
 	UPROPERTY()
-	TMap<FName, TObjectPtr<UStateMachineArchetype>> SubStateMachineArchetypes;
+	TMap<FName, FStateMachineArchetypeData> SubArchetypes;
 
 	UPROPERTY()
 	TSet<FName> EventSet;
@@ -77,7 +102,7 @@ public:
 public:
 
 	UState* GetStateData(UStateMachine* Outer, FName Machine, FName StateName);
-	FName GetStartState() const;
+	//FName GetStartState() const;
 	TArray<FString> GetStateOptions(EStateMachineAccessibility Access = EStateMachineAccessibility::PUBLIC) const;
 	TArray<FString> GetChildAccessibleSubMachines() const;
 	EStateMachineAccessibility GetSubMachineAccessibility(FName Key) const;
@@ -85,12 +110,16 @@ public:
 	UStateMachine* ConstructSubMachine(UStateMachine* Outer, FName Key) const;
 
 	void CollectExtendibleStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
+	void CollectOverrideableStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
 
-	UStateMachine* DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const;
-	UState* DuplicateStateArchetype(FName MachineName, FName StateName, UObject* Outer) const;
-	const UState* GetStateArchetype(FName MachineName, FName StateName) const;
-	const UStateMachine* GetSubMachineArchetype(FName SubMachineName) const;
-	const UStateMachineArchetype* GetSubMachineArchetypeData(FName SubMachineName = NAME_None) const;
+	// Archetype Information functions
+	//UStateMachine* DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const;
+	//UState* DuplicateStateArchetype(FName MachineName, FName StateName, UObject* Outer) const;
+	//const UState* GetStateArchetype(FName MachineName, FName StateName) const;
+	//const UStateMachine* GetSubMachineArchetype(FName SubMachineName) const;
+	const FStateMachineArchetypeData* GetMachineArchetypeData(FName MachineName = NAME_None) const;
+	const FStateArchetypeData* GetStateArchetypeData(FName StateName, FName MachineName = NAME_None) const;
+	// End Archetypal information functions
 
 	UStateMachineBlueprintGeneratedClass* GetParent() const
 	{
@@ -100,4 +129,9 @@ public:
 	bool IsSubMachineNameInUse(FString& Name) const;
 
 	UStateMachine* GetMostRecentParentArchetype(FName SubMachineKey) const;
+
+	// Procedural Construction Functions
+	void CleanAndSanitize();
+	void AddStateMachine(FStateMachineArchetypeData Data, FName MachineName = NAME_None);
+	void VerifyClass(FNodeVerificationContext& Context);
 };

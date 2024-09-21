@@ -7,6 +7,7 @@
 #include "StateMachine/Utils.h"
 #include "StateMachine/Logging.h"
 #include "StateMachine/IStateMachineLike.h"
+#include "StateMachine/DataStructures.h"
 #include "StateMachine/Transitions/BaseTransitions.h"
 #include "Utils/UtilsLibrary.h"
 
@@ -83,12 +84,14 @@ AActor* UStateMachine::GetOwner() {
 	return this->Owner;
 }
 
-void UStateMachine::AddState(FName StateName)
+UState* UStateMachine::MakeState(FName StateName)
 {
 	auto State = NewObject<UState>(this);
 	this->Graph.Add(StateName, State);
+	return State;
 }
 
+/*
 void UStateMachine::AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition)
 {
 	if (auto StateData = this->Graph.Find(State))
@@ -110,6 +113,7 @@ void UStateMachine::AddTransition(FName State, FName Event, FTransitionData Data
 		StateData->Get()->Transitions.Add(Event, Data);
 	}
 }
+*/
 
 void UStateMachine::UpdateState(FName Name)
 {
@@ -306,23 +310,6 @@ void UStateMachine::PostLinkerChange()
 	Super::PostLinkerChange();
 }
 
-void UStateMachine::CollectExtendibleStates(TSet<FString>& StateNames) const
-{
-
-	if (auto BPGC = this->GetGeneratedClass())
-	{
-		BPGC->CollectExtendibleStates(StateNames);
-	}
-
-	for (auto& States : this->Graph)
-	{
-		if (StateMachineAccessibility::IsChildVisible(States.Value->Access))
-		{
-			StateNames.Add(States.Key.ToString());
-		}
-	}
-}
-
 #endif // WITH_EDITOR
 
 UState* UStateMachine::GetStateData(FName Name)
@@ -340,32 +327,7 @@ UState* UStateMachine::GetStateData(FName Name)
 
 void UStateMachine::InitFromArchetype()
 {	
-	FName StartStateDefault = NAME_None;
 
-	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
-	{
-		StartStateDefault = BPGC->StateMachineArchetype->StartState;
-		
-	}
-
-	if (IsValid(this->ParentMachine))
-	{
-		if (auto ParentBPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->ParentMachine->GetClass()))
-		{
-			// If these two states aren't equal, then an override for the StartState happened in the editor.
-			if (StartStateDefault == this->StartState)
-			{
-				if (auto Machine = ParentBPGC->SubStateMachineArchetypes[this->ParentKey])
-				{
-					this->StartState = Machine->StartState;
-				}
-			}
-		}
-	}
-	else
-	{
-		this->StartState = StartStateDefault;
-	}
 }
 
 TArray<FString> UStateMachine::StateOptions()
@@ -378,7 +340,7 @@ TArray<FString> UStateMachine::StateOptions()
 
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GetClass()))
 	{
-		Names.Append(BPGC->StateMachineArchetype->StateOptions());
+		Names.Append(BPGC->Archetype.GetArchetype()->StateOptions());
 	}
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
@@ -470,11 +432,13 @@ void UStateMachine::AddStateData(FName StateName, UState* Data)
 	}
 }
 
-void UStateMachine::AddStateWithNode(FName StateName, UStateNode* Node)
+UState* UStateMachine::MakeStateWithNode(FName StateName, UStateNode* Node)
 {
 	UState* Data = NewObject<UState>(this);
 	Data->Node = Cast<UStateNode>(DuplicateObject(Node, this));
 	this->Graph.Add(StateName, Data);
+
+	return Data;
 }
 
 UState* UStateMachine::GetCurrentStateData() const
@@ -821,40 +785,6 @@ UState* UStateMachine::DuplicateStateObject(FName StateName, UObject* NewOuter) 
 	}
 }
 
-TArray<FString> UStateMachine::GetExtendibleStates() const
-{
-	TArray<FString> Names;
-
-	for (auto& Data : this->Graph)
-	{
-		if (StateMachineAccessibility::IsExtendible(Data.Value->Access))
-		{
-			Names.Add(Data.Key.ToString());
-		}
-	}
-
-	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
-
-	return Names;
-}
-
-TArray<FString> UStateMachine::GetOverrideableStates() const
-{
-	TArray<FString> Names;
-
-	for (auto& Data : this->Graph)
-	{
-		if (StateMachineAccessibility::IsOverrideable(Data.Value->Access))
-		{
-			Names.Add(Data.Key.ToString());
-		}
-	}
-
-	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
-
-	return Names;
-}
-
 void UStateMachine::SetParentData(UStateMachine* Parent, FName NewParentKey)
 {
 	this->ParentMachine = Parent;
@@ -869,27 +799,6 @@ UStateMachineBlueprintGeneratedClass* UStateMachine::GetGeneratedClass() const
 TArray<FString> UStateMachine::GetStateOptions(const UObject* Asker) const
 {
 	TArray<FString> Names;
-
-	for (auto& State : this->Graph)
-	{
-		auto Access = State.Value->Access;
-
-		if (Asker)
-		{
-			if (Asker->IsIn(this) && StateMachineAccessibility::IsChildVisible(Access))
-			{
-				Names.Add(State.Key.ToString());
-			}
-			else if (Access == EStateMachineAccessibility::PUBLIC)
-			{
-				Names.Add(State.Key.ToString());
-			}
-		}
-		else if (Access == EStateMachineAccessibility::PUBLIC)
-		{
-			Names.Add(State.Key.ToString());
-		}
-	}
 
 	if (auto BPGC = this->GetGeneratedClass())
 	{
@@ -911,21 +820,6 @@ TArray<FString> UStateMachine::GetStateOptions(const UObject* Asker) const
 	}
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
-
-	return Names;
-}
-
-TArray<FString> UStateMachine::GetStatesWithAccessibility(EStateMachineAccessibility Access) const
-{
-	TArray<FString> Names;
-
-	for (auto& State : this->Graph)
-	{
-		if (State.Value->Access == Access)
-		{
-			Names.Add(State.Key.ToString());
-		}
-	}
 
 	return Names;
 }

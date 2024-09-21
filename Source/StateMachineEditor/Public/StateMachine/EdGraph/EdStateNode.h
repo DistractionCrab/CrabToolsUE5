@@ -9,6 +9,8 @@
 #include "StateMachine/EdGraph/EdBaseNode.h"
 #include "EdStateNode.generated.h"
 
+struct FStateArchetypeData;
+
 UENUM(BlueprintType)
 enum class EStateNodeType : uint8
 {
@@ -94,7 +96,7 @@ public:
 	FName GetStateCategory() const { return this->StateCategory; }
 	FName SetStateName(FName NewName);
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
-	UState* GenerateState(FNodeVerificationContext& Context, UObject* Outer);
+	FStateArchetypeData CompileState(FNodeVerificationContext& Context, UObject* Outer);
 	void Delete();
 	void RenameNode(FName Name);
 
@@ -121,4 +123,6 @@ private:
 
 	UFUNCTION()
 	TArray<FString> GetInheritableStates() const;
+
+	FStateArchetypeData GetBaseCompilationData(UObject* Outer);
 };

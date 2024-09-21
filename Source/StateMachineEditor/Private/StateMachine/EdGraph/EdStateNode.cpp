@@ -26,9 +26,10 @@ TSubclassOf<UStateNode> UEdStateNode::GetNodeClass() const {
 
 FName UEdStateNode::GetStateName() const
 { 
-	if (this->StateClass->GetAccess() == EStateMachineAccessibility::PRIVATE)
+	if (this->Accessibility == EStateMachineAccessibility::PRIVATE)
 	{
 		FString Total;
+
 		Total.Append(this->GetStateGraph()->GetClassPrefix().ToString());
 		Total.Append("::");
 		Total.Append(this->StateName.ToString());
@@ -55,35 +56,67 @@ void UEdStateNode::RenameNode(FName Name)
 	this->GetStateGraph()->RenameNode(this, Name);
 }
 
-UState* UEdStateNode::GenerateState(FNodeVerificationContext& Context, UObject* Outer)
+FStateArchetypeData UEdStateNode::GetBaseCompilationData(UObject* Outer)
 {
-	if (!IsValid(this->StateClass.Get()))
-	{
-		this->Modify();
-		this->StateClass = NewObject<UState>(this);
-	}
-	UState* BuiltState = nullptr;
+	FStateArchetypeData Data;
 
-	if (this->NodeType == EStateNodeType::INLINE_NODE)
+	// This should always be copied from archetypes if this node extends/overrides.
+	Data.Access = this->Accessibility;
+
+	switch (this->NodeType)
 	{
-		BuiltState = DuplicateObject(this->StateClass, Outer, this->GetStateName());
+		case EStateNodeType::INLINE_NODE:
+
+			if (!IsValid(this->StateClass))
+			{
+				this->StateClass = NewObject<UState>(this);
+			}
+
+			Data.SetArchetype(DuplicateObject(this->StateClass, Outer));
+			
+			break;
+
+		case EStateNodeType::EXTENDED_NODE:
+			Data.SetArchetype(NewObject<UState>(Outer));
+			Data.bIsExtension = true;
+			break;
+
+		case EStateNodeType::OVERRIDE_EXTENDED_NODE: 
+			Data.SetArchetype(DuplicateObject(this->StateClassOverride.Value, Outer));
+			Data.bIsExtension = true;
+			Data.bIsOverride = true;
+			break;
+
+		case EStateNodeType::OVERRIDE_NODE:
+			Data.SetArchetype(DuplicateObject(this->StateClassOverride.Value, Outer));
+			Data.bIsOverride = true;
+			break;
 	}
-	else if (this->NodeType == EStateNodeType::EXTENDED_NODE)
+
+	return Data;
+}
+
+FStateArchetypeData UEdStateNode::CompileState(FNodeVerificationContext& Context, UObject* Outer)
+{
+	if (this->UpdateStateArchetypeOverride())
 	{
-		BuiltState = NewObject<UState>(Outer, this->GetStateName());
+		FString ErrorMessage = FString::Printf(
+			TEXT("Subgraph %s::%s::%s overriden state is out of sync with its parent and has been modified."),
+			*this->GetStateGraph()->GetBlueprintOwner()->GetName(),
+			*this->GetStateGraph()->GetName(),
+			*this->GetName());
+		Context.Warning(ErrorMessage, this);
 	}
-	else
-	{
-		BuiltState = DuplicateObject(this->StateClassOverride.Value, Outer, this->GetStateName());
-	}
+
+	FStateArchetypeData Data = this->GetBaseCompilationData(Outer);
 
 	if (this->Nodes.Num() == 1)
 	{
-		BuiltState->AppendNodeCopy(this->Nodes[0]);
+		Data.GetArchetype()->AppendNodeCopy(this->Nodes[0]);
 	}
 	else
 	{
-		auto ArrayNode = NewObject<UArrayNode>(BuiltState);
+		auto ArrayNode = NewObject<UArrayNode>(Data.GetArchetype());
 
 		for (auto Node : this->Nodes)
 		{
@@ -93,13 +126,11 @@ UState* UEdStateNode::GenerateState(FNodeVerificationContext& Context, UObject* 
 				Naming::GenerateStateNodeName(Node, this->GetStateName())));
 		}
 
-		BuiltState->AppendNode(ArrayNode);
+		Data.GetArchetype()->AppendNode(ArrayNode);
 	}
 
-	return BuiltState;
+	return Data;
 }
-
-
 
 TArray<FString> UEdStateNode::GetEventOptions() const
 {
@@ -195,8 +226,9 @@ bool UEdStateNode::UpdateStateArchetypeOverride()
 				{
 					if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
 					{
-						auto DuplicatedState = Class->DuplicateStateArchetype(this->GetStateGraph()->GetFName(), this->StateExtension, this);
-						this->Accessibility = DuplicatedState->GetAccess();
+						auto Data = Class->GetStateArchetypeData(this->GetStateGraph()->GetFName(), this->StateExtension);
+						auto DuplicatedState = DuplicateObject(Data->GetArchetype(), this);
+						this->Accessibility = Data->Access;
 						this->StateClassOverride.DefaultObject = DuplicatedState;
 						this->StateClassOverride.Value = DuplicateObject(DuplicatedState, this);
 					}
@@ -208,8 +240,9 @@ bool UEdStateNode::UpdateStateArchetypeOverride()
 				{
 					if (auto Class = BPObj->GetStateMachineGeneratedClass()->GetParent())
 					{
+						auto Data = Class->GetStateArchetypeData(this->GetStateGraph()->GetFName(), this->StateExtension);
 						bOverrideWasModified = UPropertyManagementLibrary::UpdateObjectInheritanceProperties<UState>(
-							Class->GetStateArchetype(this->GetStateGraph()->GetFName(), this->StateExtension),
+							Data->GetArchetype(),
 							this->StateClassOverride.DefaultObject,
 							this->StateClassOverride.Value);
 					}

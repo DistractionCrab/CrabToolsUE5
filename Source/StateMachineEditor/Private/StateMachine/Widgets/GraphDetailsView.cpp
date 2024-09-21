@@ -370,7 +370,7 @@ bool FStateItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMes
 	{
 		if (auto StateGraph = Cast<UEdStateGraph>(this->NodeRef->GetGraph()))
 		{
-			if (StateGraph->IsStateNameAvilable(NewName))
+			if (StateGraph->IsStateNameAvailable(NewName))
 			{
 				return true;
 			}
@@ -729,7 +729,7 @@ bool FEventItem::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMes
 	{
 		if (NewName == this->EventReference.Get()->GetEventName()) { return true; }
 
-		if (this->EventReference.Get()->GetGraph()->IsEventNameAvilable(NewName))
+		if (this->EventReference.Get()->GetGraph()->IsEventNameAvailable(NewName))
 		{
 			return true;
 		}

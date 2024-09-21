@@ -1,15 +1,32 @@
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/Utils.h"
 
-UStateMachine* UStateMachineArchetype::CreateStateMachine(UStateMachine* Parent, FName NewParentKey)
+UStateMachine* FStateMachineArchetypeData::CreateStateMachine(UStateMachine* Parent, FName NewParentKey) const
 {
-	check(this->ArchetypeObject)
+	if (!this->Archetype) { return nullptr; }
 
-	auto NewMachine = DuplicateObject<UStateMachine>(this->ArchetypeObject, Parent, NewParentKey);
+	auto NewMachine = DuplicateObject<UStateMachine>(this->Archetype, Parent, NewParentKey);
 	NewMachine->SetParentData(Parent, NewParentKey);
-	NewMachine->StartState = this->StartState;
 
 	return NewMachine;
+}
+
+void FStateMachineArchetypeData::CleanAndSanitize()
+{
+	this->Archetype = nullptr;
+	this->StateData.Empty();
+	this->bInstanceEditable = false;
+	this->bIsVariable = false;
+	this->bCanOverrideStart = false;
+	this->Accessibility = EStateMachineAccessibility::PRIVATE;
+
+}
+
+void FStateMachineArchetypeData::AddStateData(FName StateName, FStateArchetypeData Data)
+{
+	check(!this->StateData.Contains(StateName));
+
+	this->StateData.Add(StateName, Data);
 }
 
 UState* UStateMachineBlueprintGeneratedClass::GetStateData(
@@ -17,7 +34,7 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 	FName MachineName,
 	FName StateName)
 {
-	UStateMachineArchetype* Machine = nullptr;
+	FStateMachineArchetypeData* MachineData = nullptr;
 	UState* BuiltState = nullptr;
 
 	if (StateName.IsNone())
@@ -25,68 +42,102 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 		return nullptr;
 	}
 
-	if (MachineName == NAME_None)
+	if (MachineName.IsNone())
 	{
-		Machine = this->StateMachineArchetype;
+		MachineData = &this->Archetype;
 	}
-	else if (this->SubStateMachineArchetypes.Contains(MachineName)) 
+	else if (this->SubArchetypes.Contains(MachineName)) 
 	{
-		Machine = this->SubStateMachineArchetypes[MachineName];
+		MachineData = &this->SubArchetypes[MachineName];
 	}
 
-	if (Machine)
+	if (MachineData)
 	{
-		auto DefaultState = Machine->GetStateData(StateName);
+		auto DefaultState = MachineData->Archetype->GetStateData(StateName);
+		auto DefaultStateData = MachineData->StateData.Find(StateName);
 
-		if (DefaultState->GetAccess() == EStateMachineAccessibility::PRIVATE)
+		if (DefaultState && DefaultStateData)
 		{
-			BuiltState = DuplicateObject(DefaultState, Outer);
-		}
-		else if (DefaultState->GetAccess() == EStateMachineAccessibility::PROTECTED)
-		{
+			bool IsOverride = DefaultStateData->bIsOverride;
+			bool IsExtension = DefaultStateData->bIsExtension;
 
-		}
-
-		if (DefaultState)
-		{
-			BuiltState = DuplicateObject(DefaultState, Outer);
-			// Need to append the state data, as those are not duplicated.
-			BuiltState->Append(DefaultState);
-
-			if (BuiltState->GetAccess() != EStateMachineAccessibility::OVERRIDEABLE)
+			if (IsOverride && IsExtension)
 			{
-				if (auto ParentClass = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
+				if (auto Parent = this->GetParent())
 				{
-					BuiltState->Append(ParentClass->GetStateData(Outer, NAME_None, StateName));
+					auto ParentState = Parent->GetStateData(Outer, MachineName, StateName);
+					BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
+					BuiltState->Append(ParentState);
+					BuiltState->Append(DefaultState);
+				}
+				else
+				{
+					BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
+					BuiltState->Append(DefaultState);
 				}
 			}
+			else if (IsOverride)
+			{
+				BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
+				BuiltState->Append(DefaultState);
+			}
+			else if (IsExtension)
+			{
+				if (auto Parent = this->GetParent())
+				{
+					BuiltState = Parent->GetStateData(Outer, MachineName, StateName);
+					BuiltState->Append(DefaultState);
+				}
+				else
+				{
+					BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
+					BuiltState->Append(DefaultState);
+				}
+			}
+			else
+			{
+				BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
+				BuiltState->Append(DefaultState);
+			}
 		}
-	}	
+		// Else Default State is null.
+		else
+		{
+			if (auto Parent = this->GetParent())
+			{
+				BuiltState = Parent->GetStateData(Outer, MachineName, StateName);
+			}
+		}
+	}
+	// Machine was null
+	else
+	{
+		if (auto Parent = this->GetParent())
+		{
+			BuiltState = Parent->GetStateData(Outer, MachineName, StateName);
+		}
+	}
 
 	return BuiltState;
 }
 
-FName UStateMachineBlueprintGeneratedClass::GetStartState() const
+void UStateMachineBlueprintGeneratedClass::CleanAndSanitize()
 {
-	// Case for when default objects are constructed, but class isn't prepped.
-	if (!this->StateMachineArchetype) { return NAME_None; }
+	this->SubArchetypes.Empty();
+	this->Archetype.CleanAndSanitize();
+	this->EventSet.Empty();
+}
 
-	if (this->StateMachineArchetype->StartState == NAME_None)
+void UStateMachineBlueprintGeneratedClass::AddStateMachine(FStateMachineArchetypeData Data, FName MachineName)
+{
+	if (MachineName.IsNone())
 	{
-		if (auto Parent = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
-		{
-			return Parent->GetStartState();
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Could not find start state for SM-class: %s"),
-				*this->GetName());
-			return NAME_None;
-		}
+		this->Archetype = Data;
 	}
 	else
 	{
-		return this->StateMachineArchetype->StartState;
+		check(!this->SubArchetypes.Contains(MachineName));
+		this->SubArchetypes.Add(MachineName, Data);
 	}
 }
 
@@ -94,11 +145,11 @@ TArray<FString> UStateMachineBlueprintGeneratedClass::GetChildAccessibleSubMachi
 {
 	TArray<FString> Names;
 
-	for (auto& SubMachine : this->SubStateMachineArchetypes)
+	for (auto& SubMachine : this->SubArchetypes)
 	{
-		bool Check = SubMachine.Value->Accessibility == EStateMachineAccessibility::PUBLIC
-			|| SubMachine.Value->Accessibility == EStateMachineAccessibility::PROTECTED
-			|| SubMachine.Value->Accessibility == EStateMachineAccessibility::OVERRIDEABLE;
+		bool Check = SubMachine.Value.Accessibility == EStateMachineAccessibility::PUBLIC
+			|| SubMachine.Value.Accessibility == EStateMachineAccessibility::PROTECTED
+			|| SubMachine.Value.Accessibility == EStateMachineAccessibility::OVERRIDEABLE;
 
 		if (Check)
 		{
@@ -118,7 +169,18 @@ TArray<FString> UStateMachineBlueprintGeneratedClass::GetStateOptions(EStateMach
 {
 	TArray<FString> Names;
 
-	Names.Append(this->StateMachineArchetype->GetStatesWithAccessibility(Access));
+	for (auto& Data : this->Archetype.StateData)
+	{
+		if (Data.Value.Access == Access)
+		{
+			Names.Add(Data.Key.ToString());
+		}
+	}
+
+	if (auto Parent = this->GetParent())
+	{
+		Names.Append(Parent->GetStateOptions(Access));
+	}
 
 	return Names;
 }
@@ -127,7 +189,7 @@ TArray<FName> UStateMachineBlueprintGeneratedClass::GetSubMachineOptions() const
 {
 	TArray<FName> Names;
 
-	for (auto& SubMachine : this->SubStateMachineArchetypes)
+	for (auto& SubMachine : this->SubArchetypes)
 	{
 		Names.Add(SubMachine.Key);
 	}
@@ -139,13 +201,13 @@ UStateMachine* UStateMachineBlueprintGeneratedClass::ConstructSubMachine(UStateM
 {
 	UStateMachine* Constructed = nullptr;
 
-	if (auto Ptr = this->SubStateMachineArchetypes.Find(Key))
+	if (auto Ptr = this->SubArchetypes.Find(Key))
 	{
-		if (auto SM = Ptr->Get())
+		if (auto SM = Ptr->Archetype)
 		{
-			Constructed = SM->CreateStateMachine(Outer, Key);
+			Constructed = DuplicateObject(Ptr->Archetype, Outer);
 
-			if (SM->bIsVariable)
+			if (Ptr->bIsVariable)
 			{
 				FProperty* Prop = this->FindPropertyByName(Key);
 
@@ -167,16 +229,9 @@ UStateMachine* UStateMachineBlueprintGeneratedClass::ConstructSubMachine(UStateM
 
 EStateMachineAccessibility UStateMachineBlueprintGeneratedClass::GetSubMachineAccessibility(FName Key) const
 {
-	if (auto SMPtr = this->SubStateMachineArchetypes.Find(Key))
+	if (auto SMPtr = this->SubArchetypes.Find(Key))
 	{
-		if (auto SM = SMPtr->Get())
-		{
-			return SM->Accessibility;
-		}
-		else
-		{
-			return EStateMachineAccessibility::PRIVATE;
-		}
+		return SMPtr->Accessibility;
 	}
 	else if (auto Parent = Cast<UStateMachineBlueprintGeneratedClass>(this->GetSuperClass()))
 	{
@@ -194,193 +249,110 @@ void UStateMachineBlueprintGeneratedClass::CollectExtendibleStates(
 {
 	if (SubMachineName.IsNone())
 	{
-		this->StateMachineArchetype->CollectExtendibleStates(StateNames);
-	}
-	else
-	{
-		if (auto SubM = this->SubStateMachineArchetypes.Find(SubMachineName))
+		for (auto& Data : this->Archetype.StateData)
 		{
-			SubM->Get()->CollectExtendibleStates(StateNames);
-		}
-	}
-}
-
-UStateMachine* UStateMachineBlueprintGeneratedClass::DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const
-{
-	if (auto Machine = this->SubStateMachineArchetypes.Find(SubMachineName))
-	{
-		return DuplicateObject(Machine->Get()->ArchetypeObject, Outer);
-	}
-	else if (auto Parent = this->GetParent())
-	{
-		return Parent->DuplicateSubMachineArchetype(SubMachineName, Outer);
-	}
-
-	return nullptr;
-}
-
-UState* UStateMachineBlueprintGeneratedClass::DuplicateStateArchetype(FName MachineName, FName StateName, UObject* Outer) const
-{
-	/* The machine to check for in this class level. */
-	UStateMachineArchetype* Machine = nullptr;
-	UState* CopiedState = nullptr;
-
-	if (MachineName.IsNone())
-	{
-		Machine = this->StateMachineArchetype;
-	}
-	else
-	{
-		Machine = this->SubStateMachineArchetypes.Find(MachineName)->Get();
-	}	
-
-	if (Machine == nullptr)
-	{
-		if (auto Parent = this->GetParent())
-		{
-			CopiedState = Parent->DuplicateStateArchetype(MachineName, StateName, Outer);
+			if (StateMachineAccessibility::IsExtendible(Data.Value.Access))
+			{
+				StateNames.Add(Data.Key.ToString());
+			}
 		}
 	}
 	else
 	{
-		UState* Check = Machine->GetStateData(StateName);
-
-		if (Check)
+		if (auto SubM = this->SubArchetypes.Find(SubMachineName))
 		{
-			if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDEABLE)
+			for (auto& Data : SubM->StateData)
 			{
-				CopiedState = DuplicateObject(Check, Outer);
+				if (StateMachineAccessibility::IsExtendible(Data.Value.Access))
+				{
+					StateNames.Add(Data.Key.ToString());
+				}
 			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::PROTECTED)
-			{
-				CopiedState = this->GetParent()->DuplicateStateArchetype(MachineName, StateName, Outer);
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::PUBLIC)
-			{
-				CopiedState = DuplicateObject(Check, Outer);
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDE_EXTEND)
-			{
-				CopiedState = DuplicateObject(Check, Outer);
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::PRIVATE)
-			{
-				CopiedState = DuplicateObject(Check, Outer);
-			}
-			else
-			{
-				UE_LOG(LogStateMachine, Error, TEXT("Invalid inheritance access for state: %s found %s"),
-					*StateName.ToString(),
-					*UEnum::GetValueAsString(Check->GetAccess()));
-			}
-		}
-		else if (auto Parent = this->GetParent())
-		{
-			CopiedState = Parent->DuplicateStateArchetype(MachineName, StateName, Outer);
 		}
 	}
-
-	return CopiedState;
 }
 
-const UState* UStateMachineBlueprintGeneratedClass::GetStateArchetype(FName MachineName, FName StateName) const
-{
-	/* The machine to check for in this class level. */
-	UStateMachineArchetype* Machine = nullptr;
-	const UState* CopiedState = nullptr;
-
-	if (MachineName.IsNone())
-	{
-		Machine = this->StateMachineArchetype;
-	}
-	else
-	{
-		Machine = this->SubStateMachineArchetypes.Find(MachineName)->Get();
-	}
-
-	if (Machine == nullptr)
-	{
-		if (auto Parent = this->GetParent())
-		{
-			CopiedState = Parent->GetStateArchetype(MachineName, StateName);
-		}
-	}
-	else
-	{
-		const UState* Check = Machine->GetStateData(StateName);
-
-		if (Check)
-		{
-			if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDEABLE)
-			{
-				CopiedState = Check;
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::PROTECTED)
-			{
-				CopiedState = this->GetParent()->GetStateArchetype(MachineName, StateName);
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::PUBLIC)
-			{
-				CopiedState = Check;
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::OVERRIDE_EXTEND)
-			{
-				CopiedState = Check;
-			}
-			else if (Check->GetAccess() == EStateMachineAccessibility::PRIVATE)
-			{
-				CopiedState = Check;
-			}
-			else
-			{
-				UE_LOG(LogStateMachine, Error, TEXT("Invalid inheritance access for state: %s found %s"),
-					*StateName.ToString(),
-					*UEnum::GetValueAsString(Check->GetAccess()));
-			}
-		}
-		else if (auto Parent = this->GetParent())
-		{
-			CopiedState = Parent->GetStateArchetype(MachineName, StateName);
-		}
-	}
-
-	return CopiedState;
-}
-
-const UStateMachine* UStateMachineBlueprintGeneratedClass::GetSubMachineArchetype(FName SubMachineName) const
-{
-	if (auto Machine = this->SubStateMachineArchetypes.Find(SubMachineName))
-	{
-		return Machine->Get()->ArchetypeObject;
-	}
-	else if (auto Parent = this->GetParent())
-	{
-		return Parent->GetSubMachineArchetype(SubMachineName);
-	}
-
-	return nullptr;
-}
-
-const UStateMachineArchetype* UStateMachineBlueprintGeneratedClass::GetSubMachineArchetypeData(FName SubMachineName) const
+void UStateMachineBlueprintGeneratedClass::CollectOverrideableStates(
+	TSet<FString>& StateNames,
+	FName SubMachineName) const
 {
 	if (SubMachineName.IsNone())
 	{
-		return this->StateMachineArchetype;
+		for (auto& Data : this->Archetype.StateData)
+		{
+			if (StateMachineAccessibility::IsOverrideable(Data.Value.Access))
+			{
+				StateNames.Add(Data.Key.ToString());
+			}
+		}
 	}
 	else
 	{
-		if (auto Machine = this->SubStateMachineArchetypes.Find(SubMachineName))
+		if (auto SubM = this->SubArchetypes.Find(SubMachineName))
 		{
-			return Machine->Get();
+			for (auto& Data : SubM->StateData)
+			{
+				if (StateMachineAccessibility::IsOverrideable(Data.Value.Access))
+				{
+					StateNames.Add(Data.Key.ToString());
+				}
+			}
+		}
+	}
+}
+
+const FStateMachineArchetypeData* UStateMachineBlueprintGeneratedClass::GetMachineArchetypeData(FName MachineName) const
+{
+
+	const FStateMachineArchetypeData* Found = nullptr;
+
+	if (MachineName.IsNone())
+	{
+		Found = &this->Archetype;
+	}
+	else
+	{
+		if (auto Machine = this->SubArchetypes.Find(MachineName))
+		{
+			Found = Machine;
 		}
 	}
 
-	return nullptr;
+	return Found;
+}
+
+const FStateArchetypeData* UStateMachineBlueprintGeneratedClass::GetStateArchetypeData(FName StateName, FName MachineName) const
+{
+	const FStateArchetypeData* Found = nullptr;
+
+	if (MachineName.IsNone())
+	{
+		
+	}
+	else
+	{
+		if (auto SubM = this->SubArchetypes.Find(MachineName))
+		{
+			if (auto Data = SubM->StateData.Find(StateName))
+			{
+				Found = Data;
+			}
+			else
+			{
+				if (auto Parent = this->GetParent())
+				{
+					Found = Parent->GetStateArchetypeData(StateName, MachineName);
+				}
+			}
+		}
+	}
+
+	return Found;
 }
 
 bool UStateMachineBlueprintGeneratedClass::IsSubMachineNameInUse(FString& Name) const
 {
-	for (auto& SubGraph : this->SubStateMachineArchetypes)
+	for (auto& SubGraph : this->SubArchetypes)
 	{
 		if (SubGraph.Key == Name)
 		{
@@ -400,9 +372,9 @@ bool UStateMachineBlueprintGeneratedClass::IsSubMachineNameInUse(FString& Name) 
 
 UStateMachine* UStateMachineBlueprintGeneratedClass::GetMostRecentParentArchetype(FName SubMachineKey) const
 {
-	if (this->SubStateMachineArchetypes.Contains(SubMachineKey))
+	if (this->SubArchetypes.Contains(SubMachineKey))
 	{
-		return this->SubStateMachineArchetypes[SubMachineKey]->ArchetypeObject;
+		return this->SubArchetypes[SubMachineKey].Archetype;
 	}
 	else
 	{
@@ -415,4 +387,9 @@ UStateMachine* UStateMachineBlueprintGeneratedClass::GetMostRecentParentArchetyp
 			return nullptr;
 		}
 	}
+}
+
+void UStateMachineBlueprintGeneratedClass::VerifyClass(FNodeVerificationContext& Context)
+{
+
 }
