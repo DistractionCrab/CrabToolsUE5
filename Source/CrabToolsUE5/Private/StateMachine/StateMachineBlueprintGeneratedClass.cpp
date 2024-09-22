@@ -53,10 +53,10 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 
 	if (MachineData)
 	{
-		auto DefaultState = MachineData->Archetype->GetStateData(StateName);
+		//auto DefaultState = MachineData->Archetype->GetStateData(StateName);		
 		auto DefaultStateData = MachineData->StateData.Find(StateName);
 
-		if (DefaultState && DefaultStateData)
+		if (DefaultStateData)
 		{
 			bool IsOverride = DefaultStateData->bIsOverride;
 			bool IsExtension = DefaultStateData->bIsExtension;
@@ -68,36 +68,36 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 					auto ParentState = Parent->GetStateData(Outer, MachineName, StateName);
 					BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
 					BuiltState->Append(ParentState);
-					BuiltState->Append(DefaultState);
+					BuiltState->Append(DefaultStateData->Archetype);
 				}
 				else
 				{
 					BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
-					BuiltState->Append(DefaultState);
+					BuiltState->Append(DefaultStateData->Archetype);
 				}
 			}
 			else if (IsOverride)
 			{
 				BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
-				BuiltState->Append(DefaultState);
+				BuiltState->Append(DefaultStateData->Archetype);
 			}
 			else if (IsExtension)
 			{
 				if (auto Parent = this->GetParent())
 				{
 					BuiltState = Parent->GetStateData(Outer, MachineName, StateName);
-					BuiltState->Append(DefaultState);
+					BuiltState->Append(DefaultStateData->Archetype);
 				}
 				else
 				{
 					BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
-					BuiltState->Append(DefaultState);
+					BuiltState->Append(DefaultStateData->Archetype);
 				}
 			}
 			else
 			{
 				BuiltState = DuplicateObject(DefaultStateData->Archetype, Outer);
-				BuiltState->Append(DefaultState);
+				BuiltState->Append(DefaultStateData->Archetype);
 			}
 		}
 		// Else Default State is null.
@@ -126,6 +126,25 @@ void UStateMachineBlueprintGeneratedClass::CleanAndSanitize()
 	this->SubArchetypes.Empty();
 	this->Archetype.CleanAndSanitize();
 	this->EventSet.Empty();
+}
+
+FName UStateMachineBlueprintGeneratedClass::GetStartState(FName MachineName) const
+{
+	if (MachineName.IsNone())
+	{
+		return Cast<UStateMachine>(this->GetDefaultObject())->StartState;
+	}
+	else
+	{
+		if (auto Data = this->SubArchetypes.Find(MachineName))
+		{
+			return Data->Archetype.Get()->StartState;
+		}
+		else
+		{
+			return NAME_None;
+		}
+	}
 }
 
 void UStateMachineBlueprintGeneratedClass::AddStateMachine(FStateMachineArchetypeData Data, FName MachineName)

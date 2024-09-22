@@ -108,15 +108,12 @@ public:
 	EStateMachineAccessibility GetSubMachineAccessibility(FName Key) const;
 	TArray<FName> GetSubMachineOptions() const;
 	UStateMachine* ConstructSubMachine(UStateMachine* Outer, FName Key) const;
+	FName GetStartState(FName MachineName = NAME_None) const;
 
 	void CollectExtendibleStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
 	void CollectOverrideableStates(TSet<FString>& StateNames, FName SubMachineName = NAME_None) const;
 
 	// Archetype Information functions
-	//UStateMachine* DuplicateSubMachineArchetype(FName SubMachineName, UObject* Outer) const;
-	//UState* DuplicateStateArchetype(FName MachineName, FName StateName, UObject* Outer) const;
-	//const UState* GetStateArchetype(FName MachineName, FName StateName) const;
-	//const UStateMachine* GetSubMachineArchetype(FName SubMachineName) const;
 	const FStateMachineArchetypeData* GetMachineArchetypeData(FName MachineName = NAME_None) const;
 	const FStateArchetypeData* GetStateArchetypeData(FName StateName, FName MachineName = NAME_None) const;
 	// End Archetypal information functions

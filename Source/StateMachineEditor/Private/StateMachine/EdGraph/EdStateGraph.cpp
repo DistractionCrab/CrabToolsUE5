@@ -155,8 +155,7 @@ FName UEdStateGraph::GetParentDefinedStartState() const
 		else
 		{
 			Found = Data->GetArchetype()->StartState;
-		}
-		
+		}	
 	}
 
 	return Found;
@@ -165,6 +164,7 @@ FName UEdStateGraph::GetParentDefinedStartState() const
 FName UEdStateGraph::GetLocallyDefinedStartState() const
 {
 	FName Found;
+
 	TArray<UEdTransition*> Transitions;
 	this->GetNodesOfClass<UEdTransition>(Transitions);
 
@@ -393,14 +393,17 @@ FStateMachineArchetypeData UEdStateGraph::CompileStateMachine(FNodeVerificationC
 		
 		Data.bInstanceEditable = this->bInstanceEditable;
 	}
+	else
+	{
+		Data.SetArchetype(NewObject<UStateMachine>(Context.GetOuter()));
+	}
 
 	Data.bIsVariable = this->bIsVariable;
 	Data.Accessibility = this->Accessibility;
 
-	for (auto State : this->GetStates())
+	for (auto& State : this->GetStates())
 	{
 		FStateArchetypeData BuiltState = State->CompileState(Context, Context.GetOuter());
-		Data.AddStateData(State->GetStateName(), BuiltState);
 
 		for (auto Transition : this->GetExitTransitions(State))
 		{
@@ -411,13 +414,11 @@ FStateMachineArchetypeData UEdStateGraph::CompileStateMachine(FNodeVerificationC
 				BuiltState.GetArchetype()->AddTransition(Values.Key, Values.Value);
 			}
 		}
+
+		Data.AddStateData(State->GetStateName(), BuiltState);
 	}
 
-	if (!this->IsMainGraph())
-	{
-		//StateMachine->StartState = this->GetStartStateName();
-		Data.GetArchetype()->StartState = this->GetStartStateName();
-	}
+	Data.GetArchetype()->StartState = this->GetStartStateName();
 	
 
 	return Data;
@@ -812,7 +813,14 @@ FName UEdStateGraph::GetGraphName() const
 	}
 	else
 	{
-		return this->GetFName();
+		if (this->Accessibility == EStateMachineAccessibility::PRIVATE)
+		{
+			return this->GetClassPrefix();
+		}
+		else
+		{
+			return this->GetFName();
+		}
 	}
 }
 
@@ -910,8 +918,6 @@ TArray<FString> UEdStateGraph::GetInheritableStates(EStateNodeType NodeType) con
 
 	if (auto BPGC = this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->GetParent())
 	{
-		//auto Archetype = BPGC->GetMachineArchetypeData(this->GetFName());
-
 		if (NodeType == EStateNodeType::EXTENDED_NODE)
 		{
 			BPGC->CollectExtendibleStates(Names, this->GetGraphName());

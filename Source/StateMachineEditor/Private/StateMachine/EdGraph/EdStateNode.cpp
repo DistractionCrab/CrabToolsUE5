@@ -103,8 +103,9 @@ FStateArchetypeData UEdStateNode::CompileState(FNodeVerificationContext& Context
 		FString ErrorMessage = FString::Printf(
 			TEXT("Subgraph %s::%s::%s overriden state is out of sync with its parent and has been modified."),
 			*this->GetStateGraph()->GetBlueprintOwner()->GetName(),
-			*this->GetStateGraph()->GetName(),
-			*this->GetName());
+			*this->GetStateGraph()->GetGraphName().ToString(),
+			*this->GetNodeName().ToString());
+
 		Context.Warning(ErrorMessage, this);
 	}
 

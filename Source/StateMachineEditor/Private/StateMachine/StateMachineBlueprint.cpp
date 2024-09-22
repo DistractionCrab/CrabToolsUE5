@@ -17,7 +17,7 @@ UStateMachineBlueprint::UStateMachineBlueprint(const FObjectInitializer& ObjectI
 : Super(ObjectInitializer),
 	MainGraph(nullptr)
 {
-
+	
 }
 
 UClass* UStateMachineBlueprint::GetBlueprintClass() const
@@ -40,7 +40,6 @@ UEdStateGraph* UStateMachineBlueprint::GetMainGraph()
 			UEdStateGraph::StaticClass(),
 			UStateMachineSchema::StaticClass()));
 
-		//this->MainGraph->bIsMainGraph = true;
 		this->MainGraph->SetGraphType(EStateMachineGraphType::MAIN_GRAPH);
 		const UEdGraphSchema* Schema = this->MainGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*this->MainGraph);
@@ -91,7 +90,7 @@ FName UStateMachineBlueprint::GetNewGraphName() const
 
 bool UStateMachineBlueprint::IsGraphNameAvailable(FString& Name) const
 {
-	if (Name == this->MainGraph->GetName())
+	if (Name == this->MainGraph->GetGraphName())
 	{
 		return false;
 	}
@@ -99,7 +98,7 @@ bool UStateMachineBlueprint::IsGraphNameAvailable(FString& Name) const
 	{
 		for (auto& SubGraph : this->SubGraphs)
 		{
-			if (SubGraph->GetName() == Name)
+			if (SubGraph->GetGraphName() == Name)
 			{
 				return false;
 			}
@@ -155,7 +154,7 @@ TArray<FString> UStateMachineBlueprint::GetDefinedSubMachines() const
 
 	for (auto& SubM : this->SubGraphs)
 	{
-		Names.Add(SubM->GetName());
+		Names.Add(SubM->GetGraphName().ToString());
 	}
 
 	return Names;
@@ -170,9 +169,9 @@ TArray<FString> UStateMachineBlueprint::GetMachineOptions() const
 {
 	TSet<FString> Names;
 
-	for (auto Graph : this->SubGraphs)
+	for (auto& Graph : this->SubGraphs)
 	{
-		Names.Add(Graph->GetName());	
+		Names.Add(Graph->GetGraphName().ToString());
 	}
 
 	if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->GeneratedClass))
@@ -217,7 +216,7 @@ TArray<FString> UStateMachineBlueprint::GetPropertiesOptions(FSMPropertySearch& 
 		}
 	}
 
-	for (auto SubMachine : this->SubGraphs)
+	for (auto& SubMachine : this->SubGraphs)
 	{
 		for (TFieldIterator<FProperty> FIT(SubMachine->GetMachineArchetype()->GetClass(), EFieldIteratorFlags::IncludeSuper); FIT; ++FIT)
 		{
@@ -225,7 +224,10 @@ TArray<FString> UStateMachineBlueprint::GetPropertiesOptions(FSMPropertySearch& 
 
 			if (SearchParam.Matches(f))
 			{
-				FString Formatted = FString::Printf(TEXT("%s/%s"), *SubMachine->GetName(), *f->GetName());
+				FString Formatted = FString::Printf(
+					TEXT("%s/%s"), 
+					*SubMachine->GetGraphName().ToString(), 
+					*f->GetName());
 				Names.Add(Formatted);
 			}
 		}

@@ -104,7 +104,7 @@ TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FNodeVerificationC
 {
 	TMap<FName, FTransitionData> Data;
 
-	for (auto Values : this->EventToConditionMap)
+	for (auto& Values : this->EventToConditionMap)
 	{
 		FTransitionData DataValue
 		{

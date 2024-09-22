@@ -33,6 +33,7 @@ void UStateMachine::InitSubMachines()
 	{
 		if (SubMachine.Value)
 		{
+			SubMachine.Value->SetParentData(this, SubMachine.Key);
 			SubMachine.Value->Initialize(this->Owner);
 		}
 	}
@@ -90,30 +91,6 @@ UState* UStateMachine::MakeState(FName StateName)
 	this->Graph.Add(StateName, State);
 	return State;
 }
-
-/*
-void UStateMachine::AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition)
-{
-	if (auto StateData = this->Graph.Find(State))
-	{
-		FTransitionData Data =
-		{
-			Destination,
-			Condition,
-			DataCondition
-		};
-		StateData->Get()->Transitions.Add(Event, Data);
-	}
-}
-
-void UStateMachine::AddTransition(FName State, FName Event, FTransitionData Data)
-{
-	if (auto StateData = this->Graph.Find(State))
-	{
-		StateData->Get()->Transitions.Add(Event, Data);
-	}
-}
-*/
 
 void UStateMachine::UpdateState(FName Name)
 {
@@ -262,6 +239,7 @@ void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 
 	if (CurrentState)
 	{
+
 		// First we check if there are any declarative events to handle for this state.
 		if (CurrentState->Transitions.Contains(EName))
 		{
@@ -327,7 +305,7 @@ UState* UStateMachine::GetStateData(FName Name)
 
 void UStateMachine::InitFromArchetype()
 {	
-
+	
 }
 
 TArray<FString> UStateMachine::StateOptions()

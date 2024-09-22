@@ -397,7 +397,7 @@ private:
 	UPROPERTY(Transient, meta=(IgnorePropertySearch))
 	TObjectPtr<AActor> Owner;
 
-	/* Map of SubMachines. Do not change the root value of the SM, only its subproperties. */
+	/* Map of name to submachines available to this State Machine. */
 	UPROPERTY(DuplicateTransient, meta=(IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
@@ -410,7 +410,7 @@ private:
 
 public:
 
-	UPROPERTY(meta=(IgnorePropertySearch))
+	UPROPERTY(VisibleAnywhere, meta=(IgnorePropertySearch))
 	FName StartState;
 
 	UPROPERTY(BlueprintAssignable, Category="StateMachine", meta = (IgnorePropertySearch))

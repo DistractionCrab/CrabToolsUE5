@@ -264,7 +264,9 @@ void FStateMachineBlueprintCompilerContext::CopyTermDefaultsToDefaultObject(UObj
 		{
 			if (auto SMBP = this->StateMachineBlueprint())
 			{
-				StateMachine->StartState = SMBP->GetMainGraph()->GetStartStateName();
+				FName StartName = SMBP->GetMainGraph()->GetStartStateName();
+				
+				StateMachine->StartState = StartName;
 			}
 		}
 	}	
@@ -304,12 +306,14 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 			for (auto& SubGraph : SMBP->GetSubgraphs())
 			{
 				auto SubSM = SubGraph->CompileStateMachine(Context);
-				BPGClass->AddStateMachine(SubSM, SubGraph->GetFName());
+				BPGClass->AddStateMachine(SubSM, SubGraph->GetGraphName());
 			}
 
 			BPGClass->EventSet.Append(SMBP->GetEventSet());
 		}
 	}
+
+	
 
 	Super::FinishCompilingClass(Class);
 }

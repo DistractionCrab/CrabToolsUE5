@@ -196,7 +196,7 @@ public:
 	virtual void NotifyGraphChanged(const FEdGraphEditAction& Action) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
-	bool CanRename() const { return this->GraphType != EStateMachineGraphType::MAIN_GRAPH; }
+	bool CanRename() const { return this->GraphType == EStateMachineGraphType::SUB_GRAPH; }
 
 	//void CollectExtendibleStates(TSet<FString>& StateNames) const;
 
