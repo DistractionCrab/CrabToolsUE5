@@ -11,11 +11,11 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/UObjectGlobals.h"
 
-#include "K2Node_EmitEventWithDataFromDataTable.generated.h"
+#include "K2Node_EmitEventFromInterface.generated.h"
 
 class FBlueprintActionDatabaseRegistrar;
 class FString;
-class UDataTable;
+class UStateMachineInterface;
 class UEdGraph;
 class UEdGraphPin;
 class UObject;
@@ -23,9 +23,16 @@ class UScriptStruct;
 struct FLinearColor;
 
 UCLASS()
-class CRABNODES_API UK2Node_EmitEventWithDataFromDataTable : public UK2Node
+class CRABNODES_API UK2Node_EmitEventFromInterface : public UK2Node
 {
 	GENERATED_UCLASS_BODY()
+
+public:
+
+	DECLARE_MULTICAST_DELEGATE_OneParam(FInterfaceChanged, UStateMachineInterface*)
+	FInterfaceChanged OnInterfaceChanged;
+
+public:
 
 	//~ Begin UEdGraphNode Interface.
 	virtual void AllocateDefaultPins() override;
@@ -48,18 +55,15 @@ class CRABNODES_API UK2Node_EmitEventWithDataFromDataTable : public UK2Node
 	virtual void NotifyPinConnectionListChanged(UEdGraphPin* Pin) override;
 	//~ End UK2Node Interface
 
-	/** Get the Data Pin. */
-	UEdGraphPin* GetDataPin() const;
-	/** Get the State Machine Pin. */
 	UEdGraphPin* GetStateMachinePin() const;
 	/** Get the then output pin */
 	UEdGraphPin* GetThenPin() const;
 	/** Get the Data Table input pin */
-	UEdGraphPin* GetDataTablePin(const TArray<UEdGraphPin*>* InPinsToSearch=NULL) const;
+	UEdGraphPin* GetInterfacePin(const TArray<UEdGraphPin*>* InPinsToSearch=NULL) const;
 	/** Get the spawn transform input pin */	
-	UEdGraphPin* GetRowNamePin() const;
+	UEdGraphPin* GetEventPin() const;
 
-	void OnDataTableRowListChanged(const UDataTable* DataTable);
+	void OnInterfaceRowListChanged(const UStateMachineInterface* Interface);
 
 private:
 	/**
@@ -71,12 +75,9 @@ private:
 	 */
 	void SetPinToolTip(UEdGraphPin& MutatablePin, const FText& PinDescription) const;
 
-	/** Triggers a refresh which will update the node's widget; aimed at updating the dropdown menu for the RowName input */
-	void RefreshRowNameOptions();
+	/** Triggers a refresh which will update the node's widget; aimed at updating the dropdown menu for the Event input */
+	void RefreshEventOptions();
 
 	/** Tooltip text for this node. */
 	FText NodeTooltip;
-
-	/** Constructing FText strings can be costly, so we cache the node's title */
-	FNodeTextCache CachedNodeTitle;
 };

@@ -2,6 +2,15 @@
 
 #include "StateMachineInterface.generated.h"
 
+USTRUCT(BlueprintType)
+struct FSMIData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine")
+	FText Description;
+};
+
 /**
  * Simple storage class that contains what public interface a statemachine has.
  */
@@ -20,16 +29,16 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="StateMachine",
 		meta=(AllowPrivateAccess))
-	TSet<FName> Events;
+	TMap<FName, FSMIData> Events;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="StateMachine",
 		meta=(AllowPrivateAccess))
-	TSet<FName> States;
+	TMap<FName, FSMIData> States;
 
 	/* Set of public submachines implemented */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="StateMachine",
 		meta=(AllowPrivateAccess))
-	TSet<FName> SubMachines;
+	TMap<FName, FSMIData> SubMachines;
 
 public:
 

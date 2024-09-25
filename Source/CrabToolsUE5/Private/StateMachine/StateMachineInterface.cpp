@@ -44,7 +44,10 @@ TSet<FName> UStateMachineInterface::GetEvents() const
 {
 	TSet<FName> Collect;
 
-	Collect.Append(this->Events);
+	for (auto& Name : this->Events)
+	{
+		Collect.Add(Name.Key);
+	}
 
 	if (auto CheckParent = this->Parent.LoadSynchronous())
 	{
@@ -58,7 +61,10 @@ TSet<FName> UStateMachineInterface::GetStates() const
 {
 	TSet<FName> Collect;
 
-	Collect.Append(this->States);
+	for (auto& Name : this->States)
+	{
+		Collect.Add(Name.Key);
+	}
 
 	if (auto CheckParent = this->Parent.LoadSynchronous())
 	{
@@ -72,7 +78,10 @@ TSet<FName> UStateMachineInterface::GetSubMachines() const
 {
 	TSet<FName> Collect;
 
-	Collect.Append(this->SubMachines);
+	for (auto& Name : this->SubMachines)
+	{
+		Collect.Add(Name.Key);
+	}
 
 	if (auto CheckParent = this->Parent.LoadSynchronous())
 	{

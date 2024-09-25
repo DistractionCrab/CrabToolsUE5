@@ -1,8 +1,9 @@
 #include "Kismet/StateMachineGraphPanelPinFactory.h"
-#include "Kismet/K2Node_EmitEventFromDataTable.h"
-#include "Kismet/K2Node_EmitEventWithDataFromDataTable.h"
+#include "Kismet/K2Node_EmitEventFromInterface.h"
+#include "Kismet/K2Node_EmitEventWithDataFromInterface.h"
+#include "EdGraphSchema_K2.h"
 #include "K2Node_CallFunction.h"
-#include "SGraphPinDataTableRowName.h"
+#include "Widgets/SGraphPinSMEventName.h"
 #include "SGraphPinNameList.h"
 
 TSharedPtr<class SGraphPin> FStateMachineGraphPanelPinFactory::CreatePin(class UEdGraphPin* InPin) const
@@ -11,39 +12,38 @@ TSharedPtr<class SGraphPin> FStateMachineGraphPanelPinFactory::CreatePin(class U
 	{
 		UObject* Outer = InPin->GetOuter();
 
-		// Create drop down combo boxes for DataTable and CurveTable RowName pins
-		const UEdGraphPin* DataTablePin = nullptr;
-		if (Outer->IsA(UK2Node_CallFunction::StaticClass()))
+		// Create drop down combo boxes for Interface and CurveTable RowName pins
+		const UEdGraphPin* InterfacePin = nullptr;
+
+		if (Outer->IsA(UK2Node_EmitEventFromInterface::StaticClass()))
 		{
-			const UK2Node_CallFunction* CallFunctionNode = CastChecked<UK2Node_CallFunction>(Outer);
-			if (CallFunctionNode)
-			{
-				const UFunction* FunctionToCall = CallFunctionNode->GetTargetFunction();
-				if (FunctionToCall)
-				{
-					const FString& DataTablePinName = FunctionToCall->GetMetaData(FBlueprintMetadata::MD_DataTablePin);
-					DataTablePin = CallFunctionNode->FindPin(DataTablePinName);
-				}
-			}
+			const UK2Node_EmitEventFromInterface* GetInterfaceRowNode = CastChecked<UK2Node_EmitEventFromInterface>(Outer);
+			InterfacePin = GetInterfaceRowNode->GetInterfacePin();
 		}
-		else if (Outer->IsA(UK2Node_EmitEventFromDataTable::StaticClass()))
+		else if (Outer->IsA(UK2Node_EmitEventWithDataFromInterface::StaticClass()))
 		{
-			const UK2Node_EmitEventFromDataTable* GetDataTableRowNode = CastChecked<UK2Node_EmitEventFromDataTable>(Outer);
-			DataTablePin = GetDataTableRowNode->GetDataTablePin();
-		}
-		else if (Outer->IsA(UK2Node_EmitEventWithDataFromDataTable::StaticClass()))
-		{
-			const UK2Node_EmitEventWithDataFromDataTable* GetDataTableRowNode = CastChecked<UK2Node_EmitEventWithDataFromDataTable>(Outer);
-			DataTablePin = GetDataTableRowNode->GetDataTablePin();
+			const UK2Node_EmitEventWithDataFromInterface* GetInterfaceRowNode = CastChecked<UK2Node_EmitEventWithDataFromInterface>(Outer);
+			InterfacePin = GetInterfaceRowNode->GetInterfacePin();
 		}
 
-		if (DataTablePin)
+		if (InterfacePin)
 		{
-			if (DataTablePin->DefaultObject != nullptr && DataTablePin->LinkedTo.Num() == 0)
+			if (InterfacePin->DefaultObject != nullptr && InterfacePin->LinkedTo.Num() == 0)
 			{
-				if (auto DataTable = Cast<UDataTable>(DataTablePin->DefaultObject))
+				if (auto Interface = Cast<UStateMachineInterface>(InterfacePin->DefaultObject))
 				{
-					return SNew(SGraphPinDataTableRowName, InPin, DataTable);
+					auto Pin = SNew(SGraphPinSMEventName, InPin, Interface);
+
+					if (auto NodeType1 = Cast<UK2Node_EmitEventFromInterface>(Outer))
+					{
+						NodeType1->OnInterfaceChanged.AddSP(Pin, &SGraphPinSMEventName::RefreshNameList);
+					}
+					else if (auto NodeType2 = Cast<UK2Node_EmitEventWithDataFromInterface>(Outer))
+					{
+						NodeType2->OnInterfaceChanged.AddSP(Pin, &SGraphPinSMEventName::RefreshNameList);
+					}
+
+					return Pin;
 				}
 			}
 		}

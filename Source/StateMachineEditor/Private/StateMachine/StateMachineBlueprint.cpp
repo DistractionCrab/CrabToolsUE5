@@ -174,11 +174,10 @@ void UStateMachineBlueprint::RenameGraph(UEdStateGraph* Graph, FName Name)
 	}
 }
 
-bool UStateMachineBlueprint::Modify(bool bAlwaysMarkDirty = true)
+bool UStateMachineBlueprint::Modify(bool bAlwaysMarkDirty)
 {
-	Super::Modify(bAlwaysMarkDirty);
-
-	FBlueprintEditorUtils::MarkBlueprintAsModified(this);
+	//FBlueprintEditorUtils::MarkBlueprintAsModified(this);
+	return Super::Modify(bAlwaysMarkDirty);	
 }
 
 void UStateMachineBlueprint::SelectGraph(UEdStateGraph* Graph)
