@@ -287,12 +287,19 @@ UEdEventObject* UEdStateGraph::CreateEvent()
 
 bool UEdStateGraph::IsEventNameAvailable(FName Name) const
 {
-	for (auto& EventObj : this->EventObjects)
+	if (this->GetBlueprintOwner()->IsEventNameAvailable(Name))
 	{
-		if (EventObj->GetEventName() == Name)
+		for (auto& EventObj : this->EventObjects)
 		{
-			return false;
+			if (EventObj->GetEventName() == Name)
+			{
+				return false;
+			}
 		}
+	}
+	else
+	{
+		return false;
 	}
 
 	return true;
@@ -314,6 +321,24 @@ bool UEdStateGraph::IsStateNameAvailable(FName Name) const
 	return true;
 }
 
+void UEdStateGraph::Verify(FNodeVerificationContext& Context, UStateMachineInterface* IFace) const
+{
+	auto PublicStates = this->GetAllPublicStates();
+
+	for (auto& StateName : IFace->GetStates())
+	{
+		if (!PublicStates.Contains(StateName))
+		{
+			FString ErrorMessage = FString::Printf(
+				TEXT("Graph %s does not contain public state %s as needed for interface %s"),
+				*this->GetDisplayName(),
+				*StateName.ToString(),
+				*IFace->GetName());
+
+			Context.Error(ErrorMessage, this);
+		}
+	}
+}
 
 FName UEdStateGraph::RenameEvent(UEdEventObject* EventObj, FName To)
 {
@@ -434,6 +459,18 @@ bool UEdStateGraph::IsMainGraph() const
 	return false;
 }
 
+FString UEdStateGraph::GetDisplayName() const
+{
+	if (this->IsMainGraph())
+	{
+		return "Main";
+	}
+	else
+	{
+		return this->GetName();
+	}
+}
+
 bool UEdStateGraph::CanOverrideStart() const
 {
 	if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
@@ -490,6 +527,46 @@ void UEdStateGraph::Inspect()
 	this->GetBlueprintOwner()->Events.OnObjectInspected.Broadcast(this);
 }
 
+TSet<FName> UEdStateGraph::GetAllPublicStates() const
+{
+	TSet<FName> Names;
+
+	for (auto& Node : this->Nodes)
+	{
+		if (auto StateNode = Cast<UEdStateNode>(Node))
+		{
+			Names.Add(StateNode->GetStateName());
+		}
+	}
+
+	if (this->IsMainGraph())
+	{
+		if (auto Parent = this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->GetParent())
+		{
+			Parent->AppendPublicStateNames(Names);
+		}
+	}
+	else
+	{
+		if (this->GraphType == EStateMachineGraphType::SUB_GRAPH)
+		{
+			if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->MachineArchetype->GetClass()))
+			{
+				BPGC->AppendPublicStateNames(Names);
+			}
+		}
+		else if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+		{
+			if (auto BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->MachineArchetypeOverride.Value->GetClass()))
+			{
+				BPGC->AppendPublicStateNames(Names);
+			}
+		}
+	}
+
+	return Names;
+}
+
 TArray<FString> UEdStateGraph::GetStateOptions(const UObject* Asker) const
 {
 	TArray<FString> Names;
@@ -517,6 +594,7 @@ TArray<FString> UEdStateGraph::GetEventOptions() const
 	}
 
 	this->AppendEmitterEvents(Names);
+	this->GetBlueprintOwner()->AppendInterfaceEvents(Names);
 
 	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
 

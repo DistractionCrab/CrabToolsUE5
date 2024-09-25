@@ -1,6 +1,6 @@
 #include "StateMachine/Widgets/Nodes/SEdStateNode.h"
 #include "StateMachine/Widgets/Nodes/SEdEventGraphPin.h"
-#include "StateMachine/Colors/GenericColors.h"
+#include "StateMachine/Colors/StateMachineColors.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SEdStateNode"
@@ -141,19 +141,19 @@ FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 	{
 		if (Node->GetNodeType() == EStateNodeType::INLINE_NODE)
 		{
-			return GenericGraphColors::NodeBorder::Root;
+			return StateMachineColors::NodeBorder::Root;
 		}
 		else if (Node->GetNodeType() == EStateNodeType::EXTENDED_NODE)
 		{
-			return GenericGraphColors::NodeBorder::ExtensionProtected;
+			return StateMachineColors::NodeBorder::ExtensionProtected;
 		}
 		else if (Node->GetNodeType() == EStateNodeType::OVERRIDE_NODE)
 		{
-			return GenericGraphColors::NodeBorder::ExtensionOverride;
+			return StateMachineColors::NodeBorder::ExtensionOverride;
 		}
 	}
 
-	return GenericGraphColors::NodeBorder::Root;
+	return StateMachineColors::NodeBorder::Root;
 }
 
 const FSlateBrush* SEdStateNode::GetNameIcon() const
@@ -205,7 +205,10 @@ FName SEdStateNode::GetStateName() const
 
 void SEdStateNode::OnNodeNameChanged(FName OldName, FName Name)
 {
-	this->InlineEditableText->SetText(FText::FromName(Name));
+	if (this->InlineEditableText.IsValid())
+	{
+		this->InlineEditableText->SetText(FText::FromName(Name));
+	}
 }
 
 EVisibility SEdStateNode::GetDragOverMarkerVisibility() const
@@ -215,7 +218,7 @@ EVisibility SEdStateNode::GetDragOverMarkerVisibility() const
 
 FSlateColor SEdStateNode::GetBackgroundColor() const
 {
-	return GenericGraphColors::NodeBody::Default;
+	return StateMachineColors::NodeBody::Default;
 }
 
 void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)

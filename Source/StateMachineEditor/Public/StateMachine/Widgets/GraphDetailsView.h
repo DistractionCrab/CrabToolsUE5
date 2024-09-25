@@ -19,8 +19,11 @@ class UEdStateGraph;
 class UEdEventObject;
 class UEdTransition;
 class FGraphDetailsViewItem;
-using TablePtr = TSharedPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>>;
-using TableWeakPtr = TWeakPtr<STreeView<TSharedPtr<FGraphDetailsViewItem>>>;
+
+// Shortcuts for nestred templated types.
+using ItemPtr = TSharedPtr<FGraphDetailsViewItem>;
+using TablePtr = TSharedPtr<STreeView<ItemPtr>>;
+using TableWeakPtr = TWeakPtr<STreeView<ItemPtr>>;
 
 /*Base object to be put into the tree view. Used to generate the widgest for the TreeView.*/
 class FGraphDetailsViewItem : public TSharedFromThis<FGraphDetailsViewItem>
@@ -28,24 +31,29 @@ class FGraphDetailsViewItem : public TSharedFromThis<FGraphDetailsViewItem>
 private:
 	TWeakPtr<FGraphDetailsViewItem> Parent;
 	TableWeakPtr TableOwner;
-	TArray<TSharedPtr<FGraphDetailsViewItem>> Children;
+	TArray<ItemPtr> Children;
 
 public:
+
 	virtual ~FGraphDetailsViewItem() {}
 	virtual TSharedRef<ITableRow> GetEntryWidget(
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly);
 
 	void Clear() { this->Children.Empty(); }
-	void GetChildren(TArray<TSharedPtr<FGraphDetailsViewItem>>& OutChildren) const;
-	void AddChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
-	void RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh = false);
+	void GetChildren(TArray<ItemPtr>& OutChildren) const;
+	const TArray<ItemPtr>& ReadChildren() const { return this->Children; }
+	void AddChild(ItemPtr Item, bool DeferRefresh = false);
+	void RemoveChild(ItemPtr Item, bool DeferRefresh = false);
 	void SetTableView(TableWeakPtr TableOwner);
 	TWeakPtr<FGraphDetailsViewItem> GetParent() const { return this->Parent; }
 	virtual void Select() {}
 	virtual void InitView() {}
 	virtual void Delete(bool DeferRefresh=false) {}
 	virtual void EnterRenameMode() {}
+
+	virtual void Sort();
+	virtual FString SortKey() const { return ""; }
 };
 
 class FHeaderItem : public FGraphDetailsViewItem
@@ -139,6 +147,7 @@ private:
 	void Select() override { this->NodeRef->Inspect(); }
 
 	virtual void Delete(bool DeferRefresh = false) override;
+	virtual FString SortKey() const { return this->NodeRef->GetNodeName().ToString(); }
 };
 
 class FStateMachineItem : public FBaseEditableTextItem
@@ -171,6 +180,8 @@ private:
 
 	void Select() override;
 	virtual void Delete(bool DeferRefresh = false) override;
+
+	virtual FString SortKey() const override;
 };
 
 class FEventItem : public FBaseEditableTextItem
@@ -198,6 +209,8 @@ private:
 	void Select() override;
 
 	virtual void Delete(bool DeferRefresh = false) override;
+
+	virtual FString SortKey() const { return this->EventReference->GetEventName().ToString(); }
 };
 
 class FTransitionItem : public FGraphDetailsViewItem
@@ -226,13 +239,11 @@ private:
 	TWeakObjectPtr<UEdStateGraph> GraphRef;
 	TablePtr TreeView;
 
-	TSharedPtr<FGraphDetailsViewItem> StateRoot;
-	TSharedPtr<FGraphDetailsViewItem> EventRoot;
-	TSharedPtr<FGraphDetailsViewItem> AliasRoot;
-	TSharedPtr<FGraphDetailsViewItem> StaticsRoot;
-
+	ItemPtr StateRoot;
+	ItemPtr EventRoot;
+	
 	// TreeView array.
-	TArray<TSharedPtr<FGraphDetailsViewItem>> TreeViewList;
+	TArray<ItemPtr> TreeViewList;
 
 	SLATE_BEGIN_ARGS(SSubGraphDetails) {}
 	SLATE_END_ARGS()
@@ -254,16 +265,16 @@ private:
 	void OnGraphDataReverted();
 	void OnItemSelected(TSharedPtr< FGraphDetailsViewItem > InSelectedItem, ESelectInfo::Type SelectInfo) {}
 	void OnItemDoubleClicked(TSharedPtr< FGraphDetailsViewItem > InClickedItem) {}
-	void OnGetChildrenForCategory(TSharedPtr<FGraphDetailsViewItem> InItem, TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren);
-	void OnItemScrolledIntoView(TSharedPtr<FGraphDetailsViewItem> InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
-	void OnSetExpansionRecursive(TSharedPtr<FGraphDetailsViewItem> InTreeNode, bool bInIsItemExpanded) {}
+	void OnGetChildrenForCategory(ItemPtr InItem, TArray< ItemPtr >& OutChildren);
+	void OnItemScrolledIntoView(ItemPtr InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
+	void OnSetExpansionRecursive(ItemPtr InTreeNode, bool bInIsItemExpanded) {}
 	TSharedRef<ITableRow> OnGenerateRow(
-		TSharedPtr<FGraphDetailsViewItem> InItem,
+		ItemPtr InItem,
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly);
 
 	void OnSelectionChanged(
-		TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+		ItemPtr SelectedItem,
 		ESelectInfo::Type SelectInfo);
 
 	void BindEvents();
@@ -285,7 +296,9 @@ private:
 	TWeakPtr<FEditor> EditorPtr;
 	TSharedPtr<class SSearchBox> FilterBox;
 	TablePtr TreeView;
-	TArray<TSharedPtr<FGraphDetailsViewItem>> TreeViewList;
+	ItemPtr TreeViewRoot;
+
+	//TArray<ItemPtr> TreeViewList;
 	TSharedPtr<SWidgetSwitcher> DetailsTabs;
 	TMap<UEdStateGraph*, TSharedPtr<SSubGraphDetails>> GraphToWidgetMap;
 
@@ -304,31 +317,32 @@ public:
 	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& KeyEvent) override;
 
 private:
+	/* Button handler for clicking on Add New StateMachine. */
 	FReply OnAddStateMachine();
 	void BindEvents(TSharedPtr<class FEditor> InEditor);
 	void InitView(TSharedPtr<FEditor> InEditor);	
-	void InitGraphDetailsView(UEdStateGraph* Graph);
+	void InitGraphDetailsView(UEdStateGraph* Graph, bool bDeferRefresh=false);
 
 	// Event Handlers for State Machine changes.
 	void OnGraphSelected(UEdStateGraph* Graph);
 	void OnStateAdded(UEdStateNode* Node);
 
-	void OnItemSelected(TSharedPtr< FGraphDetailsViewItem > InSelectedItem, ESelectInfo::Type SelectInfo) {}
-	void OnItemDoubleClicked(TSharedPtr< FGraphDetailsViewItem > InClickedItem) {}
-	void OnGetChildrenForCategory(TSharedPtr<FGraphDetailsViewItem> InItem, TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren);
-	void OnItemScrolledIntoView(TSharedPtr<FGraphDetailsViewItem> InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
-	void OnSetExpansionRecursive(TSharedPtr<FGraphDetailsViewItem> InTreeNode, bool bInIsItemExpanded) {}
+	void OnItemSelected(ItemPtr InSelectedItem, ESelectInfo::Type SelectInfo) {}
+	void OnItemDoubleClicked(ItemPtr InClickedItem) {}
+	void OnGetChildrenForCategory(ItemPtr InItem, TArray< ItemPtr >& OutChildren);
+	void OnItemScrolledIntoView(ItemPtr InActionNode, const TSharedPtr<ITableRow>& InWidget) {}
+	void OnSetExpansionRecursive(ItemPtr InTreeNode, bool bInIsItemExpanded) {}
 
 
 	// Section Functions.
 	TSharedRef<ITableRow> OnGenerateRow(
-		TSharedPtr<FGraphDetailsViewItem> InItem,
+		ItemPtr InItem,
 		const TSharedRef<STableViewBase>& OwnerTable,
 		bool bIsReadOnly);
 
 	
 
 	void OnSelectionChanged(
-		TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+		ItemPtr SelectedItem,
 		ESelectInfo::Type SelectInfo);
 };

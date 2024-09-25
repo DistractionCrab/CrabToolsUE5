@@ -33,8 +33,6 @@ void FStateMachineEditorModule::StartupModule()
 		UStateMachineBlueprint::StaticClass(), 
 		&FStateMachineEditorModule::GetCompiler);
 
-	//auto BlueprintGraphPanelPinFactory = MakeShareable(new FStateMachineGraphPanelPinFactory());
-	//FEdGraphUtilities::RegisterVisualPinFactory(BlueprintGraphPanelPinFactory);
 }
 
 void FStateMachineEditorModule::ShutdownModule()

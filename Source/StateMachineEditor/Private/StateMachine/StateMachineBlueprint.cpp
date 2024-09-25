@@ -1,4 +1,5 @@
 #include "StateMachine/StateMachineBlueprint.h"
+#include "StateMachine/StateMachineInterface.h"
 #include "StateMachine/StateMachineBlueprintGeneratedClass.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
@@ -98,7 +99,7 @@ bool UStateMachineBlueprint::IsGraphNameAvailable(FString& Name) const
 	{
 		for (auto& SubGraph : this->SubGraphs)
 		{
-			if (SubGraph->GetGraphName() == Name)
+			if (SubGraph->GetName() == Name)
 			{
 				return false;
 			}
@@ -112,6 +113,43 @@ bool UStateMachineBlueprint::IsGraphNameAvailable(FString& Name) const
 		{
 			return true;
 		}
+	}
+}
+
+bool UStateMachineBlueprint::IsEventNameAvailable(FName Name) const
+{
+	for (auto& IFace : this->Interfaces)
+	{
+		if (IFace.LoadSynchronous()->HasEvent(Name))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void UStateMachineBlueprint::Verify(FNodeVerificationContext& Context) const
+{
+	for (auto& IFace : this->Interfaces)
+	{
+		auto SMOptions = this->GetMachineOptions();
+		auto LoadedIFace = IFace.LoadSynchronous();
+
+		for (auto& SMName : LoadedIFace->GetSubMachines())
+		{
+			if (!SMOptions.Contains(SMName.ToString()))
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("SubMachine %s not implemented for interface %s"),
+					*SMName.ToString(),
+					*IFace->GetName());
+
+				Context.Error(ErrorMessage, this);
+			}
+		}
+
+		this->MainGraph->Verify(Context, IFace.LoadSynchronous());
 	}
 }
 
@@ -134,6 +172,13 @@ void UStateMachineBlueprint::RenameGraph(UEdStateGraph* Graph, FName Name)
 		Graph->Rename(*Name.ToString(), this);
 		Graph->Events.OnNameChanged.Broadcast(OldName, Name);
 	}
+}
+
+bool UStateMachineBlueprint::Modify(bool bAlwaysMarkDirty = true)
+{
+	Super::Modify(bAlwaysMarkDirty);
+
+	FBlueprintEditorUtils::MarkBlueprintAsModified(this);
 }
 
 void UStateMachineBlueprint::SelectGraph(UEdStateGraph* Graph)
@@ -182,6 +227,7 @@ TArray<FString> UStateMachineBlueprint::GetMachineOptions() const
 	return Names.Array();
 }
 
+
 TSet<FName> UStateMachineBlueprint::GetEventSet() const
 {
 	TSet<FName> EventNames;
@@ -200,6 +246,20 @@ TSet<FName> UStateMachineBlueprint::GetEventSet() const
 	}
 
 	return EventNames;
+}
+
+void UStateMachineBlueprint::AppendInterfaceEvents(TArray<FString>& Names) const
+{
+	for (auto& IFacePtr : this->Interfaces)
+	{
+		if (auto IFace = IFacePtr.LoadSynchronous())
+		{
+			for (auto& EName : IFace->GetEvents())
+			{
+				Names.AddUnique(EName.ToString());
+			}
+		}
+	}
 }
 
 TArray<FString> UStateMachineBlueprint::GetPropertiesOptions(FSMPropertySearch& SearchParam) const

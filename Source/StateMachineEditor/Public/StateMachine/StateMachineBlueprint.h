@@ -8,6 +8,7 @@
 #include "StateMachineBlueprint.generated.h"
 
 class UDataTable;
+class UStateMachineInterface;
 
 UCLASS(BlueprintType)
 class STATEMACHINEEDITOR_API UStateMachineBlueprint
@@ -23,6 +24,9 @@ private:
 	
 	UPROPERTY()
 	TArray<TObjectPtr<class UEdStateGraph>> SubGraphs;
+
+	UPROPERTY(EditDefaultsOnly, Category="Interface")
+	TSet<TSoftObjectPtr<UStateMachineInterface>> Interfaces;
 
 public:
 
@@ -56,6 +60,7 @@ public:
 	UEdStateGraph* AddSubGraph();
 
 	bool IsGraphNameAvailable(FString& Name) const;
+	bool IsEventNameAvailable(FName Name) const;
 	bool IsMainGraph(const UEdStateGraph* Graph) const;
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
 	void DeleteGraph(UEdStateGraph* Graph);
@@ -75,8 +80,14 @@ public:
 
 	FName GetNewGraphName() const;
 
+	TSet<TSoftObjectPtr<UStateMachineInterface>> GetInterfaces() const { return this->Interfaces; }
+
+	void Verify(FNodeVerificationContext& Context) const;
+	void AppendInterfaceEvents(TArray<FString>& Names) const;
+
+	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
+
 private:
 
 	void InspectObject(UObject* Obj);
-	
 };

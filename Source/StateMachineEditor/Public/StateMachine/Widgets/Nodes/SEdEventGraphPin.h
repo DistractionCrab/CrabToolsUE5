@@ -4,7 +4,7 @@
 #include "SGraphNode.h"
 #include "SGraphPin.h"
 
-#include "StateMachine/Colors/GenericColors.h"
+#include "StateMachine/Colors/StateMachineColors.h"
 
 
 class SEdEventGraphPin : public SGraphPin
@@ -18,7 +18,7 @@ public:
 protected:
 	virtual FSlateColor GetPinColor() const override
 	{
-		return GenericGraphColors::Pin::Default;
+		return StateMachineColors::Pin::Default;
 	}
 
 	virtual TSharedRef<SWidget>	GetDefaultValueWidget() override

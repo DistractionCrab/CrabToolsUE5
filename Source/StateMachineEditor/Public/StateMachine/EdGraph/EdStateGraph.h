@@ -4,7 +4,7 @@
 #include "SGraphNode.h"
 #include "EdGraph/EdGraph.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
-#include "StateMachine/StateMachine.h"
+#include "StateMachine/StateMachineInterface.h"
 #include "StateMachine/IStateMachineLike.h"
 #include "GraphEditAction.h"
 
@@ -168,6 +168,7 @@ public:
 		return this->EventObjects; 
 	}
 
+	void Verify(FNodeVerificationContext& Context, UStateMachineInterface* IFace) const;
 	bool CanOverrideStart() const;
 	TArray<class UEdStateNode*> GetStates() const;
 	TArray<class UEdTransition*> GetTransitions() const;
@@ -220,8 +221,11 @@ public:
 	virtual TArray<FString> GetPropertiesOptions(FSMPropertySearch& SearchParam) const override;
 	
 	TArray<FString> GetInheritableStates(EStateNodeType NodeType) const;
+	FString GetDisplayName() const;
 
 private:
+
+	
 
 	bool UpdateOverrideData();
 
@@ -235,4 +239,6 @@ private:
 	void VerifyMachineArchetypes(FNodeVerificationContext& Context) const;
 	FName GetParentDefinedStartState() const;
 	FName GetLocallyDefinedStartState() const;
+
+	TSet<FName> GetAllPublicStates() const;
 };

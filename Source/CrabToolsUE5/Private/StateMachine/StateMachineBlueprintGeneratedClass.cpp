@@ -121,8 +121,25 @@ UState* UStateMachineBlueprintGeneratedClass::GetStateData(
 	return BuiltState;
 }
 
+void UStateMachineBlueprintGeneratedClass::AppendPublicStateNames(TSet<FName>& Names) const
+{
+	for (auto& Data : this->Archetype.StateData)
+	{
+		if (StateMachineAccessibility::IsPublic(Data.Value.Access))
+		{
+			Names.Add(Data.Key);
+		}
+	}
+
+	if (auto Parent = this->GetParent())
+	{
+		Parent->AppendPublicStateNames(Names);
+	}
+}
+
 void UStateMachineBlueprintGeneratedClass::CleanAndSanitize()
 {
+	this->Interfaces.Empty();
 	this->SubArchetypes.Empty();
 	this->Archetype.CleanAndSanitize();
 	this->EventSet.Empty();
@@ -145,6 +162,11 @@ FName UStateMachineBlueprintGeneratedClass::GetStartState(FName MachineName) con
 			return NAME_None;
 		}
 	}
+}
+
+bool UStateMachineBlueprintGeneratedClass::DoesImplementInterface(UStateMachineInterface* Interface) const
+{
+	return this->Interfaces.Contains(Interface);
 }
 
 void UStateMachineBlueprintGeneratedClass::AddStateMachine(FStateMachineArchetypeData Data, FName MachineName)

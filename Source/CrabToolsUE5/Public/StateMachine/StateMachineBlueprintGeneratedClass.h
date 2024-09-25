@@ -7,7 +7,7 @@
 #include "StateMachine/StateMachine.h"
 #include "StateMachineBlueprintGeneratedClass.generated.h"
 
-
+class UStateMachineInterface;
 
 USTRUCT()
 struct CRABTOOLSUE5_API FStateArchetypeData
@@ -99,10 +99,16 @@ public:
 	UPROPERTY();
 	TSet<FName> EmittedEvents;
 
+	#if WITH_EDITORONLY_DATA
+		UPROPERTY()
+		TSet<TSoftObjectPtr<UStateMachineInterface>> Interfaces;
+	#endif //WITH_EDITORONLY_DATA
+
 public:
 
+	bool DoesImplementInterface(UStateMachineInterface* Interface) const;
 	UState* GetStateData(UStateMachine* Outer, FName Machine, FName StateName);
-	//FName GetStartState() const;
+	void AppendPublicStateNames(TSet<FName>& Names) const;
 	TArray<FString> GetStateOptions(EStateMachineAccessibility Access = EStateMachineAccessibility::PUBLIC) const;
 	TArray<FString> GetChildAccessibleSubMachines() const;
 	EStateMachineAccessibility GetSubMachineAccessibility(FName Key) const;

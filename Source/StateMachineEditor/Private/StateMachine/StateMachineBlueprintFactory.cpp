@@ -108,20 +108,19 @@ bool UStateMachineBlueprintFactory::ConfigureProperties() {
 	Options.Mode = EClassViewerMode::ClassPicker;
 	Options.bShowNoneOption = false;
 	Options.bExpandAllNodes = true;
-	//Options.bShowDefaultClasses = GetDefault<UUMGEditorProjectSettings>()->bUseUserWidgetParentDefaultClassViewerSelector;
-	//Options.bShowClassesViewer = GetDefault<UUMGEditorProjectSettings>()->bUseUserWidgetParentClassViewerSelector;
 
 	TSharedPtr<FStateMachineClassFilter> Filter = MakeShareable(new FStateMachineClassFilter);
 	Options.ClassFilters.Add(Filter.ToSharedRef());
 
-	if (Options.ExtraPickerCommonClasses.Num() == 0) {
+	if (Options.ExtraPickerCommonClasses.Num() == 0)
+	{
 		Options.ExtraPickerCommonClasses.Add(UStateMachine::StaticClass());
 	}
 
 	Filter->DisallowedClassFlags = CLASS_Deprecated | CLASS_NewerVersionExists | CLASS_Hidden | CLASS_HideDropDown;
 	Filter->AllowedChildrenOfClasses.Add(UStateMachine::StaticClass());
 
-	const FText TitleText = LOCTEXT("CreateWidgetBlueprint", "Pick Parent Class for New Widget Blueprint");
+	const FText TitleText = LOCTEXT("CreateStateMachineBlueprint", "Pick Parent Class for New StateMachine Blueprint");
 
 	UClass* ChosenParentClass = nullptr;
 	bool isSuccessful = SClassPickerDialog::PickClass(TitleText, Options, ChosenParentClass, UStateMachine::StaticClass());

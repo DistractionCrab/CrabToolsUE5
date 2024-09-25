@@ -1,6 +1,6 @@
 #include "StateMachine/Widgets/Nodes/SEdStartStateNode.h"
 #include "StateMachine/Widgets/Nodes/SEdEventGraphPin.h"
-#include "StateMachine/Colors/GenericColors.h"
+#include "StateMachine/Colors/StateMachineColors.h"
 
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 
@@ -119,7 +119,7 @@ void SEdStartStateNode::Construct(const FArguments& InArgs, UEdStartStateNode* I
 
 FSlateColor SEdStartStateNode::GetBorderBackgroundColor() const
 {
-	return GenericGraphColors::NodeBorder::Start;
+	return StateMachineColors::NodeBorder::Start;
 }
 
 const FSlateBrush* SEdStartStateNode::GetNameIcon() const
@@ -140,7 +140,7 @@ EVisibility SEdStartStateNode::GetDragOverMarkerVisibility() const
 
 FSlateColor SEdStartStateNode::GetBackgroundColor() const
 {
-	return GenericGraphColors::NodeBody::Root;
+	return StateMachineColors::NodeBody::Root;
 }
 
 void SEdStartStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)

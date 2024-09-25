@@ -14,9 +14,7 @@
 
 #define LOCTEXT_NAMESPACE "PSM"
 
-//template<typename ItemType>
-//class SCategoryHeaderTableRow : public STableRow<ItemType>
-class SCategoryHeaderTableRow : public STableRow<TSharedPtr<FGraphDetailsViewItem>>
+class SCategoryHeaderTableRow : public STableRow<ItemPtr>
 {
 private:
 	TSharedPtr<SBorder> ContentBorder;
@@ -29,7 +27,7 @@ public:
 
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
 	{
-		STableRow<TSharedPtr<FGraphDetailsViewItem>>::ChildSlot
+		STableRow<ItemPtr>::ChildSlot
 			.Padding(0.0f, 2.0f, .0f, 0.0f)
 			[
 				SAssignNew(ContentBorder, SBorder)
@@ -42,7 +40,7 @@ public:
 					.Padding(5.0f)
 					.AutoWidth()
 					[
-						SNew(SExpanderArrow, STableRow< TSharedPtr<FGraphDetailsViewItem> >::SharedThis(this))
+						SNew(SExpanderArrow, STableRow< ItemPtr >::SharedThis(this))
 					]
 					+ SHorizontalBox::Slot()
 					.VAlign(VAlign_Center)
@@ -53,8 +51,8 @@ public:
 				]
 			];
 
-		STableRow < TSharedPtr<FGraphDetailsViewItem> >::ConstructInternal(
-			typename STableRow< TSharedPtr<FGraphDetailsViewItem> >::FArguments()
+		STableRow < ItemPtr >::ConstructInternal(
+			typename STableRow< ItemPtr >::FArguments()
 			.Style(FAppStyle::Get(), "DetailsView.TreeView.TableRow")
 			.ShowSelection(false),
 			InOwnerTableView
@@ -63,7 +61,7 @@ public:
 
 	const FSlateBrush* GetBackgroundImage() const
 	{
-		if (STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsHovered())
+		if (STableRow<ItemPtr>::IsHovered())
 		{
 			return FAppStyle::Get().GetBrush("Brushes.Secondary");
 		}
@@ -92,7 +90,7 @@ public:
 	{
 		if (MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 		{
-			STableRow<TSharedPtr<FGraphDetailsViewItem>>::ToggleExpansion();
+			STableRow<ItemPtr>::ToggleExpansion();
 			return FReply::Handled();
 		}
 		else
@@ -104,7 +102,7 @@ public:
 	
 };
 
-class SGraphItemRow :public STableRow<TSharedPtr<FGraphDetailsViewItem>>
+class SGraphItemRow :public STableRow<ItemPtr>
 {
 
 public:
@@ -115,8 +113,8 @@ public:
 
 	void Construct(const FArguments& InArgs, const TSharedRef<STableViewBase>& InOwnerTableView)
 	{
-		STableRow<TSharedPtr<FGraphDetailsViewItem>>::ConstructInternal(
-			STableRow<TSharedPtr<FGraphDetailsViewItem>>::FArguments()
+		STableRow<ItemPtr>::ConstructInternal(
+			STableRow<ItemPtr>::FArguments()
 			.ShowSelection(true),
 			InOwnerTableView
 		);
@@ -125,7 +123,7 @@ public:
 
 #pragma region FGraphDetailsViewItem
 
-void FGraphDetailsViewItem::AddChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh)
+void FGraphDetailsViewItem::AddChild(ItemPtr Item, bool DeferRefresh)
 { 
 	Item->Parent = this->AsWeak();
 	this->Children.Add(Item);
@@ -133,15 +131,26 @@ void FGraphDetailsViewItem::AddChild(TSharedPtr<FGraphDetailsViewItem> Item, boo
 
 	if (!DeferRefresh && this->TableOwner.IsValid())
 	{
+		this->Sort();
 		this->TableOwner.Pin()->RequestListRefresh();
 	}
 }
 
-void FGraphDetailsViewItem::RemoveChild(TSharedPtr<FGraphDetailsViewItem> Item, bool DeferRefresh)
+void FGraphDetailsViewItem::Sort()
+{
+	this->Children.Sort([&](const ItemPtr& A, const ItemPtr& B)
+		{
+			return A->SortKey() < B->SortKey();
+		});
+}
+
+void FGraphDetailsViewItem::RemoveChild(ItemPtr Item, bool DeferRefresh)
 {
 	this->Children.Remove(Item);
+
 	if (!DeferRefresh)
 	{
+		this->Sort();
 		this->TableOwner.Pin()->RequestListRefresh();
 	}
 }
@@ -157,7 +166,7 @@ TSharedRef<ITableRow> FGraphDetailsViewItem::GetEntryWidget(
 {
 	// This widget is only used for debug purposes.
 	TSharedPtr<IToolTip> SectionToolTip;
-	TSharedPtr<STableRow<TSharedPtr<FGraphDetailsViewItem>>> TableRow;
+	TSharedPtr<STableRow<ItemPtr>> TableRow;
 
 	TableRow = SNew(SCategoryHeaderTableRow, OwnerTable)
 		.ToolTip(SectionToolTip);
@@ -173,7 +182,7 @@ TSharedRef<ITableRow> FHeaderItem::GetEntryWidget(
 	bool bIsReadOnly)
 {
 	TSharedPtr<IToolTip> SectionToolTip;
-	TSharedPtr<STableRow<TSharedPtr<FGraphDetailsViewItem>>> TableRow;
+	TSharedPtr<STableRow<ItemPtr>> TableRow;
 
 	TableRow = SNew(SCategoryHeaderTableRow, OwnerTable)
 		.ToolTip(SectionToolTip);
@@ -229,7 +238,7 @@ TSharedRef<ITableRow> FCreateHeaderItem::GetEntryWidget(
 	bool bIsReadOnly)
 {
 	TSharedPtr<IToolTip> SectionToolTip;
-	TSharedPtr<STableRow<TSharedPtr<FGraphDetailsViewItem>>> TableRow;
+	TSharedPtr<STableRow<ItemPtr>> TableRow;
 
 	TableRow = SNew(SCategoryHeaderTableRow, OwnerTable)
 		.ToolTip(SectionToolTip);
@@ -323,7 +332,7 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
-	auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	auto TableRow = SNew(STableRow<ItemPtr>, OwnerTable)
 		.ShowSelection(true);		
 
 	// Make the text widget.
@@ -350,7 +359,7 @@ TSharedRef<ITableRow> FStateItem::GetEntryWidget(
 				.OnTextCommitted(this, &FStateItem::OnNameTextCommited)
 				.IsSelected(
 					TableRow, 
-					&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
+					&STableRow<ItemPtr>::IsSelectedExclusively)
 				.IsReadOnly(&FStateItem::IsReadOnly)
 		];
 	}
@@ -453,11 +462,30 @@ void FStateMachineItem::Select()
 	this->GraphRef->Select();
 }
 
+FString FStateMachineItem::SortKey() const
+{
+	if (this->GraphRef.IsValid())
+	{
+		if (GraphRef->IsMainGraph())
+		{
+			return "Main";
+		}
+		else
+		{
+			return GraphRef->GetName();
+		}
+	}
+	else
+	{
+		return "";
+	}
+}
+
 TSharedRef<ITableRow> FStateMachineItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
-	auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	auto TableRow = SNew(STableRow<ItemPtr>, OwnerTable)
 		.ShowSelection(true);
 
 	
@@ -478,7 +506,7 @@ TSharedRef<ITableRow> FStateMachineItem::GetEntryWidget(
 					.OnTextCommitted(this, &FStateMachineItem::OnNameTextCommited)
 					.IsSelected(
 						TableRow,
-						&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
+						&STableRow<ItemPtr>::IsSelectedExclusively)
 					//.IsReadOnly(this->GraphRef.Get()->IsMainGraph())
 					.IsReadOnly(&FStateMachineItem::IsReadOnly)
 			];
@@ -524,8 +552,6 @@ void FStateMachineItem::OnGraphChanged(const FEdGraphEditAction& Action)
 				//this->AddTransition(const_cast<UEdTransition*>(EventNode));
 			}
 		}
-
-		//this->TreeView->RequestListRefresh();
 	}
 }
 
@@ -603,7 +629,7 @@ TSharedRef<ITableRow> FTransitionItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
-	auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	auto TableRow = SNew(STableRow<ItemPtr>, OwnerTable)
 		.ShowSelection(true);
 
 	// Make the text widget.
@@ -670,7 +696,7 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
-	//auto TableRow = SNew(STableRow<TSharedPtr<FGraphDetailsViewItem>>, OwnerTable)
+	//auto TableRow = SNew(STableRow<ItemPtr>, OwnerTable)
 	auto TableRow = SNew(SGraphItemRow, OwnerTable);
 
 	// Make the text widget.
@@ -697,7 +723,7 @@ TSharedRef<ITableRow> FEventItem::GetEntryWidget(
 				.OnTextCommitted(this, &FEventItem::OnNameTextCommited)
 				.IsSelected(
 					TableRow,
-					&STableRow<TSharedPtr<FGraphDetailsViewItem>>::IsSelectedExclusively)
+					&STableRow<ItemPtr>::IsSelectedExclusively)
 			];
 	}
 
@@ -763,17 +789,13 @@ void SSubGraphDetails::Construct(const FArguments& InArgs, UEdStateGraph* GraphP
 {
 	this->GraphRef = GraphPtr;
 	this->StateRoot = MakeShareable(new FHeaderItem("States"));
-	this->AliasRoot = MakeShareable(new FHeaderItem("Aliases"));
 	this->EventRoot = MakeShareable(new FEventHeaderItem(GraphPtr, "Events"));
-	this->StaticsRoot = MakeShareable(new FCreateHeaderItem(GraphPtr, "Statics"));
 
 	this->TreeViewList.Add(this->StateRoot);
-	this->TreeViewList.Add(this->AliasRoot);
 	this->TreeViewList.Add(this->EventRoot);
-	this->TreeViewList.Add(this->StaticsRoot);
 
 
-	SAssignNew(TreeView, STreeView<TSharedPtr<FGraphDetailsViewItem>>)
+	SAssignNew(TreeView, STreeView<ItemPtr>)
 		.ItemHeight(24)
 		.TreeItemsSource(&this->TreeViewList)
 		.OnGenerateRow(this, &SSubGraphDetails::OnGenerateRow, false)
@@ -787,9 +809,7 @@ void SSubGraphDetails::Construct(const FArguments& InArgs, UEdStateGraph* GraphP
 		.HighlightParentNodesForSelection(true);
 
 	this->StateRoot->SetTableView(this->TreeView);
-	this->AliasRoot->SetTableView(this->TreeView);
 	this->EventRoot->SetTableView(this->TreeView);
-	this->StaticsRoot->SetTableView(this->TreeView);
 
 	ChildSlot
 	[
@@ -800,9 +820,7 @@ void SSubGraphDetails::Construct(const FArguments& InArgs, UEdStateGraph* GraphP
 	];
 
 	this->TreeView->SetItemExpansion(this->StateRoot, true);
-	this->TreeView->SetItemExpansion(this->AliasRoot, true);
 	this->TreeView->SetItemExpansion(this->EventRoot, true);
-	this->TreeView->SetItemExpansion(this->StaticsRoot, true);
 
 	this->BindEvents();
 }
@@ -831,14 +849,14 @@ void SSubGraphDetails::OnEventAdded(UEdEventObject* Event)
 
 void SSubGraphDetails::AddState(UEdStateNode* Node, bool DeferRefresh)
 {
-	TSharedPtr<FGraphDetailsViewItem> Item = MakeShareable(new FStateItem(Node));
+	ItemPtr Item = MakeShareable(new FStateItem(Node));
 
 	this->StateRoot->AddChild(Item, DeferRefresh);
 }
 
 void SSubGraphDetails::AddEvent(UEdEventObject* Node, bool DeferRefresh)
 {
-	TSharedPtr<FGraphDetailsViewItem> Item = MakeShareable(new FEventItem(Node));
+	ItemPtr Item = MakeShareable(new FEventItem(Node));
 
 	this->EventRoot->AddChild(Item, DeferRefresh);
 }
@@ -868,14 +886,14 @@ FReply SSubGraphDetails::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent&
 }
 
 void SSubGraphDetails::OnGetChildrenForCategory(
-	TSharedPtr<FGraphDetailsViewItem> InItem,
-	TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren)
+	ItemPtr InItem,
+	TArray< ItemPtr >& OutChildren)
 {
 	InItem->GetChildren(OutChildren);
 }
 
 TSharedRef<ITableRow> SSubGraphDetails::OnGenerateRow(
-	TSharedPtr<FGraphDetailsViewItem> InItem,
+	ItemPtr InItem,
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
@@ -883,7 +901,7 @@ TSharedRef<ITableRow> SSubGraphDetails::OnGenerateRow(
 }
 
 void SSubGraphDetails::OnSelectionChanged(
-	TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+	ItemPtr SelectedItem,
 	ESelectInfo::Type SelectInfo)
 {
 	if (SelectedItem.IsValid())
@@ -901,19 +919,20 @@ void SSubGraphDetails::Refresh()
 {
 	this->StateRoot->Clear();
 	this->EventRoot->Clear();
-	this->StaticsRoot->Clear();
-	this->AliasRoot->Clear();
 
-	for (auto Node : GraphRef->GetStates())
+	for (auto& Node : GraphRef->GetStates())
 	{
 		this->AddState(Node, true);
 	}
 
-	for (auto Ev : GraphRef->GetEventList())
+	for (auto& Ev : GraphRef->GetEventList())
 	{
 		this->AddEvent(Ev, true);
 	}
 
+	this->StateRoot->Sort();
+	this->EventRoot->Sort();
+		
 	this->TreeView->RequestListRefresh();
 }
 
@@ -923,11 +942,11 @@ void SGraphDetailsView::Construct(
 {
 	this->EditorPtr = InEditor;
 
+	this->TreeViewRoot = MakeShareable(new FGraphDetailsViewItem);
 
-	SAssignNew(TreeView, STreeView<TSharedPtr<FGraphDetailsViewItem>>)
+	SAssignNew(TreeView, STreeView<ItemPtr>)
 		.ItemHeight(24)
-		.TreeItemsSource(&this->TreeViewList)
-		
+		.TreeItemsSource(&this->TreeViewRoot->ReadChildren())
 		.OnGenerateRow(this, &SGraphDetailsView::OnGenerateRow, false)
 		.SelectionMode(ESelectionMode::Single)
 		.OnSelectionChanged(this, &SGraphDetailsView::OnSelectionChanged)
@@ -1008,6 +1027,7 @@ void SGraphDetailsView::Construct(
 	];
 
 	//this->TreeView->SetItemExpansion(this->TreeListRoot, true);
+	this->TreeViewRoot->SetTableView(this->TreeView);
 
 	this->BindEvents(InEditor);
 	this->InitView(InEditor);
@@ -1016,30 +1036,28 @@ void SGraphDetailsView::Construct(
 void SGraphDetailsView::InitView(TSharedPtr<FEditor> InEditor)
 {
 	auto BP = InEditor->GetStateMachineBlueprintObj();
-	this->InitGraphDetailsView(BP->GetMainGraph());
+	this->InitGraphDetailsView(BP->GetMainGraph(), true);
 
 	for (auto SubGraph : BP->GetSubgraphs())
 	{
-		this->InitGraphDetailsView(SubGraph);
+		this->InitGraphDetailsView(SubGraph, true);
 	}
 	
-
+	this->TreeViewRoot->Sort();
 	this->DetailsTabs->SetActiveWidgetIndex(0);
 	this->TreeView->RequestListRefresh();
 }
 
-void SGraphDetailsView::InitGraphDetailsView(UEdStateGraph* Graph)
+void SGraphDetailsView::InitGraphDetailsView(UEdStateGraph* Graph, bool bDeferRefresh)
 {
-	TSharedPtr<FGraphDetailsViewItem> Item = MakeShareable(new FStateMachineItem(Graph));
+	ItemPtr Item = MakeShareable(new FStateMachineItem(Graph));
 	auto Widget = SNew(SSubGraphDetails, Graph);
 
-	this->TreeViewList.Add(Item);
+	this->TreeViewRoot->AddChild(Item, bDeferRefresh);
 	Item->SetTableView(this->TreeView);
 	this->TreeView->SetItemExpansion(Item, true);
 	this->DetailsTabs->AddSlot(this->DetailsTabs->GetNumWidgets())[Widget];
 	this->GraphToWidgetMap.Add(Graph, Widget);
-
-	//Graph->Events.OnStateAdded.AddRaw(this, &SGraphDetailsView::OnStateAdded);
 
 	Widget->Refresh();
 }
@@ -1056,7 +1074,7 @@ FReply SGraphDetailsView::OnAddStateMachine()
 {
 	auto BP = this->EditorPtr.Pin()->GetStateMachineBlueprintObj();
 	auto NewGraph = BP->AddSubGraph();
-	this->InitGraphDetailsView(NewGraph);
+	this->InitGraphDetailsView(NewGraph, false);
 
 	return FReply::Handled();
 }
@@ -1072,7 +1090,7 @@ void SGraphDetailsView::OnStateAdded(UEdStateNode* Node)
 }
 
 void SGraphDetailsView::OnSelectionChanged(
-	TSharedPtr<FGraphDetailsViewItem> SelectedItem,
+	ItemPtr SelectedItem,
 	ESelectInfo::Type SelectInfo)
 {
 	if (SelectedItem.IsValid())
@@ -1082,7 +1100,7 @@ void SGraphDetailsView::OnSelectionChanged(
 }
 
 TSharedRef<ITableRow> SGraphDetailsView::OnGenerateRow(
-	TSharedPtr<FGraphDetailsViewItem> InItem,
+	ItemPtr InItem,
 	const TSharedRef<STableViewBase>& OwnerTable,
 	bool bIsReadOnly)
 {
@@ -1099,9 +1117,8 @@ void OnGraphSelected(UEdStateGraph* Graph)
 }
 
 void SGraphDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor) {
-	//InEditor->CommandEvents.NewStateEvent.AddRaw(this, &SGraphDetailsView::AddState);
-
-	if (auto BPObj = InEditor->GetStateMachineBlueprintObj()) {		
+	if (auto BPObj = InEditor->GetStateMachineBlueprintObj())
+	{
 		auto Graph = BPObj->GetMainGraph();
 		check(Graph);
 
@@ -1110,13 +1127,13 @@ void SGraphDetailsView::BindEvents(TSharedPtr<class FEditor> InEditor) {
 }
 
 void SGraphDetailsView::OnGetChildrenForCategory(
-	TSharedPtr<FGraphDetailsViewItem> InItem, 
-	TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren)
+	ItemPtr InItem, 
+	TArray< ItemPtr >& OutChildren)
 {
 	InItem->GetChildren(OutChildren);
 }
 
-void FGraphDetailsViewItem::GetChildren(TArray< TSharedPtr<FGraphDetailsViewItem> >& OutChildren) const
+void FGraphDetailsViewItem::GetChildren(TArray< ItemPtr >& OutChildren) const
 {
 	for (auto& Child : this->Children)
 	{

@@ -299,8 +299,11 @@ void FStateMachineBlueprintCompilerContext::FinishCompilingClass(UClass* Class)
 	{
 		if (auto SMBP = this->StateMachineBlueprint())
 		{	
+			BPGClass->Interfaces.Append(SMBP->GetInterfaces());
+
 			FStateMachineBlueprintNodeVerificationContext Context(BPGClass, *this);
 
+			SMBP->Verify(Context);
 			BPGClass->AddStateMachine(SMBP->GetMainGraph()->CompileStateMachine(Context));
 
 			for (auto& SubGraph : SMBP->GetSubgraphs())

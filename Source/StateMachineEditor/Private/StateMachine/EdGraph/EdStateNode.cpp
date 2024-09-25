@@ -109,6 +109,11 @@ FStateArchetypeData UEdStateNode::CompileState(FNodeVerificationContext& Context
 		Context.Warning(ErrorMessage, this);
 	}
 
+	for (auto& Node : this->Nodes)
+	{
+		Node->Verify(Context);
+	}
+
 	FStateArchetypeData Data = this->GetBaseCompilationData(Outer);
 
 	if (this->Nodes.Num() == 1)
@@ -119,7 +124,7 @@ FStateArchetypeData UEdStateNode::CompileState(FNodeVerificationContext& Context
 	{
 		auto ArrayNode = NewObject<UArrayNode>(Data.GetArchetype());
 
-		for (auto Node : this->Nodes)
+		for (auto& Node : this->Nodes)
 		{
 			ArrayNode->AddNode(DuplicateObject(
 				Node, 
