@@ -1,11 +1,14 @@
 #include "StateMachine/Animation/AnimNotifyWait.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "StateMachine/Animation/Events.h"
+#include "GameFramework/Character.h"
 
 UAnimNotifyWaitNode::UAnimNotifyWaitNode()
 {
 	this->AddEmittedEvent(Animation_Events::ANIM_NOTIFY_FINISH_WAIT);
-	this->ActorClass = ACharacter::StaticClass();
+	#if WITH_EDITORONLY_DATA
+		this->ActorClass = ACharacter::StaticClass();
+	#endif
 }
 
 void UAnimNotifyWaitNode::Initialize_Inner_Implementation()
@@ -20,6 +23,7 @@ void UAnimNotifyWaitNode::Initialize_Inner_Implementation()
 			if (Components->GetFName() == this->ComponentName) {
 				this->Component = SkComp;
 				bFoundComp = true;
+				break;
 			}
 		}
 	}
@@ -38,7 +42,9 @@ void UAnimNotifyWaitNode::Enter_Inner_Implementation()
 	{
 		if (auto AnimInst = this->Component->GetAnimInstance())
 		{
-			AnimInst->AddExternalNotifyHandler(this, "AnimNotify_SM_FinishWaitState");
+			AnimInst->AddExternalNotifyHandler(
+				this,
+				GET_FUNCTION_NAME_CHECKED(UAnimNotifyWaitNode, AnimNotify_SM_FinishWaitState));
 		}
 	}
 }
@@ -49,40 +55,18 @@ void UAnimNotifyWaitNode::Exit_Inner_Implementation()
 	{
 		if (auto AnimInst = this->Component->GetAnimInstance())
 		{
-			AnimInst->RemoveExternalNotifyHandler(this, "AnimNotify_SM_FinishWaitState");
+			AnimInst->RemoveExternalNotifyHandler(
+				this,
+				GET_FUNCTION_NAME_CHECKED(UAnimNotifyWaitNode, AnimNotify_SM_FinishWaitState));
 		}
 	}
 }
 
-TArray<FString> UAnimNotifyWaitNode::GetNotifyOptions() const
+#if WITH_EDITOR
+TArray<FString> UAnimNotifyWaitNode::GetComponentOptions() const
 {
 	TArray<FString> Names;
 
-	/*
-	this->Skeleton.LoadSynchronous();
-
-	if (this->Skeleton == nullptr) { return Names; }	
-
-	for (TObjectIterator<UAnimationAsset> Itr; Itr; ++Itr)
-	{
-		if (Skeleton->GetWorld() != (*Itr)->GetWorld()) { continue; }
-		
-		if (Skeleton == (*Itr)->GetSkeleton())
-		{
-			if (auto Seq = Cast<UAnimSequenceBase>(*Itr))
-			{
-				for (auto& Track : Seq->AnimNotifyTracks)
-				{
-					for (auto& Nots : Track.Notifies)
-					{
-						
-						Names.Add(Nots->NotifyName.ToString());
-					}
-				}
-
-			}
-		}
-	}*/
 	if (this->ActorClass)
 	{
 		for (auto& Components : Cast<AActor>(this->ActorClass->GetDefaultObject())->GetComponents())
@@ -98,6 +82,7 @@ TArray<FString> UAnimNotifyWaitNode::GetNotifyOptions() const
 
 	return Names;
 }
+#endif //WITH_EDITOR
 
 void UAnimNotifyWaitNode::AnimNotify_SM_FinishWaitState()
 {

@@ -106,6 +106,10 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UEdEventObject>> EventObjects;
 
+	/* Which class to use for state data. */
+	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
+	TSubclassOf<UState> DefaultStateClass;
+
 public:
 
 	/* Events that are used by the Graph Editor to communicate. */
@@ -223,9 +227,11 @@ public:
 	TArray<FString> GetInheritableStates(EStateNodeType NodeType) const;
 	FString GetDisplayName() const;
 
-private:
+	TSubclassOf<UState> GetStateClass() const;
 
-	
+	void UpdateDefaultStateClass(TSubclassOf<UState> StateClass);
+
+private:
 
 	bool UpdateOverrideData();
 

@@ -99,6 +99,7 @@ public:
 	FStateArchetypeData CompileState(FNodeVerificationContext& Context, UObject* Outer);
 	void Delete();
 	void RenameNode(FName Name);
+	void UpdateStateArchetype(TSubclassOf<UState> StateClass);
 
 	virtual TSubclassOf<UStateNode> GetNodeClass() const;	
 	virtual FName GetStateName() const override;

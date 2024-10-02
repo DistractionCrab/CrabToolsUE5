@@ -28,6 +28,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Interface")
 	TSet<TSoftObjectPtr<UStateMachineInterface>> Interfaces;
 
+	/* Which class to use for state data. */
+	UPROPERTY(EditDefaultsOnly, Category = "StateMachine")
+	TSubclassOf<UState> DefaultStateClass;
+
 public:
 
 	/* Editor Events when this object is changed. */
@@ -65,6 +69,7 @@ public:
 	void RenameGraph(UEdStateGraph* Graph, FName Name);
 	void DeleteGraph(UEdStateGraph* Graph);
 	void ClearDelegates();
+	TSubclassOf<UState> GetStateClass() const { return this->DefaultStateClass; }
 	const TArray<class UEdStateGraph*>& GetSubgraphs() { return this->SubGraphs; }
 	/* Returns the set of events defined by this SMBP. */
 	TSet<FName> GetEventSet() const;
@@ -87,7 +92,14 @@ public:
 
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
+	#if WITH_EDITOR
+		virtual void PostEditChangeProperty(
+			FPropertyChangedEvent& PropertyChangedEvent) override;
+	#endif	
+
 private:
 
 	void InspectObject(UObject* Obj);
+
+	void UpdateDefaultStateClass();
 };

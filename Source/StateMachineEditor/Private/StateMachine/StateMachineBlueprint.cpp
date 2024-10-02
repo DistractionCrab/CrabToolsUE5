@@ -16,7 +16,8 @@
 
 UStateMachineBlueprint::UStateMachineBlueprint(const FObjectInitializer& ObjectInitializer)
 : Super(ObjectInitializer),
-	MainGraph(nullptr)
+	MainGraph(nullptr),
+	DefaultStateClass(UState::StaticClass())
 {
 	
 }
@@ -355,5 +356,32 @@ UStateMachineBlueprintGeneratedClass* UStateMachineBlueprint::GetStateMachineGen
 {
 	return Cast<UStateMachineBlueprintGeneratedClass>(this->GeneratedClass);
 }
+
+void UStateMachineBlueprint::UpdateDefaultStateClass()
+{
+	this->MainGraph->UpdateDefaultStateClass(this->DefaultStateClass);
+
+	for (auto& Graph : this->SubGraphs)
+	{
+		Graph->UpdateDefaultStateClass(this->DefaultStateClass);
+	}
+}
+
+#if WITH_EDITOR
+
+void UStateMachineBlueprint::PostEditChangeProperty(
+	FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	this->Modify();
+
+	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UStateMachineBlueprint, DefaultStateClass))
+	{
+		this->UpdateDefaultStateClass();
+	}
+}
+
+#endif // WITH_EDITOR
 
 #undef LOCTEXT_NAMESPACE

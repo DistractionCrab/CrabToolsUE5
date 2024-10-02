@@ -13,10 +13,12 @@ class CRABTOOLSUE5_API UAnimNotifyWaitNode : public UStateNode
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation", meta = (AllowPrivateAccess))
-	TSubclassOf<AActor> ActorClass;
+	#if WITH_EDITORONLY_DATA
+		UPROPERTY(EditDefaultsOnly, Category = "Animation", meta = (AllowPrivateAccess))
+		TSubclassOf<AActor> ActorClass;
+	#endif //WITH_EDITORONLY_DATA
 
-	UPROPERTY(EditDefaultsOnly, Category="Animation", meta=(AllowPrivateAccess, GetOptions="GetNotifyOptions"))
+	UPROPERTY(EditDefaultsOnly, Category="Animation", meta=(AllowPrivateAccess, GetOptions="GetComponentOptions"))
 	FName ComponentName;
 
 	UPROPERTY(Transient)
@@ -32,8 +34,10 @@ public:
 
 private:
 
-	UFUNCTION()
-	TArray<FString> GetNotifyOptions() const;
+	#if WITH_EDITOR
+		UFUNCTION()
+		TArray<FString> GetComponentOptions() const;
+	#endif //WITH_EDITOR
 
 	UFUNCTION()
 	void AnimNotify_SM_FinishWaitState();

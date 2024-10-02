@@ -266,6 +266,17 @@ bool UEdStateNode::UpdateStateArchetypeOverride()
 	return bOverrideWasModified;
 }
 
+void UEdStateNode::UpdateStateArchetype(TSubclassOf<UState> NewStateClass)
+{
+	if (this->NodeType == EStateNodeType::INLINE_NODE)
+	{
+		if (!this->StateClass->IsA(NewStateClass))
+		{
+			this->StateClass = NewObject<UState>(this, NewStateClass);
+		}
+	}
+}
+
 #if WITH_EDITOR
 
 void UEdStateNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)

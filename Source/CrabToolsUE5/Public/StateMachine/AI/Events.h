@@ -9,4 +9,6 @@ namespace AI_Events
 	constexpr char AI_LOST[] = "AI_ON_LOST";
 	// Event for when a wait has finished.
 	constexpr char AI_WAIT_FINISHED[] = "AI_ON_WAIT_FINISHED";
+	// Event for when an ability has finished.
+	constexpr char AI_ABILITY_FINISHED[] = "AI_ABILITY_FINISHED";
 }

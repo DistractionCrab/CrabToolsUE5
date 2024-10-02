@@ -16,7 +16,9 @@
 constexpr char DEFAULT_NODE_NAME[] = "NewState";
 constexpr char DEFAULT_EVENT_NAME[] = "NewEvent";
 
-UEdStateGraph::UEdStateGraph(): Accessibility(EStateMachineAccessibility::PRIVATE)
+UEdStateGraph::UEdStateGraph()
+: Accessibility(EStateMachineAccessibility::PRIVATE),
+	DefaultStateClass(nullptr)
 {
 	this->MachineArchetype = this->CreateDefaultSubobject<UStateMachine>(TEXT("Default Machine"));
 }
@@ -1014,6 +1016,32 @@ TArray<FString> UEdStateGraph::GetInheritableStates(EStateNodeType NodeType) con
 	return Names.Array();
 }
 
+TSubclassOf<UState> UEdStateGraph::GetStateClass() const
+{
+	if (this->DefaultStateClass)
+	{
+		return this->DefaultStateClass;
+	}
+	else
+	{
+		return this->GetBlueprintOwner()->GetStateClass();
+	}
+}
+
+void UEdStateGraph::UpdateDefaultStateClass(TSubclassOf<UState> StateClass)
+{
+	if (!this->DefaultStateClass)
+	{
+		for (auto& Node : this->Nodes)
+		{
+			if (auto StateNode = Cast<UEdStateNode>(Node))
+			{
+				StateNode->UpdateStateArchetype(StateClass);
+			}
+		}
+	}
+}
+
 #if WITH_EDITOR
 
 void UEdStateGraph::PostLoad()
@@ -1075,6 +1103,13 @@ void UEdStateGraph::PostEditChangeProperty(
 			this->OverridenMachine = NAME_None;
 			this->RenameGraph(this->GetBlueprintOwner()->GetNewGraphName());
 		}
+	}
+	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UEdStateGraph, DefaultStateClass))
+	{
+		if (this->DefaultStateClass)
+		{
+			this->UpdateDefaultStateClass(this->DefaultStateClass);
+		}		
 	}
 }
 
