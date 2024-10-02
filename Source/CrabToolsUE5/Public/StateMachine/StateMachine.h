@@ -94,6 +94,9 @@ class CRABTOOLSUE5_API UState : public UObject
 
 	friend class UStateMachine;
 
+	UPROPERTY(Transient, DuplicateTransient)
+	TObjectPtr<UStateMachine> Owner;
+
 	UPROPERTY(DuplicateTransient)
 	TObjectPtr<UStateNode> Node;
 
@@ -112,11 +115,36 @@ public:
 	/* Only use to build states. Do not use for currently in use States/State Machines */
 	void AppendNodeCopy(UStateNode* Node);
 
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	UStateMachine* GetOwner() const { return this->Owner; }
+
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE UStateNode* GetNode() const { return this->Node; }
 	FORCEINLINE const TMap<FName, FTransitionData>& GetTransitions() const { return Transitions; }
 
 	void AddTransition(FName EventName, FTransitionData Data) { this->Transitions.Add(EventName, Data); }
+
+	void Initialize(UStateMachine* POwner);
+	void Enter();
+	void EnterWithData(UObject* Data);
+	void Exit();
+	void ExitWithData(UObject* Data);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	void Enter_Inner();
+	virtual void Enter_Inner_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	void EnterWithData_Inner(UObject* Data);
+	virtual void EnterWithData_Inner_Implementation(UObject* Data) { this->Enter_Inner(); }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	void Exit_Inner();
+	virtual void Exit_Inner_Implementation() {}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	void ExitWithData_Inner(UObject* Data);
+	virtual void ExitWithData_Inner_Implementation(UObject* Data) { this->Exit_Inner(); }
 };
 
 UCLASS(BlueprintType, Abstract, Category = "StateMachine")
@@ -124,7 +152,7 @@ class CRABTOOLSUE5_API UTransitionCondition : public UObject
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, DuplicateTransient)
 	TObjectPtr<UStateMachine> Owner;
 
 public:
@@ -147,7 +175,7 @@ class CRABTOOLSUE5_API UTransitionDataCondition : public UObject
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, DuplicateTransient)
 	TObjectPtr<UStateMachine> Owner;
 
 public:
@@ -180,7 +208,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 		meta=(AllowPrivateAccess=true))
 	bool bRequiresTick = false;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, DuplicateTransient)
 	TObjectPtr<UStateMachine> Owner;
 	bool bActive = false;
 
@@ -192,6 +220,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 	#endif
 
 public:
+
 	UStateNode();
 
 	/**
@@ -268,12 +297,10 @@ protected:
 	void EventWithData_Inner(FName EName, UObject* Data);
 	virtual void EventWithData_Inner_Implementation(FName EName, UObject* Data);
 
-	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	void Enter_Inner();	
 	virtual void Enter_Inner_Implementation() {}
 
-	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	void EnterWithData_Inner(UObject* Data);	
 	virtual void EnterWithData_Inner_Implementation(UObject* Data);
@@ -290,7 +317,6 @@ protected:
 	void PostTransition_Inner();
 	virtual void PostTransition_Inner_Implementation() {}
 
-	/* Call the _Internal Version. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine")
 	void ExitWithData_Inner(UObject* Data);	
 	virtual void ExitWithData_Inner_Implementation(UObject* Data);
@@ -465,19 +491,22 @@ public:
 	UState* GetStateData(FName Name);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
-	FName GetCurrentStateName();
+	FName GetCurrentStateName() const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	TArray<FString> StateOptions();
 
 	UFUNCTION()
-	TArray<FString> ConditionOptions();
+	TArray<FString> ConditionOptions() const;
 
 	UFUNCTION()
-	TArray<FString> ConditionDataOptions();
+	TArray<FString> ConditionDataOptions() const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	FName GetPreviousState() const;
+	FName GetPreviousStateName() const;
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	UState* GetPreviousState() const;
 
 	/* Condition function that always returns true. */
 	UFUNCTION(meta = (IsDefaultCondition))

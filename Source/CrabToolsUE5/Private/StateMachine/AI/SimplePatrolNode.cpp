@@ -31,7 +31,7 @@ void UAISimplePatrolNode::Enter_Inner_Implementation()
 
 	for (auto& IncState : this->NonResetStates)
 	{
-		if (IncState.StateName == this->GetMachine()->GetPreviousState())
+		if (IncState.StateName == this->GetMachine()->GetPreviousStateName())
 		{
 			bDoReset = false;
 		}
