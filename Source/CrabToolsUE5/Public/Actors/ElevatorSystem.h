@@ -1,72 +1,72 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/TimelineComponent.h"
+#include "Actors/PatrolPath.h"
 #include "ElevatorSystem.generated.h"
+
+namespace ElevatorSystem::Constants
+{
+	constexpr int NULL_TARGET = -1;
+}
+
 
 UCLASS()
 class AElevatorSystem : public AActor
 {
 	GENERATED_BODY()
-	
+
+	TObjectPtr<UTimelineComponent> MovementTimeline;
+	FOnTimelineFloat MovementTrack;
+	FOnTimelineEvent EndMovementTrack;
+
+	UPROPERTY(EditAnywhere, Category = "ElevatorSystem",
+		meta=(AllowPrivateAccess))
+	TObjectPtr<UCurveFloat> MovementCurve;
+
+	UPROPERTY(EditAnywhere, Category = "ElevatorSystem",
+		meta = (AllowPrivateAccess, ShowOnlyInnerProperties))
+	FPatrolPathState State;
+
+	/* Used when traversing multiple points. */
+	int TargetIndex = ElevatorSystem::Constants::NULL_TARGET;
+
+public:
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FArrivedEvent, int, Index);
+	UPROPERTY(BlueprintAssignable, Category="ElevatorSystem")
+	FArrivedEvent OnArrivedEvent;
+
 public:	
 	// Sets default values for this actor's properties
 	AElevatorSystem();
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElevatorSystem")
-	TArray<AActor*> Targets;
+	FVector GetMovementStart() const;
+	FVector GetMovementDirection() const;
 
-	
-	UTimelineComponent* MovementTimeline;
-	FOnTimelineFloat MovementTrack;
-	FOnTimelineEvent EndMovementTrack;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ElevatorSystem")
-	UCurveFloat* MovementCurve;
-	UPROPERTY()
-	//TEnumAsByte<ETimelineDirection::Type> TimelineDirection;
-
-	TArray<int> MovementSequence;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ElevatorSystem")
-	int PositionIndex;
-	bool Reverse;
-
-
-private:
-	void StartMovement() {
-		if (this->HasTwoPoints()) {
-			this->MovementTimeline->PlayFromStart();
-		}
-	}
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	FVector GetMovementStart();
-	FVector GetMovementDirection();
-
-public:	
-
+	/* Move the elevetor to the next position. */
 	UFUNCTION(BlueprintCallable, Category = "ElevatorSystem")
-	virtual void Step();
-
-	UFUNCTION(BlueprintCallable, Category = "ElevatorSystem")
-	virtual void UpdatePosition(float alpha);
+	virtual void Step();	
 
 	UFUNCTION(BlueprintCallable, Category = "ElevatorSystem")
 	void GoToIndex(int i);
-	
-
-	FORCEINLINE bool HasTwoTargets() { return this->Targets.Num() >= 2; }
-	FORCEINLINE bool HasTwoPoints() { return this->MovementSequence.Num() >= 2; }
-	
-	UFUNCTION()
-	void FinishedMovement();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ElevatorSystem")
 	void PostFinishCallback();
+
+protected:
+
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+private:
+
+	void StartMovement();
+
+	UFUNCTION()
+	virtual void UpdatePosition(float alpha);
+
+	UFUNCTION()
+	void FinishedMovement();
 };

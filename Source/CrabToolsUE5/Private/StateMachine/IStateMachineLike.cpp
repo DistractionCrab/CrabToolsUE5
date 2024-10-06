@@ -11,7 +11,7 @@ bool FSMPropertySearch::Matches(FProperty* F) const
 	{
 		if (F->GetClass() == FStructProperty::StaticClass())
 		{
-			FStructProperty* Sf = (FStructProperty*) F;
+			FStructProperty* Sf = CastField<FStructProperty>(F);
 
 			if (Sf->Struct == this->Struct)
 			{
@@ -20,7 +20,7 @@ bool FSMPropertySearch::Matches(FProperty* F) const
 		}
 		else if (F->GetClass() == FObjectProperty::StaticClass())
 		{
-			FObjectProperty* Of = (FObjectProperty*) F;
+			FObjectProperty* Of = CastField<FObjectProperty>(F);
 
 			if (Of->PropertyClass == this->Class)
 			{
@@ -54,7 +54,7 @@ FSMPropertySearch FSMPropertySearch::StructProperty(UScriptStruct* Struct)
 
 	FSMPropertySearch Params;
 
-	Params.FClass = FObjectProperty::StaticClass();
+	Params.FClass = FStructProperty::StaticClass();
 	Params.Struct = Struct;
 
 	return Params;

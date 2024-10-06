@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "PatrolPath.generated.h"
 
+class APatrolPath;
+
 USTRUCT(BlueprintType)
 struct FPatrolPathState
 {
@@ -14,18 +16,29 @@ private:
 	/* The index in the patrol path to get. */
 	UPROPERTY(EditDefaultsOnly, Category="PatrolPath")
 	int PathIndex;
+	int CurrentIndex;
+
+	/* Whether or not we are following the path forward.*/
+	UPROPERTY(EditDefaultsOnly, Category = "PatrolPath")
+	bool bDirection;
+
+	UPROPERTY(EditAnywhere, Category = "PatrolPath")
+	TObjectPtr<APatrolPath> Path;
 
 public:
 
-	FPatrolPathState() : PathIndex(0) {}
+	FPatrolPathState() : PathIndex(0), CurrentIndex(0), bDirection(true) {}
 
-	FVector GetCurrentTarget(APatrolPath* Path);
-	FVector GetNextTarget(APatrolPath* Path);
-	void Skip();
+	FVector GetTarget(int Offset=0) const;
+	void Step();
+	void Reset();
+	int GetIndex() const { return this->CurrentIndex; }
+	APatrolPath* GetPath() const { return this->Path; }
+	void SetDirection(int Index);
+	void SetDirection(bool NewDirection) { this->bDirection = NewDirection; }
 
-	void Reset() { this->PathIndex = 0; }
-
-	int GetIndex() const { return this->PathIndex; }
+	/* Return whether or not this state can be valid to traverse. Requires a path and at least two points. */
+	operator bool() const;
 };
 
 
@@ -37,7 +50,7 @@ class UPatrolPathLibrary : public UBlueprintFunctionLibrary
 public:
 
 	UFUNCTION(BlueprintCallable, Category="PatrolPath")
-	static FVector GetNextTarget(UPARAM(Ref) FPatrolPathState& State, APatrolPath* Path);
+	static FVector GetTarget(UPARAM(Ref) FPatrolPathState& State, int Offset=0);
 };
 
 UCLASS()
@@ -46,10 +59,15 @@ class CRABTOOLSUE5_API APatrolPath : public AActor
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI,
-		meta = (AllowPrivateAccess = true))
+		meta = (AllowPrivateAccess))
+	bool bIsCycle = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI,
+		meta = (AllowPrivateAccess))
 	float LostDistance = 100000;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI, meta = (MakeEditWidget, AllowPrivateAccess=true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AI,
+		meta = (MakeEditWidget, AllowPrivateAccess))
 	TArray<FVector> PatrolPoints;
 
 	#if WITH_EDITORONLY_DATA
@@ -76,6 +94,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "AI")
 	FORCEINLINE int Num() const { return this->PatrolPoints.Num(); }
+	FORCEINLINE bool IsCycle() const { return this->bIsCycle; }
+	void SetIsCycle(bool bNewCycleState) { this->bIsCycle = bNewCycleState; }
 
 	#if WITH_EDITOR
 		virtual void PreSave(FObjectPreSaveContext SaveContext) override;

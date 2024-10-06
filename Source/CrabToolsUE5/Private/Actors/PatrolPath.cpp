@@ -4,7 +4,7 @@
 #include "Components/SplineComponent.h"
 #include "UObject/ObjectSaveContext.h"
 
-APatrolPath::APatrolPath()
+APatrolPath::APatrolPath(): bIsCycle(true)
 {
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
@@ -30,7 +30,7 @@ APatrolPath::APatrolPath()
 		
 		this->PathSpline = CreateEditorOnlyDefaultSubobject<USplineComponent>(TEXT("PathDisplay"));
 
-		this->PathSpline->SetClosedLoop(true);
+		this->PathSpline->SetClosedLoop(this->bIsCycle);
 		this->PathSpline->bHiddenInGame = true;
 		this->PathSpline->SetVisibility(false);
 		this->PathSpline->bDrawDebug = false;
@@ -92,6 +92,9 @@ int APatrolPath::FindClosestIndex(AActor* Patroller) {
 
 FVector APatrolPath::Get(int i)
 {
+	// To enable negative indexing.
+	i = i % this->PatrolPoints.Num();
+
 	return this->PatrolPoints[i] + this->GetActorLocation();
 }
 
@@ -115,6 +118,10 @@ void APatrolPath::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(APatrolPath, PatrolPoints))
 	{
 		this->InitArrows();
+	}
+	else if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(APatrolPath, bIsCycle))
+	{
+		this->PathSpline->SetClosedLoop(this->bIsCycle);
 	}
 }
 
@@ -149,30 +156,7 @@ void APatrolPath::PostSaveRoot(FObjectPostSaveRootContext SaveContext)
 
 #endif
 
-FVector FPatrolPathState::GetNextTarget(APatrolPath* Path)
-{
-	if (Path)
-	{
-		auto PointCount = Path->Num();
-		if (PointCount > 0)
-		{
-			this->PathIndex = (this->PathIndex + 1) % Path->Num();
-			auto Next = Path->Get(this->PathIndex);
-
-			return Next;
-		}
-		else
-		{
-			return Path->GetActorLocation();
-		}
-	}
-	else
-	{
-		return FVector::Zero();
-	}
-}
-
-FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
+FVector FPatrolPathState::GetTarget(int Offset) const
 {
 	if (Path)
 	{
@@ -180,8 +164,10 @@ FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
 		
 		if (PointCount > 0)
 		{
-			this->PathIndex %= PointCount;
-			auto Next = Path->Get(this->PathIndex);
+			// Need to reverse the offset if the direction has been reversed.
+			Offset = this->bDirection ? Offset : -Offset;
+
+			auto Next = Path->Get(this->CurrentIndex + Offset);
 
 			return Next;
 		}
@@ -196,13 +182,69 @@ FVector FPatrolPathState::GetCurrentTarget(APatrolPath* Path)
 	}
 }
 
-void FPatrolPathState::Skip()
+void FPatrolPathState::Step()
 {
-	this->PathIndex += 1;
+	int Increment = this->bDirection ? 1 : -1;
+	if (Path->IsCycle())
+	{
+		if (this->bDirection)
+		{
+			if (this->CurrentIndex == Path->Num() - 1)
+			{
+				this->bDirection = !this->bDirection;
+				Increment = -Increment;
+			}
+		}
+		else
+		{
+			if (this->CurrentIndex == 0)
+			{
+				this->bDirection = !this->bDirection;
+				Increment = -Increment;
+			}
+		}
+
+		this->CurrentIndex = this->CurrentIndex + Increment;
+	}
+	else
+	{
+		this->CurrentIndex = (this->CurrentIndex + Increment) % Path->Num();
+	}
 }
 
-FVector UPatrolPathLibrary::GetNextTarget(FPatrolPathState& State, APatrolPath* Path)
+void FPatrolPathState::SetDirection(int Index)
 {
-	return State.GetNextTarget(Path);
+	if (IsValid(this->Path))
+	{
+		Index = Index % this->Path->Num();
+
+		if (Index >= this->CurrentIndex)
+		{
+			this->bDirection = true;
+		}
+		else
+		{
+			this->bDirection = true;
+		}
+	}
+	else
+	{
+		this->bDirection = true;
+	}
 }
 
+void FPatrolPathState::Reset()
+{
+	this->CurrentIndex = PathIndex;
+}
+
+FVector UPatrolPathLibrary::GetTarget(FPatrolPathState& State, int Offset)
+{
+	return State.GetTarget(Offset);
+}
+
+
+FPatrolPathState::operator bool() const
+{
+	return this->Path && this->Path->Num() >= 2;
+}

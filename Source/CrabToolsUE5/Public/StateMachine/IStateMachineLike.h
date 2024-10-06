@@ -15,11 +15,20 @@ struct FSMPropertyReference
     {
         if (this->PropertyRef && this->StateMachine)
         {
-            return *this->PropertyRef->ContainerPtrToValuePtr<T*>(this->StateMachine);
+            if (this->PropertyRef->GetClass() == FStructProperty::StaticClass())
+            {
+                return this->PropertyRef->ContainerPtrToValuePtr<T>(this->StateMachine);
+            }
+            else
+            {
+                return *this->PropertyRef->ContainerPtrToValuePtr<T*>(this->StateMachine);
+            }
         }
 
         return nullptr;
     }
+
+    operator bool() { return this->PropertyRef != nullptr; }
 };
 
 /* Interface for objects which look like State Machines data-wise, but not necessarily function-wise.*/

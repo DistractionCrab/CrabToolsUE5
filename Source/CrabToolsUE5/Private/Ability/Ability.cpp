@@ -2,7 +2,10 @@
 
 void UAbility::Initialize(AActor* POwner)
 {
-	this->Owner = POwner;
+	if (!this->Owner)
+	{
+		this->Owner = POwner;
+	}
 	this->Initialize_Inner();
 }
 
@@ -30,7 +33,6 @@ void UAbility::Tick(float DeltaTime)
 	if (this->bActive)
 	{
 		this->Tick_Inner(DeltaTime);
-		this->OnAbilityPerformed.Broadcast(this);
 	}
 }
 

@@ -13,7 +13,8 @@ class CRABTOOLSUE5_API UAbility : public UObject
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(Transient)
+	UPROPERTY(BlueprintReadOnly, Transient, DuplicateTransient,
+		meta=(ExposeOnSpawn=true, AllowPrivateAccess))
 	TObjectPtr<AActor> Owner;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Ability",
@@ -29,7 +30,7 @@ public:
 	FAbilityStarted OnAbilityStarted;
 	
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityPerformed, UAbility*, Ability);
-	/* Called when the ability performs its body. Either through Perform() or Tick() */
+	/* Called when the ability performs its body. Either through Perform() */
 	UPROPERTY(BlueprintAssignable, Category="Ability")
 	FAbilityStarted OnAbilityPerformed;
 

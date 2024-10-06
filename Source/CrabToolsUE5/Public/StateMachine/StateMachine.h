@@ -238,22 +238,27 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner();
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
+		meta=(HideSelfPin))
 	UStateMachine* GetMachine() const;
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
 	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) const;
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine",
+		meta = (HideSelfPin))
 	void EmitEvent(FName EName);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine",
+		meta = (HideSelfPin))
 	void EmitEventWithData(FName EName, UObject* Data);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(DisplayName="EmitEvent"))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(DisplayName="EmitEvent"),
+		meta = (HideSelfPin))
 	void EmitEventSlot(const FEventSlot& ESlot);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (DisplayName = "EmitEventWithData"))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (DisplayName = "EmitEventWithData"),
+		meta = (HideSelfPin))
 	void EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")

@@ -15,8 +15,8 @@ class CRABTOOLSUE5_API UAISimplePatrolNode : public UAIBaseNode
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine|AI")
-	FPatrolPathState PatrolState;
+	//UPROPERTY(EditDefaultsOnly, Category = "StateMachine|AI")
+	//FPatrolPathState PatrolState;
 
 	/* 
 	 * This value is used to guard against too many close patrol points. This is needed
@@ -61,5 +61,5 @@ private:
 	void BindCallback();
 	void UnbindCallback();
 
-	APatrolPath* GetPatrolPath() const;
+	FPatrolPathState* GetState() const;
 };

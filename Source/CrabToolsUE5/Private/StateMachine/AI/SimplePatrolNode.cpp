@@ -19,10 +19,10 @@ void UAISimplePatrolNode::Initialize_Inner_Implementation()
 	Super::Initialize_Inner_Implementation();
 
 	FString Address = this->PropertyName.ToString();
-	FSMPropertySearch Params = FSMPropertySearch::ObjectProperty(APatrolPath::StaticClass());
-	this->PropertyRef = Params.GetProperty<FObjectProperty>(this->GetMachine(), Address);
+	FSMPropertySearch Params = FSMPropertySearch::StructProperty(FPatrolPathState::StaticStruct());
+	this->PropertyRef = Params.GetProperty<FStructProperty>(this->GetMachine(), Address);
 
-	this->PatrolState.Reset();
+	check(this->PropertyRef);
 }
 
 void UAISimplePatrolNode::Enter_Inner_Implementation()
@@ -39,7 +39,7 @@ void UAISimplePatrolNode::Enter_Inner_Implementation()
 
 	if (bDoReset)
 	{
-		this->PatrolState.Reset();
+		this->GetState()->Reset();
 	}
 
 	this->BindCallback();	
@@ -58,7 +58,7 @@ void UAISimplePatrolNode::Exit_Inner_Implementation()
 
 void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
-	this->PatrolState.Skip();
+	this->GetState()->Step();
 
 	if (Result == EPathFollowingResult::Success)
 	{
@@ -76,32 +76,35 @@ void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 
 void UAISimplePatrolNode::MoveToNext()
 {
-	if (auto PatrolPath = this->GetPatrolPath()) 
+	auto State = this->GetState();
+
+	if (!IsValid(State->GetPath())) { return; }
+
+	if (auto Ctrl = this->GetAIController())
 	{
-		if (PatrolPath == nullptr || !IsValid(PatrolPath)) { return; }
+		FVector Goal = State->GetTarget();
 
-		if (auto Ctrl = this->GetAIController())
+		this->RecurseGuard += 1;
+
+		if (this->RecurseGuard > State->GetPath()->Num())
 		{
-			FVector Goal = this->PatrolState.GetCurrentTarget(PatrolPath);
-
-			this->RecurseGuard += 1;
-
-			if (this->RecurseGuard > PatrolPath->Num())
-			{
-				// If we've recursed too many times, then remove the call back.
-				this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
-			}
-
-			Ctrl->MoveToLocation(Goal);
-
-			this->RecurseGuard = 0;
+			// If we've recursed too many times, then remove the call back.
+			this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
 		}
+
+		Ctrl->MoveToLocation(Goal);
+
+		this->RecurseGuard = 0;
 	}
 }
 
-APatrolPath* UAISimplePatrolNode::GetPatrolPath() const
+FPatrolPathState* UAISimplePatrolNode::GetState() const
 {
-	return this->PropertyRef.GetValue<APatrolPath>();
+	auto State = this->PropertyRef.GetValue<FPatrolPathState>();
+
+	check(State);
+
+	return State;
 }
 
 void UAISimplePatrolNode::BindCallback()
@@ -109,8 +112,9 @@ void UAISimplePatrolNode::BindCallback()
 	if (auto CtrlQ = this->GetAIController())
 	{
 		FAIMoveCompletedSignature::FDelegate Callback;
-		Callback.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UAISimplePatrolNode, OnMoveCompleted));
-		CtrlQ->ReceiveMoveCompleted.Add(Callback);
+		//Callback.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UAISimplePatrolNode, OnMoveCompleted));
+		//CtrlQ->ReceiveMoveCompleted.Add(Callback);
+		CtrlQ->ReceiveMoveCompleted.AddDynamic(this, &UAISimplePatrolNode::OnMoveCompleted);
 	}
 	else
 	{
@@ -133,7 +137,7 @@ TArray<FString> UAISimplePatrolNode::GetPatrolOptions() const
 
 	if (auto Outer = UtilsFunctions::GetOuterAs<IStateMachineLike>(this))
 	{
-		FSMPropertySearch Params = FSMPropertySearch::ObjectProperty(APatrolPath::StaticClass());
+		FSMPropertySearch Params = FSMPropertySearch::StructProperty(FPatrolPathState::StaticStruct());
 
 		Props.Append(Outer->GetPropertiesOptions(Params));
 	}
