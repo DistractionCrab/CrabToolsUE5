@@ -17,10 +17,7 @@ void UAbilityChain::Start_Inner_Implementation()
 	{
 		auto& Abi = this->AbilityChain[0];
 		Abi->Start();
-
-		FScriptDelegate Script;
-		Script.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UAbilityChain, HandleFinish));
-		Abi->OnAbilityFinished.Add(Script);
+		Abi->OnAbilityFinished.AddDynamic(this, &UAbilityChain::HandleFinish);
 	}
 	else
 	{

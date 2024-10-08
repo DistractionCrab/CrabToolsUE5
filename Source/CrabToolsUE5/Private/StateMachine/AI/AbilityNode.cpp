@@ -19,9 +19,7 @@ void UAbilityNode::Enter_Inner_Implementation()
 {
 	if (IsValid(this->Selected))
 	{
-		FScriptDelegate Script;
-		Script.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UAbilityNode, HandleFinish));
-		this->Selected->OnAbilityFinished.Add(Script);
+		this->Selected->OnAbilityFinished.AddDynamic(this, &UAbilityNode::HandleFinish);
 
 		this->Selected->Start();
 	}

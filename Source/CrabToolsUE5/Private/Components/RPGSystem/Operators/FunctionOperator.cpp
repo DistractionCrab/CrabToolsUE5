@@ -8,17 +8,16 @@ int UIntFunctionOperator::Operate_Implementation(int Value) {
 	}
 }
 
-void UIntFunctionOperator::Initialize_Implementation() {
-	//this->Callback.BindUFunction(this->GetOwner(), this->FunctionName);
+void UIntFunctionOperator::Initialize_Implementation()
+{
+	this->Callback.BindUFunction(this->GetOwner(), this->FunctionName);
 }
 
 TArray<FString> UIntFunctionOperator::GetIntOperatorFunctions() const {
 	
 	TArray<FString> Names;
-	UE_LOG(LogTemp, Warning, TEXT("Looking for functions."));
-	
+
 	if (this->GetOwner()) {
-		UE_LOG(LogTemp, Warning, TEXT("Getting Parent System."));
 		auto System = this->GetOwner();
 
 		if (System) {

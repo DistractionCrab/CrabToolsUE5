@@ -102,8 +102,7 @@ void UAISimpleMoveToNode::BindCallback()
 	if (auto CtrlQ = this->GetAIController())
 	{
 		FAIMoveCompletedSignature::FDelegate Callback;
-		Callback.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UAISimpleMoveToNode, OnMoveCompleted));
-		CtrlQ->ReceiveMoveCompleted.Add(Callback);
+		CtrlQ->ReceiveMoveCompleted.AddDynamic(this, &UAISimpleMoveToNode::OnMoveCompleted);
 	}
 	else
 	{
