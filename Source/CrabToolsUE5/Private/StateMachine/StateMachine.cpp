@@ -81,7 +81,7 @@ UStateMachine* UStateNode::GetMachineAs(TSubclassOf<UStateMachine> SClass, ESear
 	return nullptr;
 }
 
-AActor* UStateMachine::GetOwner() {
+AActor* UStateMachine::GetOwner() const {
 	return this->Owner;
 }
 
@@ -843,7 +843,7 @@ UStateMachine* UStateNode::GetMachine() const
 	return this->Owner;
 }
 
-AActor* UStateNode::GetOwner() {
+AActor* UStateNode::GetOwner() const {
 	return this->Owner->GetOwner();
 }
 

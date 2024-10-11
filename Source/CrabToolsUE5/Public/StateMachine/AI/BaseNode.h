@@ -22,10 +22,10 @@ public:
 	virtual void Initialize_Inner_Implementation() override;
 
 	/* Return the AIController that was retrieved by the Pawn onwer of the state machine. */
-	FORCEINLINE AAIController* GetAIController() { return this->AICtrl.Get(); }
-	FORCEINLINE APawn* GetPawn() { return this->PawnRef.Get(); }
+	FORCEINLINE AAIController* GetAIController() const { return this->AICtrl.Get(); }
+	FORCEINLINE APawn* GetPawn() const { return this->PawnRef.Get(); }
 
 
 	/* Returns whether or not the owner of the state machine is a pawn. */
-	FORCEINLINE bool HasPawnOwner() { return this->PawnRef != nullptr; }
+	FORCEINLINE bool HasPawnOwner() const { return this->PawnRef != nullptr; }
 };

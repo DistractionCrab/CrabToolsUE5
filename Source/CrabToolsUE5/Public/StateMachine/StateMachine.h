@@ -204,20 +204,22 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 
 	friend class UStateMachine;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="StateMachine",
-		meta=(AllowPrivateAccess=true))
-	bool bRequiresTick = false;
-
 	UPROPERTY(Transient, DuplicateTransient)
 	TObjectPtr<UStateMachine> Owner;
 	bool bActive = false;
 
 	#if WITH_EDITORONLY_DATA
 		UPROPERTY(EditDefaultsOnly, Category="StateMachine|Events",
-			meta=(AllowPrivateAccess=true, HideInDetailPanel))
+			meta=(AllowPrivateAccess, HideInDetailPanel))
 		TSet<FName> EmittedEvents;
 		TSet<FName> PreEditEmittedEvents;
 	#endif
+
+protected:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
+		meta = (AllowPrivateAccess = true))
+	bool bRequiresTick = false;
 
 public:
 
@@ -236,7 +238,7 @@ public:
 	FORCEINLINE bool Active() const { return this->bActive; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
-	AActor* GetOwner();
+	AActor* GetOwner() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
 		meta=(HideSelfPin))
@@ -467,7 +469,7 @@ public:
 	void SetActive(bool bNewActive);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
-	AActor* GetOwner();
+	AActor* GetOwner() const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	void Reset();
