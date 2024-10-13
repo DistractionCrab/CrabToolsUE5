@@ -3,7 +3,7 @@
 
 void UFunctionTransitionCondition::Initialize_Inner_Implementation()
 {
-	this->Callback.BindUFunction(this->GetOwner(), this->FunctionName);
+	this->Callback.BindUFunction(this->GetMachine(), this->FunctionName);
 }
 
 bool UFunctionTransitionCondition::Check() const
@@ -35,7 +35,7 @@ TArray<FString> UFunctionTransitionCondition::GetFunctionOptions() const
 
 void UFunctionTransitionDataCondition::Initialize_Inner_Implementation()
 {
-	this->Callback.BindUFunction(this->GetOwner(), this->FunctionName);
+	this->Callback.BindUFunction(this->GetMachine(), this->FunctionName);
 }
 
 bool UFunctionTransitionDataCondition::Check(UObject* Data) const

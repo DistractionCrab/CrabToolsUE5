@@ -14,6 +14,12 @@ class IInteractableInterface
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Interaction")
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Interaction")
 	void Interact(AActor* User);
+	virtual void Interact_Implementation(AActor* User) {}
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	void InteractWithData(AActor* User, UObject* Data);
+	virtual void InteractWithData_Implementation(AActor* User, UObject* Data) {}
 };

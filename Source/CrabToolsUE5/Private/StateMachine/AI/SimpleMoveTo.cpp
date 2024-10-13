@@ -4,6 +4,8 @@
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
 #include "StateMachine/AI/Events.h"
+#include "StateMachine/AI/AIStructs.h"
+
 
 UAISimpleMoveToNode::UAISimpleMoveToNode()
 {
@@ -36,11 +38,6 @@ void UAISimpleMoveToNode::EnterWithData_Inner_Implementation(UObject* Data)
 	this->MoveTo(Data);
 }
 
-void UAISimpleMoveToNode::EventWithData_Inner_Implementation(FName EName, UObject* Data)
-{
-	this->MoveTo(Data);
-}
-
 void UAISimpleMoveToNode::MoveTo(UObject* Data)
 {
 	if (auto Actor = Cast<AActor>(Data))
@@ -68,7 +65,7 @@ void UAISimpleMoveToNode::MoveTo(UObject* Data)
 void UAISimpleMoveToNode::Enter_Inner_Implementation()
 {
 	this->BindCallback();
-	if (auto Value = this->PropertyRef.GetValue<FMoveToData>())
+	if (auto Value = this->GetMovementData())
 	{	
 		if (auto Ctrl = this->GetAIController())
 		{
@@ -84,17 +81,29 @@ void UAISimpleMoveToNode::Enter_Inner_Implementation()
 	}
 }
 
+FMoveToData* UAISimpleMoveToNode::GetMovementData() const
+{
+	return this->PropertyRef.GetValue<FMoveToData>();
+}
+
+void UAISimpleMoveToNode::StopMovement()
+{
+	if (auto Ctrl = this->GetAIController())
+	{
+		Ctrl->StopMovement();
+	}
+}
+
 void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
-	if (Result == EPathFollowingResult::Success)
+	this->MovementResult = Result;
+
+	switch (Result)
 	{
-		this->EmitEvent(AI_Events::AI_ARRIVE);
+		case EPathFollowingResult::Success: this->EmitEvent(AI_Events::AI_ARRIVE); break;
+		case EPathFollowingResult::Aborted: this->EmitEvent(AI_Events::AI_ARRIVE); break;
+		default:this->EmitEvent(AI_Events::AI_LOST);
 	}
-	else if (Result == EPathFollowingResult::Blocked)
-	{
-		this->EmitEvent(AI_Events::AI_LOST);
-	}
-	
 }
 
 void UAISimpleMoveToNode::BindCallback()

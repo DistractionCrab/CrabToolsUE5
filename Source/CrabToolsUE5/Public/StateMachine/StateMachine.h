@@ -95,7 +95,7 @@ class CRABTOOLSUE5_API UState : public UObject
 	friend class UStateMachine;
 
 	UPROPERTY(Transient, DuplicateTransient)
-	TObjectPtr<UStateMachine> Owner;
+	TObjectPtr<UStateMachine> OwnerMachine;
 
 	UPROPERTY(DuplicateTransient)
 	TObjectPtr<UStateNode> Node;
@@ -116,7 +116,10 @@ public:
 	void AppendNodeCopy(UStateNode* Node);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
-	UStateMachine* GetOwner() const { return this->Owner; }
+	AActor* GetOwner() const;
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	UStateMachine* GetMachine() const { return this->OwnerMachine; }
 
 	UFUNCTION(BlueprintCallable, Category="StateMachine")
 	FORCEINLINE UStateNode* GetNode() const { return this->Node; }
@@ -153,15 +156,18 @@ class CRABTOOLSUE5_API UTransitionCondition : public UObject
 	GENERATED_BODY()
 
 	UPROPERTY(Transient, DuplicateTransient)
-	TObjectPtr<UStateMachine> Owner;
+	TObjectPtr<UStateMachine> OwnerMachine;
 
 public:
 
 	void Initialize(UStateMachine* NewOwner);
 	virtual bool Check() const { return false; }
 
+	UFUNCTION(BlueprintCallable, Category = "StateMachine|Transition")
+	FORCEINLINE AActor* GetOwner() const;
+
 	UFUNCTION(BlueprintCallable, Category="StateMachine|Transition")
-	FORCEINLINE UStateMachine* GetOwner() const { return this->Owner; }
+	FORCEINLINE UStateMachine* GetMachine() const { return this->OwnerMachine; }
 
 protected:
 
@@ -176,7 +182,7 @@ class CRABTOOLSUE5_API UTransitionDataCondition : public UObject
 	GENERATED_BODY()
 
 	UPROPERTY(Transient, DuplicateTransient)
-	TObjectPtr<UStateMachine> Owner;
+	TObjectPtr<UStateMachine> OwnerMachine;
 
 public:
 
@@ -184,7 +190,10 @@ public:
 	virtual bool Check(UObject* Data) const { return false; }
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine|Transition")
-	FORCEINLINE UStateMachine* GetOwner() const { return this->Owner; }
+	FORCEINLINE AActor* GetOwner() const;
+
+	UFUNCTION(BlueprintCallable, Category = "StateMachine|Transition")
+	FORCEINLINE UStateMachine* GetMachine() const { return this->OwnerMachine; }
 
 protected:
 
@@ -425,7 +434,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, IgnorePropertySearch,
 			ClampMin = "2", ClampMax = "1000", UIMin = "2", UIMax = "1000"))
-	int MaxStackSize = 5;
+	int MaxPrevStateStackSize = 5;
 
 	UPROPERTY(Transient, meta=(IgnorePropertySearch))
 	TObjectPtr<AActor> Owner;

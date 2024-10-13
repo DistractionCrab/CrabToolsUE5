@@ -108,9 +108,7 @@ void UStateMachine::UpdateState(FName Name)
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
-		bool ValidState = CurrentState && CurrentState->Node;
-
-		if (ValidState)
+		if (CurrentState)
 		{
 			CurrentState->Exit();
 			StateChangedData.FromState = CurrentState;
@@ -121,9 +119,7 @@ void UStateMachine::UpdateState(FName Name)
 		this->PushStateToStack(Name);
 		CurrentState = this->GetCurrentState();
 
-		ValidState = CurrentState && CurrentState->Node;
-
-		if (ValidState)
+		if (CurrentState)
 		{
 			StateChangedData.ToState = CurrentState;
 			CurrentState->Enter();
@@ -133,7 +129,7 @@ void UStateMachine::UpdateState(FName Name)
 
 		this->bIsTransitioning = false;
 
-		if (ValidState)
+		if (CurrentState)
 		{
 			CurrentState->Node->PostTransition();
 		}
@@ -158,9 +154,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		auto CurrentState = this->GetCurrentState();
 		auto OldState = this->CurrentStateName;
 
-		bool ValidState = CurrentState && CurrentState->Node;
-
-		if (CurrentState && CurrentState->Node)
+		if (CurrentState)
 		{
 			StateChangedData.FromState = CurrentState;
 			CurrentState->ExitWithData(Data);
@@ -170,9 +164,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		this->PushStateToStack(Name);
 		CurrentState = this->GetCurrentState();
 
-		ValidState = CurrentState && CurrentState->Node;
-
-		if (ValidState)
+		if (CurrentState)
 		{
 			StateChangedData.ToState = CurrentState;
 			CurrentState->EnterWithData(Data);
@@ -181,7 +173,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 		this->OnStateChanged.Broadcast(StateChangedData);
 		this->bIsTransitioning = false;
 
-		if (ValidState)
+		if (CurrentState)
 		{
 			CurrentState->Node->PostTransition();
 		}
@@ -730,7 +722,7 @@ void UStateMachine::BindDataConditionAt(FString& Address, FTransitionDataDelegat
 
 void UStateMachine::PushStateToStack(FName EName)
 {
-	if (this->StateStack.Num() >= this->MaxStackSize)
+	if (this->StateStack.Num() >= this->MaxPrevStateStackSize)
 	{
 		this->StateStack.RemoveNode(this->StateStack.GetHead());
 	}
@@ -1176,21 +1168,25 @@ void UState::AppendNodeCopy(UStateNode* ANode)
 	}
 }
 
+AActor* UTransitionCondition::GetOwner() const { return this->OwnerMachine->GetOwner(); }
+AActor* UTransitionDataCondition::GetOwner() const { return this->OwnerMachine->GetOwner(); }
+
 void UTransitionCondition::Initialize(UStateMachine* NewOwner)
 {
-	this->Owner = NewOwner;
+	this->OwnerMachine = NewOwner;
 	this->Initialize_Inner();
 }
 
 void UTransitionDataCondition::Initialize(UStateMachine* NewOwner)
 {
-	this->Owner = NewOwner;
+	this->OwnerMachine = NewOwner;
 	this->Initialize_Inner();
 }
 
+
 void UState::Initialize(UStateMachine* POwner)
 {
-	this->Owner = POwner;
+	this->OwnerMachine = POwner;
 
 	if (IsValid(this->Node))
 	{
@@ -1232,4 +1228,9 @@ void UState::ExitWithData(UObject* Data)
 	{
 		this->Node->ExitWithData(Data);
 	}
+}
+
+AActor* UState::GetOwner() const
+{
+	return this->OwnerMachine->GetOwner();
 }

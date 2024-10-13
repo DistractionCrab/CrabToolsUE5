@@ -5,20 +5,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "SimpleMoveTo.generated.h"
 
-USTRUCT(BlueprintType)
-struct FMoveToData
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "StateMachine|AI")
-	FVector DestinationLocation;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "StateMachine|AI")
-	TObjectPtr<AActor> DestinationActor;
-
-	FMoveToData() : DestinationLocation(0, 0, 0) {}
-};
+struct FMoveToData;
 
 /**
  * Simple node for making an entity move to a given actor.
@@ -36,13 +23,14 @@ private:
 	FName PropertyName;
 	FSMPropertyReference PropertyRef;
 
+	EPathFollowingResult::Type MovementResult;
+
 public:
 
 	UAISimpleMoveToNode();
 
 	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
 	virtual void Enter_Inner_Implementation() override;
-	virtual void EventWithData_Inner_Implementation(FName EName, UObject* Data) override;
 	virtual void Exit_Inner_Implementation() override;
 	virtual void Initialize_Inner_Implementation() override;
 	
@@ -56,7 +44,16 @@ public:
 		TArray<FString> GetPropertyOptions() const;
 	#endif
 
+protected:
+
+	FMoveToData* GetMovementData() const;
+
+	FORCEINLINE EPathFollowingResult::Type GetMovementResult() const { return this->MovementResult; }
+
+	void StopMovement();
+
 private:
+
 	void BindCallback();
 	void UnbindCallback();
 

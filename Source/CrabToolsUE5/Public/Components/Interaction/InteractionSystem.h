@@ -19,27 +19,24 @@ class CRABTOOLSUE5_API UInteractionSystem : public UActorComponent
 	GENERATED_BODY()
 	
 	TArray<TWeakObjectPtr<UObject>> InteractableObjects;
-	unsigned int SelectedIndex;
+	int SelectedIndex;
 
 public:
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionSelected, TScriptInterface<IInteractableInterface>, Selected);
 
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
-	FInteractionSelected InteractableAddedEvent;
+	FInteractionSelected OnInteractableAddedEvent;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FInteractionSelected InteractableRemovedEvent;
+	FInteractionSelected OnInteractableRemovedEvent;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FInteractionSelected InteractableSelectedEvent;
+	FInteractionSelected OnInteractableSelectedEvent;
 
 public:	
 
-	// Sets default values for this component's properties
 	UInteractionSystem();
-
-public:	
 	
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	void AddInteractable(UObject* Obj);
@@ -53,7 +50,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	void InteractWith(AActor* Redirect);
 	
-
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void Cycle();
 
@@ -65,6 +61,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
 	int IndexOf(UObject* Obj);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void Select(UObject* Obj);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction", meta=(ExpandBoolAsExecs="bHasObject"))
+	bool HasObject(UObject* Obj, bool& bHasObject);
+	bool HasObject(UObject* Obj);
 
 	TScriptInterface<IInteractableInterface> GetSelected();
 };

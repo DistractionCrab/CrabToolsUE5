@@ -99,7 +99,7 @@ public:
 private:
 
 	UFUNCTION()
-	void StatechangedCallback(FStateChangedEventData& Data);
+	void StateChangedCallback(UStateMachine* Data);
 
 	/* Handle checking for submachine states, and if in appropriate state, pass an event to Owner Machine. */
 	void PerformExit();
