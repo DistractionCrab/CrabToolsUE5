@@ -96,8 +96,8 @@ public:
 	UPROPERTY()
 	TSet<FName> EventSet;
 
-	UPROPERTY();
-	TSet<FName> EmittedEvents;
+	//UPROPERTY();
+	//TSet<FName> EmittedEvents;
 
 	#if WITH_EDITORONLY_DATA
 		UPROPERTY()

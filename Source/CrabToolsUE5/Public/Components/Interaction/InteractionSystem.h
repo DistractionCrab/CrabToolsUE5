@@ -25,14 +25,21 @@ public:
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInteractionSelected, TScriptInterface<IInteractableInterface>, Selected);
 
+	/* Called when a new interactable is made available. */
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
 	FInteractionSelected OnInteractableAddedEvent;
 
+	/* Called when an available interactable has been removed. */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FInteractionSelected OnInteractableRemovedEvent;
 
+	/* Called when the currently selected interactable has changed. */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FInteractionSelected OnInteractableSelectedEvent;
+
+	/* Called prior to the current interactable is interacted with. */
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FInteractionSelected OnInteractableActivatedEvent;
 
 public:	
 

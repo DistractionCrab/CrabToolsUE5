@@ -28,11 +28,15 @@ class CRABTOOLSUE5_API AEventTriggerBox : public ATriggerBox
 	/* Whether or not to use data events vs basic events. */
 	UPROPERTY(EditAnywhere, Category = "StateMachine|Events",
 		meta = (AllowPrivateAccess))
-	bool bUseData;
+	bool bUseData = false;
 
 	UPROPERTY(EditAnywhere, Category = "StateMachine|Events",
 		meta = (AllowPrivateAccess, EditCondition = "bUseData", EditConditionHides))
 	TSoftObjectPtr<UObject> Data;
+
+public:
+
+	AEventTriggerBox();
 
 protected:
 

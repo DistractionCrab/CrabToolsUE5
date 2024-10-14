@@ -237,14 +237,6 @@ TSet<FName> UStateMachineBlueprint::GetEventSet() const
 		EventNames.Add(Ev->GetEventName());
 	}
 
-	for (auto& SubGraph : this->SubGraphs)
-	{
-		for (auto& Ev : SubGraph->GetEventList())
-		{
-			EventNames.Add(Ev->GetEventName());
-		}
-	}
-
 	return EventNames;
 }
 
@@ -350,6 +342,21 @@ void UStateMachineBlueprint::AddEventsToDataTable(UDataTable* EventSet, bool bCl
 	{
 		UE_LOG(LogTemp, Error, TEXT("Data Table has wrong type of row."));
 	}
+}
+
+bool UStateMachineBlueprint::HasEvent(FName EName) const
+{
+	bool bHasEvent = false;
+
+	for (auto& Interface : this->Interfaces)
+	{
+		if (Interface->HasEvent(EName))
+		{
+			bHasEvent = true;
+		}
+	}
+
+	return bHasEvent;
 }
 
 UStateMachineBlueprintGeneratedClass* UStateMachineBlueprint::GetStateMachineGeneratedClass() const

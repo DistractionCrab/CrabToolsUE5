@@ -198,21 +198,45 @@ FName UEdStateGraph::GetStartStateName() const
 
 bool UEdStateGraph::HasEvent(FName EName) const
 {
+	bool bHasEvent = false;
 	auto Ev = this->EventObjects.FindByPredicate([&](const UEdEventObject* Ev) { return Ev->GetEventName() == EName; });
 
 	if (Ev)
 	{
-		return true;
+		bHasEvent = true;
 	}
 	else
 	{
-		if (this->DoesEmitterHaveEvent(EName))
+		bHasEvent = this->DoesEmitterHaveEvent(EName) || this->GetBlueprintOwner()->HasEvent(EName);
+
+		if (!this->IsMainGraph())
 		{
-			return true;
-		}		
+			UStateMachineBlueprintGeneratedClass* BPGC = nullptr;
+
+			if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+			{
+				BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->MachineArchetypeOverride.Value->GetClass());
+			}
+			else if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+			{
+				BPGC = Cast<UStateMachineBlueprintGeneratedClass>(this->MachineArchetype->GetClass());
+			}
+
+			if (BPGC != nullptr)
+			{
+				for (auto& IFace : BPGC->Interfaces)
+				{
+					if (IFace->HasEvent(EName))
+					{
+						bHasEvent = true;
+						break;
+					}
+				}
+			}
+		}
 	}	
 
-	return false;
+	return bHasEvent;;
 }
 
 bool UEdStateGraph::DoesEmitterHaveEvent(FName EName) const

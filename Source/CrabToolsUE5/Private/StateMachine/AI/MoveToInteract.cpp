@@ -120,20 +120,16 @@ void UAIMoveToInteractNode::PostTransition_Inner_Implementation()
 
 UInteractionSystem* UAIMoveToInteractNode::GetInteractionComponent() const
 {
-	if (auto InteractComp = this->GetOwner()->FindComponentByClass<UInteractionSystem>())
-	{
-		return InteractComp;
-	}
+	auto InteractComp = this->GetOwner()->FindComponentByClass<UInteractionSystem>();
 
-	return nullptr;
+	check(IsValid(InteractComp));
+	
+	return InteractComp;
 }
 
 void UAIMoveToInteractNode::BindEvents()
 {
-	if (auto InteractComp = this->GetInteractionComponent())
-	{
-		InteractComp->OnInteractableAddedEvent.AddDynamic(this, &UAIMoveToInteractNode::OnInteractableAdded);
-	}
+	this->GetInteractionComponent()->OnInteractableAddedEvent.AddDynamic(this, &UAIMoveToInteractNode::OnInteractableAdded);
 }
 
 void UAIMoveToInteractNode::OnInteractableAdded(TScriptInterface<IInteractableInterface> Interactable)

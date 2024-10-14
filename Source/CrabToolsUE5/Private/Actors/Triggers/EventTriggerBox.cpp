@@ -2,6 +2,12 @@
 #include "StateMachine/EventListener.h"
 #include "Components/ShapeComponent.h"
 
+AEventTriggerBox::AEventTriggerBox()
+{
+	// These are not meant to be physical blockers, just overlap detectors.
+	this->GetCollisionComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
 void AEventTriggerBox::BeginPlay()
 {
 	Super::BeginPlay();

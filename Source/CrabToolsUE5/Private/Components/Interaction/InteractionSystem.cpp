@@ -7,12 +7,14 @@ UInteractionSystem::UInteractionSystem() {
 }
 
 
-void UInteractionSystem::AddInteractable(UObject* Obj) {
+void UInteractionSystem::AddInteractable(UObject* Obj)
+{
 	if (Obj && Obj->GetClass()->ImplementsInterface(UInteractableInterface::StaticClass())) {
 		this->InteractableObjects.Add(Obj);
 
 		TScriptInterface<IInteractableInterface> IFace = Obj;
 		this->OnInteractableAddedEvent.Broadcast(IFace);
+
 		if (this->InteractableObjects.Num() == 1) {
 			this->OnInteractableSelectedEvent.Broadcast(IFace);
 		}
@@ -42,14 +44,21 @@ void UInteractionSystem::Interact() {
 }
 
 
-void UInteractionSystem::InteractWith(AActor* Redirect) {
-	if (this->InteractableObjects.Num() > 0) {
-		auto Obj = this->InteractableObjects[this->SelectedIndex];
+void UInteractionSystem::InteractWith(AActor* Redirect)
+{
+	if (this->InteractableObjects.Num() > 0)
+	{
+		auto& Obj = this->InteractableObjects[this->SelectedIndex];
 
-		if (Obj.IsValid()) {
+		if (Obj.IsValid())
+		{
+			TScriptInterface<IInteractableInterface> NewIFace = Obj.Get();
+			this->OnInteractableActivatedEvent.Broadcast(NewIFace);
+
 			IInteractableInterface::Execute_Interact(Obj.Get(), Redirect);
 		}
-		else {
+		else
+		{
 			this->InteractableObjects.RemoveAt(this->SelectedIndex);
 		}
 	}
