@@ -1,9 +1,9 @@
 #include "StateMachine/AI/Wait.h"
-#include "StateMachine/AI/Events.h"
+#include "StateMachine/Events.h"
 
 UAIWaitNode::UAIWaitNode()
 {
-	this->AddEmittedEvent(AI_Events::AI_WAIT_FINISHED);
+	this->AddEmittedEvent(Events::AI::WAIT_FINISHED);
 }
 
 void UAIWaitNode::Enter_Inner_Implementation()
@@ -23,5 +23,5 @@ void UAIWaitNode::Exit_Inner_Implementation()
 
 void UAIWaitNode::OnWaitEnd()
 {
-	this->EmitEvent(AI_Events::AI_WAIT_FINISHED);
+	this->EmitEvent(Events::AI::WAIT_FINISHED);
 }

@@ -5,7 +5,7 @@
 #include "AbilityManager.generated.h"
 
 
-UCLASS( ClassGroup=(General), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(General), meta=(BlueprintSpawnableComponent))
 class CRABTOOLSUE5_API UAbilityManagerComponent : public UActorComponent
 {
 	GENERATED_BODY()

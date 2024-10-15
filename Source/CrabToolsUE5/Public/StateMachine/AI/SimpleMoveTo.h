@@ -25,6 +25,10 @@ private:
 
 	EPathFollowingResult::Type MovementResult;
 
+	/* Overriden location for extended nodes to use. This is used on a per Enter basis.*/
+	FVector OverrideLocation;
+	bool bUseOverrideLocation = false;
+
 public:
 
 	UAISimpleMoveToNode();
@@ -51,6 +55,7 @@ protected:
 	FORCEINLINE EPathFollowingResult::Type GetMovementResult() const { return this->MovementResult; }
 
 	void StopMovement();
+	void SetOverrideLocation(FVector Location);
 
 private:
 

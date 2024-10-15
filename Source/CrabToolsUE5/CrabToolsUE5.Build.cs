@@ -38,6 +38,7 @@ public class CrabToolsUE5 : ModuleRules
 				"Core",
 				"CoreUObject",
 				"Engine",
+				"NavigationSystem",
 				// ... add private dependencies that you statically link with here ...	
 			});
 		

@@ -3,14 +3,14 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
-#include "StateMachine/AI/Events.h"
+#include "StateMachine/Events.h"
 #include "StateMachine/AI/AIStructs.h"
 
 
 UAISimpleMoveToNode::UAISimpleMoveToNode()
 {
-	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
-	this->AddEmittedEvent(AI_Events::AI_LOST);
+	this->AddEmittedEvent(Events::AI::ARRIVE);
+	this->AddEmittedEvent(Events::AI::LOST);
 }
 
 void UAISimpleMoveToNode::Initialize_Inner_Implementation()
@@ -20,54 +20,67 @@ void UAISimpleMoveToNode::Initialize_Inner_Implementation()
 	FString Address = this->PropertyName.ToString();
 	FSMPropertySearch Params = FSMPropertySearch::StructProperty(FMoveToData::StaticStruct());
 	this->PropertyRef = Params.GetProperty<FStructProperty>(this->GetMachine(), Address);
+
+	check(this->GetAIController());
 }
 
 void UAISimpleMoveToNode::Exit_Inner_Implementation()
 {
 	this->UnbindCallback();
 
-	if (auto Ctrl = this->GetAIController())
-	{
-		Ctrl->StopMovement();
-	}
+	this->StopMovement();
+
+	this->OverrideLocation = FVector::Zero();
+	this->bUseOverrideLocation = false;
 }
 
 void UAISimpleMoveToNode::EnterWithData_Inner_Implementation(UObject* Data)
 {
 	this->BindCallback();
-	this->MoveTo(Data);
+
+	if (this->bUseOverrideLocation)
+	{
+		this->GetAIController()->MoveToLocation(this->OverrideLocation);
+	}
+	else
+	{
+		this->MoveTo(Data);
+	}
 }
 
 void UAISimpleMoveToNode::MoveTo(UObject* Data)
 {
 	if (auto Actor = Cast<AActor>(Data))
 	{
-		if (auto Ctrl = this->GetAIController())
-		{
-			if (Ctrl->IsFollowingAPath())
-			{
-				Ctrl->StopMovement();
-			}
+		auto Ctrl = this->GetAIController();
 
-			Ctrl->MoveToActor(Actor);
-		}
-		else
+		if (Ctrl->IsFollowingAPath())
 		{
-			this->EmitEvent(AI_Events::AI_LOST);
+			Ctrl->StopMovement();
 		}
+
+		Ctrl->MoveToActor(Actor);
 	}
 	else
 	{
-		this->EmitEvent(AI_Events::AI_LOST);
+		this->EmitEvent(Events::AI::LOST);
 	}
 }
+
 
 void UAISimpleMoveToNode::Enter_Inner_Implementation()
 {
 	this->BindCallback();
+
 	if (auto Value = this->GetMovementData())
 	{	
-		if (auto Ctrl = this->GetAIController())
+		auto Ctrl = this->GetAIController();
+
+		if (this->bUseOverrideLocation)
+		{ 
+			Ctrl->MoveToLocation(this->OverrideLocation);
+		}
+		else
 		{
 			if (Value->DestinationActor)
 			{
@@ -81,6 +94,12 @@ void UAISimpleMoveToNode::Enter_Inner_Implementation()
 	}
 }
 
+void UAISimpleMoveToNode::SetOverrideLocation(FVector Location)
+{
+	this->OverrideLocation = Location;
+	this->bUseOverrideLocation = true;
+}
+
 FMoveToData* UAISimpleMoveToNode::GetMovementData() const
 {
 	return this->PropertyRef.GetValue<FMoveToData>();
@@ -88,10 +107,7 @@ FMoveToData* UAISimpleMoveToNode::GetMovementData() const
 
 void UAISimpleMoveToNode::StopMovement()
 {
-	if (auto Ctrl = this->GetAIController())
-	{
-		Ctrl->StopMovement();
-	}
+	this->GetAIController()->StopMovement();
 }
 
 void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -100,31 +116,24 @@ void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 
 	switch (Result)
 	{
-		case EPathFollowingResult::Success: this->EmitEvent(AI_Events::AI_ARRIVE); break;
-		case EPathFollowingResult::Aborted: this->EmitEvent(AI_Events::AI_ARRIVE); break;
-		default:this->EmitEvent(AI_Events::AI_LOST);
+		case EPathFollowingResult::Success: this->EmitEvent(Events::AI::ARRIVE); break;
+		case EPathFollowingResult::Aborted: this->EmitEvent(Events::AI::ARRIVE); break;
+		default:this->EmitEvent(Events::AI::LOST);
 	}
 }
 
 void UAISimpleMoveToNode::BindCallback()
 {
-	if (auto CtrlQ = this->GetAIController())
-	{
-		FAIMoveCompletedSignature::FDelegate Callback;
-		CtrlQ->ReceiveMoveCompleted.AddDynamic(this, &UAISimpleMoveToNode::OnMoveCompleted);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("AISimplePatrolNode: AIController was null."));
-	}
+	auto CtrlQ = this->GetAIController();
+	
+	CtrlQ->ReceiveMoveCompleted.AddDynamic(this, &UAISimpleMoveToNode::OnMoveCompleted);
+
 }
 
 void UAISimpleMoveToNode::UnbindCallback()
 {
-	if (auto CtrlQ = this->GetAIController())
-	{
-		CtrlQ->ReceiveMoveCompleted.RemoveAll(this);
-	}
+	auto CtrlQ = this->GetAIController();
+	CtrlQ->ReceiveMoveCompleted.RemoveAll(this);
 }
 
 #if WITH_EDITOR

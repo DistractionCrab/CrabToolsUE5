@@ -3,15 +3,15 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
-#include "StateMachine/AI/Events.h"
+#include "StateMachine/Events.h"
 #include "StateMachine/Logging.h"
 
 #define LOCTEXT_NAMESPACE "AISimplePatrolNode"
 
 UAISimplePatrolNode::UAISimplePatrolNode()
 {
-	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
-	this->AddEmittedEvent(AI_Events::AI_LOST);
+	this->AddEmittedEvent(Events::AI::ARRIVE);
+	this->AddEmittedEvent(Events::AI::LOST);
 }
 
 void UAISimplePatrolNode::Initialize_Inner_Implementation()
@@ -23,6 +23,7 @@ void UAISimplePatrolNode::Initialize_Inner_Implementation()
 	this->PropertyRef = Params.GetProperty<FStructProperty>(this->GetMachine(), Address);
 
 	check(this->PropertyRef);
+	check(this->GetAIController());
 }
 
 void UAISimplePatrolNode::Enter_Inner_Implementation()
@@ -50,10 +51,7 @@ void UAISimplePatrolNode::Exit_Inner_Implementation()
 {
 	this->UnbindCallback();
 
-	if (auto Ctrl = this->GetAIController())
-	{
-		Ctrl->StopMovement();
-	}
+	this->GetAIController()->StopMovement();
 }
 
 void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
@@ -62,7 +60,7 @@ void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 
 	if (Result == EPathFollowingResult::Success)
 	{
-		this->EmitEvent(AI_Events::AI_ARRIVE);
+		this->EmitEvent(Events::AI::ARRIVE);
 		if (this->Active())
 		{
 			this->MoveToNext();
@@ -80,22 +78,20 @@ void UAISimplePatrolNode::MoveToNext()
 
 	if (!IsValid(State->GetPath())) { return; }
 
-	if (auto Ctrl = this->GetAIController())
+	auto Ctrl = this->GetAIController();
+	FVector Goal = State->GetTarget();
+
+	this->RecurseGuard += 1;
+
+	if (this->RecurseGuard > State->GetPath()->Num())
 	{
-		FVector Goal = State->GetTarget();
-
-		this->RecurseGuard += 1;
-
-		if (this->RecurseGuard > State->GetPath()->Num())
-		{
-			// If we've recursed too many times, then remove the call back.
-			this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
-		}
-
-		Ctrl->MoveToLocation(Goal);
-
-		this->RecurseGuard = 0;
+		// If we've recursed too many times, then remove the call back.
+		this->GetAIController()->ReceiveMoveCompleted.RemoveAll(this);
 	}
+
+	Ctrl->MoveToLocation(Goal);
+
+	this->RecurseGuard = 0;
 }
 
 FPatrolPathState* UAISimplePatrolNode::GetState() const
@@ -109,15 +105,7 @@ FPatrolPathState* UAISimplePatrolNode::GetState() const
 
 void UAISimplePatrolNode::BindCallback()
 {
-	if (auto CtrlQ = this->GetAIController())
-	{
-		FAIMoveCompletedSignature::FDelegate Callback;
-		CtrlQ->ReceiveMoveCompleted.AddDynamic(this, &UAISimplePatrolNode::OnMoveCompleted);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("AISimplePatrolNode: AIController was null."));
-	}
+	this->GetAIController()->ReceiveMoveCompleted.AddDynamic(this, &UAISimplePatrolNode::OnMoveCompleted);
 }
 
 void UAISimplePatrolNode::UnbindCallback()

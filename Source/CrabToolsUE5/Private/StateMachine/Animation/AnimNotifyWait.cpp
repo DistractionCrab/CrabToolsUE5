@@ -1,11 +1,11 @@
 #include "StateMachine/Animation/AnimNotifyWait.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "StateMachine/Animation/Events.h"
+#include "StateMachine/Events.h"
 #include "GameFramework/Character.h"
 
 UAnimNotifyWaitNode::UAnimNotifyWaitNode()
 {
-	this->AddEmittedEvent(Animation_Events::ANIM_NOTIFY_FINISH_WAIT);
+	this->AddEmittedEvent(Events::Animation::NOTIFY_FINISH_WAIT);
 	#if WITH_EDITORONLY_DATA
 		this->ActorClass = ACharacter::StaticClass();
 	#endif
@@ -86,5 +86,5 @@ TArray<FString> UAnimNotifyWaitNode::GetComponentOptions() const
 
 void UAnimNotifyWaitNode::AnimNotify_SM_FinishWaitState()
 {
-	this->EmitEvent(Animation_Events::ANIM_NOTIFY_FINISH_WAIT);
+	this->EmitEvent(Events::Animation::NOTIFY_FINISH_WAIT);
 }

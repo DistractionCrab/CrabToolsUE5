@@ -3,27 +3,31 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
-#include "StateMachine/AI/Events.h"
+#include "StateMachine/Events.h"
 #include "StateMachine/AI/AIStructs.h"
 #include "Components/Interaction/InteractionSystem.h"
+#include "Utils/PathFindingUtils.h"
 
 UAIMoveToInteractNode::UAIMoveToInteractNode()
 {
-	this->AddEmittedEvent(AI_Events::AI_CANNOT_INTERACT);
+	this->AddEmittedEvent(Events::AI::CANNOT_INTERACT);
 }
 
 void UAIMoveToInteractNode::Initialize_Inner_Implementation()
 {
 	Super::Initialize_Inner_Implementation();
+
+	check(IsValid(this->GetInteractionComponent()));
 }
 
 void UAIMoveToInteractNode::EnterWithData_Inner_Implementation(UObject* Data)
 {
-	Super::EnterWithData_Inner_Implementation(Data);
-
 	if (IsValid(Data))
 	{
 		this->SetTarget(Data);
+		this->BindEvents();
+
+		Super::EnterWithData_Inner_Implementation(Data);
 	}
 	else
 	{
@@ -33,12 +37,14 @@ void UAIMoveToInteractNode::EnterWithData_Inner_Implementation(UObject* Data)
 
 void UAIMoveToInteractNode::Enter_Inner_Implementation()
 {
-	Super::Enter_Inner_Implementation();
-
 	if (auto Data = this->GetMovementData())
 	{
 		this->SetTarget(Data->DestinationActor);
 	}
+
+	this->BindEvents();
+
+	Super::Enter_Inner_Implementation();
 }
 
 void UAIMoveToInteractNode::Exit_Inner_Implementation()
@@ -54,28 +60,29 @@ void UAIMoveToInteractNode::Exit_Inner_Implementation()
 		this->HandleInteraction();
 	}
 
-	if (auto InteractComp = this->GetInteractionComponent())
-	{
-		InteractComp->OnInteractableAddedEvent.RemoveAll(this);
-	}
+	this->GetInteractionComponent()->OnInteractableAddedEvent.RemoveAll(this);
 }
 
 bool UAIMoveToInteractNode::HandleInteraction()
 {
 	bool bDidInteract = false;
 
-	if (auto InteractComp = this->GetInteractionComponent())
-	{
-		if (InteractComp->HasObject(this->Target))
-		{
-			InteractComp->Select(this->Target);
-			InteractComp->Interact();
+	auto InteractComp = this->GetInteractionComponent();
 
-			bDidInteract = true;
-		}
+	if (InteractComp->HasObject(this->Target))
+	{
+		InteractComp->Select(this->Target);
+		InteractComp->Interact();
+
+		bDidInteract = true;
 	}
 
 	return bDidInteract;
+}
+
+bool UAIMoveToInteractNode::HasInteractable() const
+{
+	return this->GetInteractionComponent()->HasObject(this->Target);
 }
 
 void UAIMoveToInteractNode::SetTarget(UObject* Data)
@@ -84,9 +91,16 @@ void UAIMoveToInteractNode::SetTarget(UObject* Data)
 	{
 		if (Data->Implements<UInteractableInterface>())
 		{
-			if (auto Actor = Cast<AActor>(Data))
+			this->Target = Data;
+
+			TArray<FVector> Locations;
+			IInteractableInterface::Execute_GetLocations(Data, Locations);
+
+			if (Locations.Num() > 0)
 			{
-				this->Target = Actor;
+				auto Dest = UPathFindingUtilsLibrary::ChooseNearLocation(this->GetAIController(), Locations);
+
+				this->SetOverrideLocation(Dest);
 			}
 		}
 		else
@@ -100,19 +114,19 @@ void UAIMoveToInteractNode::PostTransition_Inner_Implementation()
 {
 	if (!IsValid(this->Target))
 	{
-		this->EmitEvent(AI_Events::AI_CANNOT_INTERACT);
+		this->EmitEvent(Events::AI::CANNOT_INTERACT);
 	}
 	else
 	{
 		if (!this->Target->Implements<UInteractableInterface>())
 		{
-			this->EmitEvent(AI_Events::AI_CANNOT_INTERACT);
+			this->EmitEvent(Events::AI::CANNOT_INTERACT);
 		}
 		else
 		{
-			if (this->HandleInteraction())
+			if (this->HasInteractable())
 			{
-				this->EmitEvent(AI_Events::AI_ARRIVE);
+				this->EmitEvent(Events::AI::ARRIVE);
 			}
 		}
 	}
@@ -121,8 +135,6 @@ void UAIMoveToInteractNode::PostTransition_Inner_Implementation()
 UInteractionSystem* UAIMoveToInteractNode::GetInteractionComponent() const
 {
 	auto InteractComp = this->GetOwner()->FindComponentByClass<UInteractionSystem>();
-
-	check(IsValid(InteractComp));
 	
 	return InteractComp;
 }
@@ -136,7 +148,7 @@ void UAIMoveToInteractNode::OnInteractableAdded(TScriptInterface<IInteractableIn
 {
 	if (Interactable.GetObject() == this->Target)
 	{
-		this->StopMovement();
+		this->EmitEvent(Events::AI::ARRIVE);
 	}
 }
 

@@ -3,13 +3,13 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
 #include "StateMachine/IStateMachineLike.h"
-#include "StateMachine/AI/Events.h"
+#include "StateMachine/Events.h"
 
 UAIRotateToNode::UAIRotateToNode()
 {
 	this->bRequiresTick = true;
-	this->AddEmittedEvent(AI_Events::AI_ARRIVE);
-	this->AddEmittedEvent(AI_Events::AI_LOST);
+	this->AddEmittedEvent(Events::AI::ARRIVE);
+	this->AddEmittedEvent(Events::AI::LOST);
 }
 
 void UAIRotateToNode::Tick_Inner_Implementation(float DeltaTime)
@@ -18,12 +18,12 @@ void UAIRotateToNode::Tick_Inner_Implementation(float DeltaTime)
 	{
 		if (this->FacingCheck())
 		{
-			this->EmitEvent(AI_Events::AI_ARRIVE);
+			this->EmitEvent(Events::AI::ARRIVE);
 		}
 	}
 	else
 	{
-		this->EmitEvent(AI_Events::AI_LOST);
+		this->EmitEvent(Events::AI::LOST);
 	}
 }
 
@@ -82,7 +82,7 @@ void  UAIRotateToNode::PostTransition_Inner_Implementation()
 {
 	if (!this->TargetActor.IsValid())
 	{
-		this->EmitEvent(AI_Events::AI_LOST);
+		this->EmitEvent(Events::AI::LOST);
 	}
 }
 

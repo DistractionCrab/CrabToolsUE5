@@ -14,7 +14,7 @@ class CRABTOOLSUE5_API UAIMoveToInteractNode : public UAISimpleMoveToNode
 	GENERATED_BODY()
 
 	UPROPERTY(Transient)
-	TObjectPtr<AActor> Target;
+	TObjectPtr<UObject> Target;
 
 public:
 
@@ -38,4 +38,5 @@ private:
 	class UInteractionSystem* GetInteractionComponent() const;
 
 	bool HandleInteraction();
+	bool HasInteractable() const;
 };

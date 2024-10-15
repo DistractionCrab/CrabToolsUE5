@@ -21,5 +21,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
 	void InteractWithData(AActor* User, UObject* Data);
-	virtual void InteractWithData_Implementation(AActor* User, UObject* Data) {}
+	virtual void InteractWithData_Implementation(AActor* User, UObject* Data) {  }
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	void GetLocations(UPARAM(ref) TArray<FVector>& Locations);
+	virtual void GetLocations_Implementation(UPARAM(ref) TArray<FVector>& Locations)
+	{
+		if (auto Actor = Cast<AActor>(this))
+		{
+			Locations.Add(Actor->GetActorLocation());
+		}
+	}
 };

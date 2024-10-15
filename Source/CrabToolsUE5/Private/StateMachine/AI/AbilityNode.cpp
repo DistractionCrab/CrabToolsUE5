@@ -1,10 +1,10 @@
 #include "StateMachine/AI/AbilityNode.h"
-#include "StateMachine/AI/Events.h"
+#include "StateMachine/Events.h"
 #include "Ability/Ability.h"
 
 UAbilityNode::UAbilityNode()
 {
-	this->AddEmittedEvent(AI_Events::AI_ABILITY_FINISHED);
+	this->AddEmittedEvent(Events::AI::ABILITY_FINISHED);
 }
 
 void UAbilityNode::Initialize_Inner_Implementation()
@@ -25,7 +25,7 @@ void UAbilityNode::Enter_Inner_Implementation()
 	}
 	else
 	{
-		this->EmitEvent(AI_Events::AI_ABILITY_FINISHED);
+		this->EmitEvent(Events::AI::ABILITY_FINISHED);
 	}
 }
 
