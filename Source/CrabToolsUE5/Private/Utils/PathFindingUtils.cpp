@@ -10,8 +10,6 @@ FVector UPathFindingUtilsLibrary::ChooseNearLocation(AAIController* Ctrl, TArray
 
 	if (Ctrl)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Finding nearest point to %s"), *Ctrl->GetNavAgentLocation().ToString());
-
 		const auto AgentLocation = Ctrl->GetNavAgentLocation();
 		const ANavigationData* NavData = NavSys->GetNavDataForProps(Ctrl->GetNavAgentPropertiesRef(), AgentLocation);
 		
@@ -24,16 +22,12 @@ FVector UPathFindingUtilsLibrary::ChooseNearLocation(AAIController* Ctrl, TArray
 			FPathFindingQuery Query(Ctrl, *NavData, AgentLocation, Pt);
 			FNavPathSharedPtr NavPath;
 
-			UE_LOG(LogTemp, Warning, TEXT("- Check Pt = %s"), *Pt.ToString());
-
 			auto Result = NavSys->FindPathSync(Query);
 
 			if (Result.IsSuccessful())
 			{
 				bFoundPath = true;
 				float Length = Result.Path->GetLength();
-
-				UE_LOG(LogTemp, Warning, TEXT("- Path length was equal to %f"), Length);
 
 				if (Length < PathLength)
 				{
