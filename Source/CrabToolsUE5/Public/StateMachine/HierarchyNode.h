@@ -67,6 +67,10 @@ class CRABTOOLSUE5_API UHierarchyNode : public UStateNode
 	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
 	bool ResetOnEnter = true;
 
+	/* Whether or not the submachine should be reset when this node is exited. */
+	UPROPERTY(EditAnywhere, Category = "StateMachine", meta = (AllowPrivateAccess = "true"))
+	bool ResetOnExit = true;
+
 	/*
 	 * The event to pass to the submachine when entering. Useful for when ResetOnEnter is false, but
 	 * work needs to be continued. Specifically, if ResetOnEnter is false, and nothing is done to transition 

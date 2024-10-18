@@ -9,7 +9,23 @@ bool UUtilsLibrary::TimeGatedBoolConvert(const FTimeGatedBool& input) {
 	return input.GetValue();
 }
 
-float UUtilsLibrary::RotateAngleTo(float Base, float Goal, float Delta) {
+float UUtilsLibrary::RotateAngleTo(float Base, float Goal, float Delta)
+{
+	bool Complete = false;
+	float RealDelta = RotateAngleToDelta(Base, Goal, Delta, Complete);
+
+	if (Complete)
+	{
+		return Goal;
+	}
+	else
+	{
+		return Base + RealDelta;
+	}
+}
+
+float UUtilsLibrary::RotateAngleToDelta(float Base, float Goal, float Delta, bool& Complete)
+{
 	// Normalize the angles to [-180, 180] and to [0, 360].
 	Base = FRotator::NormalizeAxis(Base);
 	Goal = FRotator::NormalizeAxis(Goal);
@@ -23,11 +39,15 @@ float UUtilsLibrary::RotateAngleTo(float Base, float Goal, float Delta) {
 	// Whichever is the smallest diff will be the true difference in the angle.
 	float Diff = FMath::Abs(DiffNorm) < FMath::Abs(DiffUnNorm) ? DiffNorm : DiffUnNorm;
 
-	if (FMath::Abs(Diff) < FMath::Abs(Delta)) {
-		return Goal;
+	if (FMath::Abs(Diff) < FMath::Abs(Delta))
+	{
+		Complete = true;
+		return Diff;
 	}
-	else {
-		return Base + FMath::Sign(Diff)*Delta;
+	else
+	{
+		Complete = false;
+		return FMath::Sign(Diff) * Delta;
 	}
 }
 

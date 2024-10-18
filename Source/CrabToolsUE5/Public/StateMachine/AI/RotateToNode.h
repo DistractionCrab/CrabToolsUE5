@@ -2,13 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "StateMachine/AI/BaseNode.h"
-#include "RotateTo.generated.h"
+#include "RotateToNode.generated.h"
 
 
 /**
  * Simple node for making an entity move to a given actor.
  */
-UCLASS(Blueprintable, Category = "StateMachine|AI")
+UCLASS(Blueprintable, Category = "StateMachine|AI", meta=(DisplayName="RotateTo"))
 class CRABTOOLSUE5_API UAIRotateToNode : public UAIBaseNode
 {
 	GENERATED_BODY()
@@ -37,6 +37,7 @@ public:
 	virtual void Exit_Inner_Implementation() override;
 	virtual void Initialize_Inner_Implementation() override;
 	virtual void PostTransition_Inner_Implementation() override;
+	virtual bool RequiresTick_Implementation() const override { return true; }
 	
 	#if WITH_EDITOR
 		virtual void PostLinkerChange() override;

@@ -2,7 +2,26 @@
 
 #include "CoreMinimal.h"
 #include "Delegates/DelegateSignatureImpl.inl"
+#include "Actors/Targeting/BaseTargetingActor.h"
 #include "Ability.generated.h"
+
+/* This interface is used for containers of abilitys, e.g. Targeting Controllers. */
+UINTERFACE(MinimalAPI, Blueprintable, BlueprintType)
+class UHasAbilityInterface : public UInterface
+{
+	GENERATED_BODY()
+};
+
+class IHasAbilityInterface
+{
+	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Ability")
+	UAbility* GetAbility();
+	UAbility* GetAbility_Implementation() { return nullptr; }
+};
 
 /**
  * Class for player abilities. Abilities consist of a start, a continuous action,
@@ -17,11 +36,10 @@ class CRABTOOLSUE5_API UAbility : public UObject
 		meta=(ExposeOnSpawn=true, AllowPrivateAccess))
 	TObjectPtr<AActor> Owner;
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Ability",
-		meta=(AllowPrivateAccess))
-	bool bNeedsTick = false;
-
 	bool bActive = false;
+
+	UPROPERTY(Transient)
+	TObjectPtr<ABaseTargetingActor> Targeting;
 
 public:
 
@@ -30,7 +48,8 @@ public:
 	FAbilityStarted OnAbilityStarted;
 	
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityPerformed, UAbility*, Ability);
-	/* Called when the ability performs its body. Either through Perform() */
+
+	/* Called when the ability performs its body. */
 	UPROPERTY(BlueprintAssignable, Category="Ability")
 	FAbilityStarted OnAbilityPerformed;
 
@@ -60,9 +79,10 @@ public:
 	bool IsActive() const { return this->bActive; }
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
+	bool RequiresTick() const { return this->RequiresTick_Inner(); }
+
+	UFUNCTION(BlueprintCallable, Category = "Ability")
 	AActor* GetOwner() const { return this->Owner; }
-
-
 
 protected:
 
@@ -70,6 +90,11 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
 	void Start_Inner();
 	virtual void Start_Inner_Implementation() {}
+
+	/* Start the ability; Used for initializing data. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	bool RequiresTick_Inner() const;
+	virtual bool RequiresTick_Inner_Implementation() const { return false; }
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
 	void Initialize_Inner();
@@ -86,4 +111,5 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
 	void Finish_Inner();
 	virtual void Finish_Inner_Implementation() {}
+
 };

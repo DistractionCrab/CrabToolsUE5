@@ -38,11 +38,23 @@ void UAbilityNode::Exit_Inner_Implementation()
 	}
 }
 
+void UAbilityNode::PostTransition_Inner_Implementation()
+{
+	if (!IsValid(this->Selected))
+	{
+		this->EmitEvent(Events::AI::ABILITY_FINISHED);
+	}
+}
+
 void UAbilityNode::EnterWithData_Inner_Implementation(UObject* Data)
 {
 	if (auto Abi = Cast<UAbility>(Data))
 	{
 		this->Selected = Abi;
+	}
+	else if (Data->Implements<UHasAbilityInterface>())
+	{
+		this->Selected = IHasAbilityInterface::Execute_GetAbility(Data);
 	}
 	else
 	{

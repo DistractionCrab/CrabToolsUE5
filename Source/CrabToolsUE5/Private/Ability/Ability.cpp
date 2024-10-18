@@ -45,4 +45,3 @@ void UAbility::Finish()
 		this->OnAbilityFinished.Broadcast(this);
 	}
 }
-

@@ -36,9 +36,21 @@ public:
 	 * Rotates the Base angle to Goal angle by Delta Amount. If the difference between 
 	 * Goal and Base is less than delta Goal will be returned. Undefined behaviour for negative
 	 * Deltas.
+	 * 
+	 * returns the result angle in degrees.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Utility")
 	static float RotateAngleTo(float Base, float Goal, float Delta);
+
+	/* 
+	 * Gets the remaining amount of rotation between an angle, so that adding the delta
+	 * to Base will Be goal if it's close enough. Otherwise, it'll reqturn +/- Delta
+	 * depending on the closer direction.
+	 * 
+	 * Returns the Delta in degrees.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Utility")
+	static float RotateAngleToDelta(float Base, float Goal, float Delta, bool& Complete);
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
 	UObject* GetOwnerAs(UActorComponent* Component, TSubclassOf<AActor> SClass, ESearchResult& Result);

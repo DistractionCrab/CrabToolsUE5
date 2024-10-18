@@ -226,9 +226,11 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 
 protected:
 
+	/*
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess = true))
 	bool bRequiresTick = false;
+	*/
 
 public:
 
@@ -274,7 +276,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	bool RequiresTick() const;
-	virtual bool RequiresTick_Implementation() const { return this->bRequiresTick; }
+	virtual bool RequiresTick_Implementation() const { return false; }
 
 	#if WITH_EDITOR
 		virtual void GetEmittedEvents(TSet<FName>& Events) const;

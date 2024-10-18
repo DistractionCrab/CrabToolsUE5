@@ -17,6 +17,12 @@ namespace Events::AI
 
 	// Event for when a target cannot be interacted with.
 	constexpr char CANNOT_INTERACT[] = "AI_CANNOT_INTERACT";
+
+	// Event for when data is passed that doesn't implement that TargetingControllerInterface.
+	constexpr char INVALID_TARGETING[] = "AI_INVALID_TARGETING";
+
+	// Event for when targets have been confirmed by the targeting controller.
+	constexpr char TARGETS_CONFIRMED[] = "AI_CONFIRMED_TARGETS";
 }
 
 namespace Events::Animation

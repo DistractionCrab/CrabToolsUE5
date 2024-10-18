@@ -74,7 +74,14 @@ void UHierarchyNode::Exit_Inner_Implementation()
 {
 	if (this->SubMachine)
 	{
-		this->SubMachine->SendEvent(this->ExitEventName);
+		if (this->ResetOnExit)
+		{
+			this->SubMachine->Reset();
+		}
+		else
+		{
+			this->SubMachine->SendEvent(this->ExitEventName);
+		}
 		this->SubMachine->SetActive(false);
 	}
 }

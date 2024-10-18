@@ -1,4 +1,4 @@
-#include "StateMachine/AI/RotateTo.h"
+#include "StateMachine/AI/RotateToNode.h"
 #include "AIController.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Utils/UtilsLibrary.h"
@@ -7,7 +7,6 @@
 
 UAIRotateToNode::UAIRotateToNode()
 {
-	this->bRequiresTick = true;
 	this->AddEmittedEvent(Events::AI::ARRIVE);
 	this->AddEmittedEvent(Events::AI::LOST);
 }

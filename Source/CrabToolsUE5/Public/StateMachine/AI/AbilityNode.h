@@ -6,6 +6,10 @@
 
 class UAbility;
 
+/* 
+ * Node which handles an ability performing its task and monitoring it's finish. The
+ * Data passed to this node can either be a node itself, or something which implements
+ */
 UCLASS(Blueprintable, Category = "StateMachine|AI")
 class CRABTOOLSUE5_API UAbilityNode : public UStateNode
 {
@@ -26,6 +30,7 @@ public:
 	virtual void Enter_Inner_Implementation() override;
 	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
 	virtual void Exit_Inner_Implementation() override;
+	virtual void PostTransition_Inner_Implementation() override;
 
 private:
 	UFUNCTION()
