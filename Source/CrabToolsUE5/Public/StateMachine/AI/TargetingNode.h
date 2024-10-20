@@ -23,6 +23,8 @@ public:
 protected:
 
 	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
+	virtual bool HasPipedData_Implementation() const override;
+	virtual UObject* GetPipedData_Implementation() override;
 
 private:
 

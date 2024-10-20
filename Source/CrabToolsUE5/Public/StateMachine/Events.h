@@ -1,5 +1,9 @@
 #pragma once
 
+/*
+ * This file defines various namespaces for events that are natively used for nodes and
+ * state machines. 
+ */
 
 namespace Events::AI
 {
@@ -23,6 +27,9 @@ namespace Events::AI
 
 	// Event for when targets have been confirmed by the targeting controller.
 	constexpr char TARGETS_CONFIRMED[] = "AI_CONFIRMED_TARGETS";
+
+	// Generic event for when something is done, but is a non-specific task.
+	constexpr char DONE[] = "AI_DONE";
 }
 
 namespace Events::Animation

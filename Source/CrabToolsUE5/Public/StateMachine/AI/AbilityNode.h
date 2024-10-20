@@ -22,6 +22,9 @@ class CRABTOOLSUE5_API UAbilityNode : public UStateNode
 	/* The ability to start when entering this node. */
 	TObjectPtr<UAbility> Selected;
 
+	/* Flag used to control immediate ability finish checking. */
+	bool bNeedsFinishing = false;
+
 public:
 
 	UAbilityNode();

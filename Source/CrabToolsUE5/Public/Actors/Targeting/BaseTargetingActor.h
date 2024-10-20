@@ -5,7 +5,7 @@
 #include "Ability/TargetingController.h"
 #include "BaseTargetingActor.generated.h"
 
-UCLASS(Blueprintable)
+UCLASS(Abstract, Blueprintable)
 class ABaseTargetingActor : public AActor, public ITargetingControllerInterface
 {
 	GENERATED_BODY()

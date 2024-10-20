@@ -7,7 +7,7 @@ struct FSMIData
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine", meta=(MultiLine=true))
 	FText Description;
 };
 

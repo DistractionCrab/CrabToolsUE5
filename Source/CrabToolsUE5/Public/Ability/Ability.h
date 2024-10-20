@@ -57,6 +57,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Ability")
 	FAbilityStarted OnAbilityFinished;
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityCanceled, UAbility*, Ability);
+	UPROPERTY(BlueprintAssignable, Category = "Ability")
+	FAbilityCanceled OnAbilityCanceled;
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
@@ -75,40 +79,52 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Ability")
 	void Finish();
 
+	/* Called when the ability was canceled. Can be used even when not active. */
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	void Cancel();
+
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	bool IsActive() const { return this->bActive; }
 
-	UFUNCTION(BlueprintCallable, Category = "Ability")
-	bool RequiresTick() const { return this->RequiresTick_Inner(); }
+	/* Start the ability; Used for initializing data. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	bool RequiresTick() const;
+	virtual bool RequiresTick_Implementation() const { return false; }
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	AActor* GetOwner() const { return this->Owner; }
 
+	virtual UWorld* GetWorld() const override;
+
 protected:
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
+	void Cancel_Inner();
+	void Cancel_Inner_Implementation() {}
+
 	/* Start the ability; Used for initializing data. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	void Start_Inner();
 	virtual void Start_Inner_Implementation() {}
 
 	/* Start the ability; Used for initializing data. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	bool RequiresTick_Inner() const;
 	virtual bool RequiresTick_Inner_Implementation() const { return false; }
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	void Initialize_Inner();
 	virtual void Initialize_Inner_Implementation() {}
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	void Perform_Inner();
 	virtual void Perform_Inner_Implementation() {}
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	void Tick_Inner(float DeltaTime);
 	virtual void Tick_Inner_Implementation(float DeltaTime) {}
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Ability")
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	void Finish_Inner();
 	virtual void Finish_Inner_Implementation() {}
 

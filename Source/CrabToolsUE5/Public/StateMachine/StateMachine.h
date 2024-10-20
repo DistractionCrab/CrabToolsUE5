@@ -297,11 +297,19 @@ public:
 	/* Runs a verification check on the node. Returns true if no error, false if an error happened. */
 	bool Verify(FNodeVerificationContext& Context) const;
 
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	bool HasPipedData() const;
+	virtual bool HasPipedData_Implementation() const { return false; }
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	UObject* GetPipedData();
+	virtual UObject* GetPipedData_Implementation() { return nullptr; }
+
 protected:
 
 	/* Override this with your verification code. */
 	virtual bool Verify_Inner(FNodeVerificationContext& Context) const { return true; }
-
+	
 	/* Function called by Initialize_Internal. Override this to setup your init code. */
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	void Initialize_Inner();
@@ -441,7 +449,7 @@ private:
 	UPROPERTY(Transient, meta=(IgnorePropertySearch))
 	TObjectPtr<AActor> Owner;
 
-	/* Map of name to submachines available to this State Machine. */
+	/* Map of name to submachines available to this state machine. */
 	UPROPERTY(DuplicateTransient, meta=(IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateMachine>> SubMachines;
 
@@ -555,8 +563,6 @@ public:
 
 	void SetParentData(UStateMachine* Parent, FName NewParentKey);
 	UStateMachineBlueprintGeneratedClass* GetGeneratedClass() const;
-	//TArray<FString> GetStatesWithAccessibility(EStateMachineAccessibility Access) const;
-
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -581,20 +587,10 @@ public:
 
 	UState* DuplicateStateObject(FName StateName, UObject* NewOuter) const;
 
-	/* Returns the names of states that can be extended, but not overwritten. */
-	//TArray<FString> GetExtendibleStates() const;
-
-	/* Returns the names of states that can be extended, but not overwritten. */
-	//TArray<FString> GetOverrideableStates() const;
-
 	// Procedural construction functions.
 	UState* MakeState(FName StateName);
 	UState* MakeStateWithNode(FName StateName, UStateNode* Node);
 	void AddStateData(FName StateName, UState* Data);
-
-	//void AddTransition(FName State, FName Event, FName Destination, UTransitionCondition* Condition, UTransitionDataCondition* DataCondition);
-	//void AddTransition(FName State, FName Event, FTransitionData Data);
-	//void ClearStates() { this->Graph.Empty(); }
 	// End Procedural Construction functions
 
 protected:
@@ -608,6 +604,6 @@ private:
 	void InitFromArchetype();
 	void PushStateToStack(FName EName);
 	void UpdateState(FName Name);
-	void UpdateStateWithData(FName Name, UObject* Data);	
+	void UpdateStateWithData(FName Name, UObject* Data, bool UsePiped=true);
 	void InitSubMachines();
 };

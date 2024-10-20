@@ -23,7 +23,6 @@ public:
 	AActor* GetUsingActor() const;
 	virtual AActor* GetUsingActor_Implementation() const { return nullptr; }
 
-	/* Used to attach to the UsingActor as needed. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting")
 	void Initialize();
 	virtual void Initialize_Implementation() {}
@@ -32,6 +31,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting")
 	void AddTarget(AActor* Target);
 	virtual void AddTarget_Implementation(AActor* Target) {}
+
+	/* Wehther or not the targeting controller supports direct adding of targets. */
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting")
+	bool SupportsDirectAdd() const;
+	virtual bool SupportsDirectAdd_Implementation() const { return false; }
 
 	/* Save the currently selected targets */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting")
@@ -55,10 +59,10 @@ public:
 	virtual void AddListener_Implementation(const FConfirmTargetsSingle& Callback) {}
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting")
-	TArray<AActor*> GetTargets() const;
-	virtual TArray<AActor*> GetTargets_Implementation() const { return {}; }
+	void GetTargets(TArray<AActor*>& Actors) const;
+	virtual void GetTargets_Implementation(TArray<AActor*>& Actors) const {};
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting")
-	TArray<FVector> GetTargetPoints() const;
-	virtual TArray<FVector> GetTargetPoints_Implementation() const { return {}; }
+	void GetTargetPoints(TArray<FVector>& Points) const;
+	virtual void GetTargetPoints_Implementation(TArray<FVector>& Points) const {};
 };

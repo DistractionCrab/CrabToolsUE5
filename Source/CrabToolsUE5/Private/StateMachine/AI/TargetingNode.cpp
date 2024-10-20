@@ -29,5 +29,15 @@ void UTargetingNode::EnterWithData_Inner_Implementation(UObject* Data)
 
 void UTargetingNode::OnConfirmed()
 {
-	this->EmitEventWithData(Events::AI::TARGETS_CONFIRMED, this->TargetingInterface);
+	this->EmitEvent(Events::AI::TARGETS_CONFIRMED);
+}
+
+bool UTargetingNode::HasPipedData_Implementation() const
+{
+	return IsValid(this->TargetingInterface);
+}
+
+UObject* UTargetingNode::GetPipedData_Implementation()
+{
+	return this->TargetingInterface;
 }

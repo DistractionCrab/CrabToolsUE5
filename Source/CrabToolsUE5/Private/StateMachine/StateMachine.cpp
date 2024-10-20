@@ -96,52 +96,76 @@ void UStateMachine::UpdateState(FName Name)
 {
 	if (Name != this->CurrentStateName)
 	{
-		this->TransitionIdentifier.EnterTransition();
-		this->bIsTransitioning = true;
-
-		FStateChangedEventData StateChangedData;
-
-		StateChangedData.StateMachine = this;
-		StateChangedData.From = this->CurrentStateName;
-		StateChangedData.To = Name;
-
 		auto CurrentState = this->GetCurrentState();
-		auto OldState = this->CurrentStateName;
 
-		if (CurrentState)
+		// We check to see if there is data that needs to be piped.
+		if (CurrentState->Node && CurrentState->Node->HasPipedData())
 		{
-			CurrentState->Exit();
-			StateChangedData.FromState = CurrentState;
+			this->UpdateStateWithData(Name, CurrentState->Node->GetPipedData(), false);
 		}
-
-
-		this->CurrentStateName = Name;
-		this->PushStateToStack(Name);
-		CurrentState = this->GetCurrentState();
-
-		if (CurrentState)
+		else
 		{
-			StateChangedData.ToState = CurrentState;
-			CurrentState->Enter();
+
+			this->TransitionIdentifier.EnterTransition();
+			this->bIsTransitioning = true;
+
+			FStateChangedEventData StateChangedData;
+
+			StateChangedData.StateMachine = this;
+			StateChangedData.From = this->CurrentStateName;
+			StateChangedData.To = Name;
+
+
+			auto OldState = this->CurrentStateName;
+
+			if (CurrentState)
+			{
+				CurrentState->Exit();
+				StateChangedData.FromState = CurrentState;
+			}
+
+
+			this->CurrentStateName = Name;
+			this->PushStateToStack(Name);
+			CurrentState = this->GetCurrentState();
+
+			if (CurrentState)
+			{
+				StateChangedData.ToState = CurrentState;
+				CurrentState->Enter();
+			}
+
+			this->OnStateChanged.Broadcast(StateChangedData);
+
+			this->bIsTransitioning = false;
+
+			if (CurrentState)
+			{
+				CurrentState->Node->PostTransition();
+			}
+
+			this->OnTransitionFinished.Broadcast(this);
 		}
-
-		this->OnStateChanged.Broadcast(StateChangedData);
-
-		this->bIsTransitioning = false;
-
-		if (CurrentState)
-		{
-			CurrentState->Node->PostTransition();
-		}
-		
-		this->OnTransitionFinished.Broadcast(this);
 	}
 }
 
-void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
+void UStateMachine::UpdateStateWithData(FName Name, UObject* Data, bool UsePiped)
 {
 	if (Name != this->CurrentStateName)
 	{
+		auto CurrentState = this->GetCurrentState();
+		auto OldState = this->CurrentStateName;
+
+		if (UsePiped && CurrentState->Node && CurrentState->Node->HasPipedData())
+		{
+			auto NewData = NewObject<UArrayNodeData>(this);
+
+			NewData->AddData(Data);
+			NewData->AddData(CurrentState->Node->GetPipedData());
+
+			Data = NewData;
+		}
+
 		this->TransitionIdentifier.EnterTransition();
 		this->bIsTransitioning = true;
 
@@ -149,10 +173,8 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data)
 
 		StateChangedData.StateMachine = this;
 		StateChangedData.From = this->CurrentStateName;
-		StateChangedData.To = Name;
-
-		auto CurrentState = this->GetCurrentState();
-		auto OldState = this->CurrentStateName;
+		StateChangedData.To = Name;		
+		
 
 		if (CurrentState)
 		{
@@ -386,8 +408,6 @@ TSet<FName> UStateMachine::GetEvents() const {
 
 	return List;
 }
-
-
 
 void UStateMachine::AddStateData(FName StateName, UState* Data)
 {

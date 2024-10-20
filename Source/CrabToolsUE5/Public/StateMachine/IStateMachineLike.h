@@ -165,3 +165,98 @@ public:
         return Ref;
     }
 };
+
+/* Interface for data objects passed by state machine data piping. */
+UINTERFACE(MinimalAPI)
+class UStateMachineDataInterface : public UInterface
+{
+    GENERATED_BODY()
+};
+
+class IStateMachineDataInterface
+{
+    GENERATED_BODY()
+
+public:
+
+    UFUNCTION(BlueprintNativeEvent, Category="StateMachine|Data",
+        meta=(DeterminesOutputType="Type"))
+    UObject* FindDataOfType(TSubclassOf<UObject> Type);
+    virtual UObject* FindDataOfType_Implementation(TSubclassOf<UObject> Type) { return nullptr; }
+
+    UFUNCTION(BlueprintNativeEvent, Category = "StateMachine|Data",
+        meta = (DeterminesOutputType = "Type", DynamicOutputParam="ReturnValue"))
+    void FindAllDataOfType(TSubclassOf<UObject> Type, TArray<UObject*>& ReturnValue);
+    virtual void FindAllDataOfType_Implementation(TSubclassOf<UObject> Type, TArray<UObject*>& ReturnValue) { }
+
+    UFUNCTION(BlueprintNativeEvent, Category = "StateMachine|Data", meta = (DeterminesOutputType = "Type"))
+    TScriptInterface<UInterface> FindDataImplementing(TSubclassOf<UInterface> Type);
+    virtual TScriptInterface<UInterface> FindDataImplementing_Implementation(TSubclassOf<UInterface> Type) {return nullptr; }
+
+    UFUNCTION(BlueprintNativeEvent, Category = "StateMachine|Data",
+        meta = (DeterminesOutputType = "Type", DynamicOutputParam = "ReturnValue"))
+    void FindAllDataImplementing(TSubclassOf<UInterface> Type, TArray<TScriptInterface<UInterface>>& ReturnValue);
+    virtual void FindAllDataImplementing_Implementation(TSubclassOf<UInterface> Type, TArray<TScriptInterface<UInterface>>& ReturnValue) { }
+};
+
+UCLASS()
+class UStateMachineDataHelpers : public UBlueprintFunctionLibrary
+{
+    GENERATED_BODY()
+
+public:
+
+    UFUNCTION(BlueprintCallable, Category = "StateMachine|Data", meta = (DeterminesOutputType = "Type", ExpandBoolAsExecs="Found"))
+    static UObject* FindDataOfType(TSubclassOf<UObject> Type, UObject* Data, bool& Found);
+    static UObject* FindDataOfType(TSubclassOf<UObject> Type, UObject* Data);
+
+    template<class T> static T* FindDataOfType(UObject* Data)
+    {
+        return Cast<T>(FindDataOfType(T::StaticClass(), Data));
+    }
+
+    UFUNCTION(BlueprintCallable, Category = "StateMachine|Data",
+        meta = (DeterminesOutputType = "Type", DynamicOutputParam = "ReturnValue", ExpandBoolAsExecs = "Found"))
+    static void FindAllDataOfType(TSubclassOf<UObject> Type, UObject* Data, TArray<UObject*>& ReturnValue, bool& Found);
+    static void FindAllDataOfType(TSubclassOf<UObject> Type, UObject* Data, TArray<UObject*>& ReturnValue);
+
+    template<class T> static void FindAllDataOfType(UObject* Data, TArray<T*>& ReturnValue)
+    {
+        TArray<UObject*> Found;
+
+        FindAllDataOfType(T::StaticClass(), Data, Found);
+
+        for (auto& Value : Found)
+        {
+            ReturnValue.Add(Cast<T>(Value));
+        }
+    }
+
+    UFUNCTION(BlueprintCallable, Category = "StateMachine|Data", meta = (DeterminesOutputType = "Type", ExpandBoolAsExecs = "Found"))
+    static TScriptInterface<UInterface> FindDataImplementing(TSubclassOf<UInterface> Type, UObject* Data, bool& Found);
+    static TScriptInterface<UInterface> FindDataImplementing(TSubclassOf<UInterface> Type, UObject* Data);
+
+    template<class T> static TScriptInterface<T> FindDataImplementing(UObject* Data)
+    {
+        auto Value = FindDataImplementing(T::StaticClass(), Data);      
+
+        return TScriptInterface<T>(Value.GetObjectRef());
+    }
+
+    UFUNCTION(BlueprintCallable, Category = "StateMachine|Data",
+        meta = (DeterminesOutputType = "Type", DynamicOutputParam = "ReturnValue", ExpandBoolAsExecs = "Found"))
+    static void FindAllDataImplementing(TSubclassOf<UInterface> Type, UObject* Data, TArray<TScriptInterface<UInterface>>& ReturnValue, bool& Found);
+    static void FindAllDataImplementing(TSubclassOf<UInterface> Type, UObject* Data, TArray<TScriptInterface<UInterface>>& ReturnValue);
+
+    template<class T> static void FindAllDataImplementing(UObject* Data, TArray<TScriptInterface<T>>& ReturnValue)
+    {
+        TArray<TScriptInterface<UInterface>> Found;
+
+        FindAllDataImplementing(T::StaticClass(), Data, Found);
+
+        for (auto& Value : Found)
+        {
+            ReturnValue.Add(TScriptInterface<T>(Value.GetObjectRef()));
+        }
+    }
+};

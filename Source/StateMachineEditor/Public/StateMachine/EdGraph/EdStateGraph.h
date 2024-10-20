@@ -39,7 +39,7 @@ struct FStateMachineArchetypeOverrideContainer
 	TObjectPtr<UStateMachine> DefaultObject;
 };
 
-UCLASS(CollapseCategories, MinimalAPI)
+UCLASS(MinimalAPI)
 class UEdStateGraph : public UEdGraph, public IStateMachineLike
 {
 	GENERATED_BODY()
@@ -79,7 +79,7 @@ private:
 	TObjectPtr<UStateMachine> MachineArchetype;
 
 	/* For extended graphs, the name of the submachine in the parent to override internal data. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
+	UPROPERTY(EditDefaultsOnly, Category = "Override",
 		meta = (AllowPrivateAccess,
 			GetOptions = "GetOverrideableMachines",
 			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
@@ -87,14 +87,14 @@ private:
 	FName OverridenMachine;
 
 	/* Reference to a copy of the parent machine archetype, allows for changing variables. */
-	UPROPERTY(EditAnywhere, Category = "StateMachine",
+	UPROPERTY(EditAnywhere, Category = "Override",
 		meta = (AllowPrivateAccess,
 			EditCondition = "GraphType == EStateMachineGraphType::EXTENDED_GRAPH",
 			EditConditionHides))
 	FStateMachineArchetypeOverrideContainer MachineArchetypeOverride;
 
 	/* Event sets to be added to this submachine. */
-	UPROPERTY(EditDefaultsOnly, Category = "StateMachine", meta=(RowType = "FEventSetRow"))
+	UPROPERTY(EditDefaultsOnly, Category = "Events", meta=(RowType = "FEventSetRow"))
 	TSet<TObjectPtr<UDataTable>> EventSets;
 
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",

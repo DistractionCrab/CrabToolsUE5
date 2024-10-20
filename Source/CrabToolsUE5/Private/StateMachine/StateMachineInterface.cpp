@@ -114,5 +114,7 @@ void UStateMachineInterface::PostEditChangeProperty(FPropertyChangedEvent& Prope
 			this->ParentBackup = nullptr;
 		}
 	}
+
+	this->Events.KeySort([&](const FName& A, const FName& B) { return A.ToString() < B.ToString(); });
 }
 #endif //WITH_EDITOR

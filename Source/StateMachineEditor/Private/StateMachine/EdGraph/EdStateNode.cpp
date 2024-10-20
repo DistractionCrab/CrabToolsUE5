@@ -142,7 +142,7 @@ TArray<FString> UEdStateNode::GetEventOptions() const
 {
 	TSet<FName> EventsSet;
 
-	for (auto Node : this->Nodes)
+	for (auto& Node : this->Nodes)
 	{
 		if (IsValid(Node))
 		{
@@ -151,8 +151,8 @@ TArray<FString> UEdStateNode::GetEventOptions() const
 	}
 
 	TArray<FString> EventArray;
-	for (auto Event : EventsSet) { EventArray.Add(Event.ToString()); }
-	for (auto Event : this->GetStateGraph()->GetEventOptions()) { EventArray.Add(Event); }
+	for (auto& Event : EventsSet) { EventArray.Add(Event.ToString()); }
+	for (auto& Event : this->GetStateGraph()->GetEventOptions()) { EventArray.Add(Event); }
 	
 	return EventArray;
 }
@@ -178,6 +178,7 @@ bool UEdStateNode::Modify(bool bAlwaysMarkDirty)
 
 bool UEdStateNode::HasEvent(FName EName)
 {
+	this->UpdateEmittedEvents();
 	return this->NodeEmittedEvents.Contains(EName) || this->GetStateGraph()->HasEvent(EName);
 }
 
@@ -185,7 +186,7 @@ void UEdStateNode::UpdateEmittedEvents()
 {
 	this->NodeEmittedEvents.Empty();
 
-	for (auto Node : this->Nodes)
+	for (auto& Node : this->Nodes)
 	{
 		if (Node)
 		{

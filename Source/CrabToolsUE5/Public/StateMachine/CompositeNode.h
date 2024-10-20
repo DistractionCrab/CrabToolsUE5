@@ -4,6 +4,25 @@
 #include "StateMachine.h"
 #include "CompositeNode.generated.h"
 
+/* This is used to handle piped data for the nested structure. */
+UCLASS()
+class CRABTOOLSUE5_API UCompositeNodeData : public UStateNode, public IStateMachineDataInterface
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UObject>> Data;
+
+public:
+
+	virtual UObject* FindDataOfType_Implementation(TSubclassOf<UObject> Type) override;
+	virtual void FindAllDataOfType_Implementation(TSubclassOf<UObject> Type, TArray<UObject*>& ReturnValue) override;
+	virtual TScriptInterface<UInterface> FindDataImplementing_Implementation(TSubclassOf<UInterface> Type) override;
+	virtual void FindAllDataImplementing_Implementation(TSubclassOf<UInterface> Type, TArray<TScriptInterface<UInterface>>& ReturnValue) override;
+
+	void AddData(FName Key, UObject* AddedData);
+};
+
 /**
  * State Machine Node that is a composite of other nodes.
  */
@@ -27,6 +46,8 @@ public:
 	virtual void ExitWithData_Inner_Implementation(UObject* Data) override;
 	virtual bool RequiresTick_Implementation() const override;
 	virtual void PostTransition_Inner_Implementation() override;
+	virtual bool HasPipedData_Implementation() const override;
+	virtual UObject* GetPipedData_Implementation() override;
 
 	#if WITH_EDITORONLY_DATA
 		virtual void GetEmittedEvents(TSet<FName>& Events) const override;

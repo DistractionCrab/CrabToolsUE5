@@ -123,12 +123,104 @@ bool UArrayNode::RequiresTick_Implementation() const
 	return false;
 }
 
+bool UArrayNode::HasPipedData_Implementation() const
+{
+	for (const auto& Child : this->Nodes)
+	{
+		if (Child->HasPipedData())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+UObject* UArrayNode::GetPipedData_Implementation()
+{
+	auto Data = NewObject<UArrayNodeData>(this);
+
+	for (auto& Child : this->Nodes)
+	{
+		if (Child->HasPipedData())
+		{
+			Data->AddData(Child->GetPipedData());
+		}
+	}
+
+	return Data;
+}
+
+void UArrayNodeData::AddData(UObject* AddedData)
+{
+	if (IsValid(AddedData))
+	{
+		this->Data.Add(AddedData);
+	}
+}
+
+UObject* UArrayNodeData::FindDataOfType_Implementation(TSubclassOf<UObject> Type)
+{
+	for (auto& Child : this->Data)
+	{
+		if (auto Check = UStateMachineDataHelpers::FindDataOfType(Type, Child))
+		{
+			return Check;
+		}
+	}
+
+	return nullptr;
+}
+
+void UArrayNodeData::FindAllDataOfType_Implementation(TSubclassOf<UObject> Type, TArray<UObject*>& ReturnValue)
+{
+	for (auto& Child : this->Data)
+	{
+		if (Child->IsA(Type))
+		{
+			ReturnValue.Add(Child);
+		}
+		
+		UStateMachineDataHelpers::FindAllDataOfType(Type, Child, ReturnValue);
+	}
+}
+
+TScriptInterface<UInterface> UArrayNodeData::FindDataImplementing_Implementation(TSubclassOf<UInterface> Type)
+{
+	for (auto& Child : this->Data)
+	{
+		if (Child->GetClass()->ImplementsInterface(Type))
+		{
+			TScriptInterface<UInterface> T(Child);
+
+			return T;
+		}
+	}
+
+	return nullptr;
+}
+
+void UArrayNodeData::FindAllDataImplementing_Implementation(TSubclassOf<UInterface> Type, TArray<TScriptInterface<UInterface>>& ReturnValue)
+{
+	for (auto& Child : this->Data)
+	{
+		if (Child->GetClass()->ImplementsInterface(Type))
+		{
+			TScriptInterface<UInterface> T(Child);
+
+			ReturnValue.Add(T);
+		}
+
+		UStateMachineDataHelpers::FindAllDataImplementing(Type, Child, ReturnValue);
+	}
+}
+
 #if WITH_EDITORONLY_DATA
 void UArrayNode::GetEmittedEvents(TSet<FName>& Events) const
 {
 	Super::GetEmittedEvents(Events);
 
-	for (auto Child : this->Nodes)
+	for (auto& Child : this->Nodes)
 	{
 		Child->GetEmittedEvents(Events);
 	}

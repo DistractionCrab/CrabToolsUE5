@@ -30,7 +30,7 @@ struct FStateNodeOverrideContainer
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "Override",
-		meta = (ShowInnerProperties, NoResetToDefault))
+		meta = (ShowInnerProperties, NoResetToDefault, EditConditionHides))
 	TObjectPtr<UState> Value;
 
 	/* This object is used to compare overriden variables when Linking changes. */
@@ -38,7 +38,7 @@ struct FStateNodeOverrideContainer
 	TObjectPtr<UState> DefaultObject;
 };
 
-UCLASS(CollapseCategories, MinimalAPI)
+UCLASS(MinimalAPI)
 class UEdStateNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
@@ -62,22 +62,22 @@ class UEdStateNode : public UEdBaseStateNode
 		meta = (EditCondition = "NodeType == EStateNodeType::INLINE_NODE", EditConditionHides))
 	FName StateCategory;
 
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachine")
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Nodes")
 	TArray<TObjectPtr<UStateNode>> Nodes;
 
-	UPROPERTY(VisibleAnywhere, Category="StateMachine|Events")
+	UPROPERTY(VisibleAnywhere, Category="Events")
 	TSet<FName> NodeEmittedEvents;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "StateMachine",
 		meta=(EditCondition="NodeType == EStateNodeType::INLINE_NODE", EditConditionHides))
 	TObjectPtr<UState> StateClass;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine",
+	UPROPERTY(EditAnywhere, Category = "Override",
 		meta = (EditCondition = "NodeType != EStateNodeType::INLINE_NODE", EditConditionHides,
 			GetOptions="GetInheritableStates"))
 	FName StateExtension;
 
-	UPROPERTY(EditAnywhere, Category = "StateMachine",
+	UPROPERTY(EditAnywhere, Category = "Override",
 		meta = (
 			EditCondition = "(NodeType != EStateNodeType::INLINE_NODE) && (NodeType != EStateNodeType::EXTENDED_NODE)",
 			EditConditionHides,
