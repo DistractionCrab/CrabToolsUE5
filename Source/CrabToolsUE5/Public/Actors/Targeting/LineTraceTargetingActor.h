@@ -42,13 +42,16 @@ class ALineTraceTargetingActor : public ABaseTargetingActor
 		meta = (AllowPrivateAccess))
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECollisionChannel::ECC_Visibility;
 
-	/* The actor traced for targeting. */
-	TWeakObjectPtr<AActor> TracedActor;
-	/* The impact point that was traced by this targeting actor. */
-	FVector TracedLocation;
+protected:
 
 	TArray<AActor*> AddedActors;
 	TArray<FVector> AddedPoints;
+
+	/* The actor traced for targeting. */
+	TWeakObjectPtr<AActor> TracedActor;
+	/* The impact point that was traced by this targeting actor. */
+	UPROPERTY(BlueprintreadOnly, Category = "Targeting|LineTrace")
+	FVector TracedLocation;
 
 public:
 
