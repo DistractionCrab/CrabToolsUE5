@@ -2,6 +2,7 @@
 #include "StateMachine/StateMachineBlueprint.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/EdGraph/EdAliasNode.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/StateConnectionDrawingPolicy.h"
@@ -77,6 +78,55 @@ void FSMSchemaAction_NewExtensionNode::AddReferencedObjects(FReferenceCollector&
 FString FSMSchemaAction_NewExtensionNode::GetReferencerName() const
 {
 	return "FSMSchemaAction_NewExtensionNode";
+}
+
+UEdGraphNode* FSMSchemaAction_NewAliasNode::PerformAction(
+	class UEdGraph* ParentGraph,
+	UEdGraphPin* FromPin,
+	const FVector2D Location,
+	bool bSelectNewNode)
+{
+	UEdAliasNode* ResultNode = nullptr;
+	UEdStateGraph* StateGraph = Cast<UEdStateGraph>(ParentGraph);
+
+	if (NodeTemplate != nullptr)
+	{
+		const FScopedTransaction Transaction(
+			LOCTEXT("StateMachineEditorNewAliasNode", "State Machine Editor: New Alias Node"));
+
+		ParentGraph->Modify();
+		if (FromPin != nullptr)
+			FromPin->Modify();
+
+		NodeTemplate->Rename(nullptr, ParentGraph);
+
+		ParentGraph->AddNode(NodeTemplate, true, bSelectNewNode);
+
+		NodeTemplate->CreateNewGuid();
+		NodeTemplate->PostPlacedNewNode();
+		NodeTemplate->AllocateDefaultPins();
+		NodeTemplate->AutowireNewNode(FromPin);
+
+		NodeTemplate->NodePosX = Location.X;
+		NodeTemplate->NodePosY = Location.Y;
+
+		NodeTemplate->SetFlags(RF_Transactional);
+
+		ResultNode = NodeTemplate;
+	}
+
+	return ResultNode;
+}
+
+void FSMSchemaAction_NewAliasNode::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	FEdGraphSchemaAction::AddReferencedObjects(Collector);
+	Collector.AddReferencedObject(NodeTemplate);
+}
+
+FString FSMSchemaAction_NewAliasNode::GetReferencerName() const
+{
+	return "FSMSchemaAction_NewAliasNode";
 }
 
 UEdGraphNode* FSMSchemaAction_NewNode::PerformAction(
@@ -263,6 +313,21 @@ void UStateMachineSchema::AddExtensionAction(FGraphContextMenuBuilder& ContextMe
 	
 	auto StateNode = NewObject<UEdStateNode>(ContextMenuBuilder.OwnerOfTemporaries);
 	StateNode->SetNodeType(EStateNodeType::EXTENDED_NODE);
+	ExtendAction->SetNodeTemplate(StateNode);
+
+	ContextMenuBuilder.AddAction(ExtendAction);
+}
+
+void UStateMachineSchema::AddAliasAction(FGraphContextMenuBuilder& ContextMenuBuilder) const
+{
+	const FText Desc = LOCTEXT("NewStateGraphExtensionNodeMenuText", "Alias existing nodes...");
+	const FText MenuText = FText::FromString("");
+	const FText ToolTip = LOCTEXT("NewStateGraphNodeTooltip", "Add an alias node here");
+
+	TSharedPtr<FSMSchemaAction_NewAliasNode> ExtendAction(
+		new FSMSchemaAction_NewAliasNode(MenuText, Desc, ToolTip, -100));
+
+	auto StateNode = NewObject<UEdAliasNode>(ContextMenuBuilder.OwnerOfTemporaries);
 	ExtendAction->SetNodeTemplate(StateNode);
 
 	ContextMenuBuilder.AddAction(ExtendAction);

@@ -2,6 +2,7 @@
 
 #include "StateMachine/EdGraph/EdBaseNode.h"
 #include "StateMachine/EdGraph/EdStartStateNode.h"
+#include "StateMachine/EdGraph/EdAliasNode.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/StateMachineBlueprint.h"
@@ -400,7 +401,13 @@ TArray<UEdTransition*> UEdStateGraph::GetExitTransitions(UEdStateNode* Start) co
 	TArray<UEdTransition*> Transitions;
 	this->GetNodesOfClass<UEdTransition>(Transitions);
 
-	auto Pred = [&](const UEdTransition* A) -> bool { return A->GetStartNode() == Start; };
+	auto Pred = [&](const UEdTransition* A) -> bool {
+		if (auto Alias = Cast<UEdAliasNode>(A->GetStartNode()))
+		{
+			return Alias->Matches(Start);
+		}
+		return A->GetStartNode() == Start;
+	};
 
 	return Transitions.FilterByPredicate(Pred);
 }
@@ -718,7 +725,7 @@ TArray<FString> UEdStateGraph::GetConditionOptions() const
 	return Names;
 }
 
-FName UEdStateGraph::RenameNode(UEdStateNode* Node, FName NewName)
+FName UEdStateGraph::RenameNode(UEdBaseStateNode* Node, FName NewName)
 {
 
 	if (this->IsStateNameAvailable(NewName))

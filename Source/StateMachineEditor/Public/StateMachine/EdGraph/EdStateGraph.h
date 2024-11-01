@@ -192,7 +192,7 @@ public:
 	bool IsVariable() const;
 	FName GetCategoryName() const;
 	FName GetClassPrefix() const;
-	FName RenameNode(UEdStateNode* Node, FName NewName);
+	FName RenameNode(UEdBaseStateNode* Node, FName NewName);
 
 	FName GetGraphName() const;
 	FORCEINLINE void SetGraphType(EStateMachineGraphType GType) { this->GraphType = GType; }

@@ -36,7 +36,7 @@ public:
 };
 
 /* Base State node to be used for states in the State Machine Graph. */
-UCLASS(MinimalAPI)
+UCLASS(Abstract, MinimalAPI)
 class UEdBaseStateNode : public UEdBaseNode, public IStateLike
 {
 	GENERATED_BODY()
@@ -53,6 +53,7 @@ public:
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
 	/* Returns the name of this state when compiled. */
 	virtual FName GetStateName() const { return NAME_None; }
+	virtual FName SetStateName(FName NewName) { return NAME_None; }
 	/* Returns the name displayed for graph nodes and UI purposes. */
 	virtual FName GetNodeName() const { return NAME_None; }
 	virtual bool HasEvent(FName EName) { return false; }

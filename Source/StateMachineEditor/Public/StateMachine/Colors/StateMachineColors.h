@@ -26,6 +26,9 @@ namespace StateMachineColors
 		const FLinearColor InternalError(1.0f, 0.0f, 0.0f);
 
 		const FLinearColor Root(0.2f, 0.2f, 0.2f, 0.8f);
+
+		/* Color Used for alias state nodes. */
+		const FLinearColor Alias(0, 0.73f, 0.27f);
 	}
 
 	namespace Pin

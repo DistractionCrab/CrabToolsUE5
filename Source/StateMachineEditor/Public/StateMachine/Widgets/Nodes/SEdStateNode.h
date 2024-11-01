@@ -15,7 +15,7 @@ public:
 	SLATE_BEGIN_ARGS(SEdStateNode) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, UEdStateNode* InNode);
+	void Construct(const FArguments& InArgs, UEdBaseStateNode* InNode);
 	
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
 	virtual void CreatePinWidgets() override;
@@ -24,12 +24,10 @@ public:
 	virtual FSlateColor GetBackgroundColor() const;
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 	virtual void UpdateGraphNode() override;
-	virtual const FSlateBrush* GetNameIcon() const;	
-
-	void IsNameReadOnly();
+	virtual const FSlateBrush* GetNameIcon() const;
 
 	FName GetStateName() const;
-	UEdStateNode* GetStateNode() const { return Cast<UEdStateNode>(this->GraphNode); }
+	UEdBaseStateNode* GetStateNode() const { return Cast<UEdBaseStateNode>(this->GraphNode); }
 
 private:
 	//bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);

@@ -38,6 +38,35 @@ public:
 };
 
 USTRUCT()
+struct STATEMACHINEEDITOR_API FSMSchemaAction_NewAliasNode
+	: public FEdGraphSchemaAction, public FGCObject
+{
+	GENERATED_USTRUCT_BODY();
+
+private:
+
+	TObjectPtr<UEdAliasNode> NodeTemplate;
+
+public:
+	FSMSchemaAction_NewAliasNode() : NodeTemplate(nullptr)
+	{
+		this->Grouping = -100;
+	}
+
+	FSMSchemaAction_NewAliasNode(const FText& InNodeCategory, const FText& InMenuDesc, const FText& InToolTip, const int32 InGrouping)
+		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping), NodeTemplate(nullptr)
+	{
+	}
+
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
+
+	void SetNodeTemplate(UEdAliasNode* Template) { this->NodeTemplate = Template; }
+
+	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	virtual FString GetReferencerName() const override;
+};
+
+USTRUCT()
 struct STATEMACHINEEDITOR_API FSMSchemaAction_NewNode
 : public FEdGraphSchemaAction, public FGCObject
 {
@@ -148,4 +177,5 @@ public:
 private:
 
 	void AddExtensionAction(FGraphContextMenuBuilder& ContextMenuBuilder) const;
+	void AddAliasAction(FGraphContextMenuBuilder& ContextMenuBuilder) const;
 };

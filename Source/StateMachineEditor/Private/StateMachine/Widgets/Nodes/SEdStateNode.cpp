@@ -2,10 +2,11 @@
 #include "StateMachine/Widgets/Nodes/SEdEventGraphPin.h"
 #include "StateMachine/Colors/StateMachineColors.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "StateMachine/EdGraph/EdAliasNode.h"
 
 #define LOCTEXT_NAMESPACE "SEdStateNode"
 
-void SEdStateNode::Construct(const FArguments& InArgs, UEdStateNode* InNode) {
+void SEdStateNode::Construct(const FArguments& InArgs, UEdBaseStateNode* InNode) {
 	this->GraphNode = InNode;
 	this->UpdateGraphNode();
 	
@@ -137,7 +138,7 @@ void SEdStateNode::UpdateGraphNode()
 
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 {
-	if (auto Node = this->GetStateNode())
+	if (auto Node = Cast<UEdStateNode>(this->GetStateNode()))
 	{
 		if (Node->GetNodeType() == EStateNodeType::INLINE_NODE)
 		{
@@ -152,6 +153,10 @@ FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 			return StateMachineColors::NodeBorder::ExtensionOverride;
 		}
 	}
+	else if (auto AliasNode = Cast<UEdStateNode>(this->GetStateNode()))
+	{
+		return StateMachineColors::NodeBorder::Alias;
+	}
 
 	return StateMachineColors::NodeBorder::Root;
 }
@@ -163,12 +168,16 @@ const FSlateBrush* SEdStateNode::GetNameIcon() const
 
 bool SEdStateNode::IsNameReadOnly() const
 {
-	if (auto StateNode = this->GetStateNode())
+	if (auto StateNode = Cast<UEdStateNode>(this->GetStateNode()))
 	{
 		if (StateNode->GetNodeType() == EStateNodeType::INLINE_NODE)
 		{
 			return false;
 		}
+	}
+	else if (Cast<UEdAliasNode>(this->GetStateNode()))
+	{
+		return false;
 	}
 
 	return true;
@@ -219,6 +228,7 @@ EVisibility SEdStateNode::GetDragOverMarkerVisibility() const
 FSlateColor SEdStateNode::GetBackgroundColor() const
 {
 	return StateMachineColors::NodeBody::Default;
+	
 }
 
 void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
