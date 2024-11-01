@@ -16,7 +16,8 @@ private:
 	TObjectPtr<UInstancedStaticMeshComponent> InstanceManager;
 
 public:
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="InstancedStaticMeshActor")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="InstancedStaticMeshActor",
+		meta=(MakeEditWidget))
 	TArray<FTransform> InstanceTransforms;
 
 
