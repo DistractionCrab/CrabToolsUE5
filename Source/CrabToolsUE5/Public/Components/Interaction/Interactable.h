@@ -23,7 +23,8 @@ public:
 	void InteractWithData(AActor* User, UObject* Data);
 	virtual void InteractWithData_Implementation(AActor* User, UObject* Data) {  }
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction",
+		meta=(ForceAsFunction))
 	void GetLocations(UPARAM(ref) TArray<FVector>& Locations);
 	virtual void GetLocations_Implementation(UPARAM(ref) TArray<FVector>& Locations)
 	{
