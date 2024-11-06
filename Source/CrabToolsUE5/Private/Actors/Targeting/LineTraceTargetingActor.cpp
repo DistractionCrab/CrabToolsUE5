@@ -1,4 +1,5 @@
 #include "Actors/Targeting/LineTraceTargetingActor.h"
+#include "Actors/Targeting/ITargeter.h"
 
 ALineTraceTargetingActor::ALineTraceTargetingActor()
 {
@@ -17,8 +18,8 @@ void ALineTraceTargetingActor::Tick(float DelaTime)
 
 	FHitResult Result(ForceInit);
 
-	FVector Base = this->GetActorLocation();
-	FVector Target = ILineTraceTargeterInterface::Execute_GetEndPoint(this->GetUsingActorNative());
+	FVector Base = this->GetTraceBase();
+	FVector Target = ITargeterInterface::Execute_GetEndPoint(this->GetUsingActorNative());
 	FVector FixedTarget = (1 + this->CorrectionFactor/100) * (Target - Base) + Base;
 
 	#if WITH_EDITORONLY_DATA

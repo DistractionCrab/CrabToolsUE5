@@ -269,7 +269,7 @@ void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 
 void SEdStateNode::CreatePinWidgets()
 {
-	UEdStateNode* StateNode = CastChecked<UEdStateNode>(GraphNode);
+	UEdBaseStateNode* StateNode = CastChecked<UEdBaseStateNode>(GraphNode);
 
 	for (int32 PinIdx = 0; PinIdx < StateNode->Pins.Num(); PinIdx++)
 	{

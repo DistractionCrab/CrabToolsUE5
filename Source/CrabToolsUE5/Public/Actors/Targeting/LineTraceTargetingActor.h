@@ -4,23 +4,6 @@
 #include "Actors/Targeting/BaseTargetingActor.h"
 #include "LineTraceTargetingActor.generated.h"
 
-UINTERFACE(MinimalAPI, Blueprintable, BlueprintType)
-class ULineTraceTargeterInterface : public UInterface
-{
-	GENERATED_BODY()
-};
-
-class ILineTraceTargeterInterface
-{
-	GENERATED_BODY()
-
-public:
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Targeting|LineTrace")
-	FVector GetEndPoint() const;
-	virtual FVector GetEndPoint_Implementation() const { return FVector::Zero(); }
-};
-
 UCLASS(Blueprintable)
 class ALineTraceTargetingActor : public ABaseTargetingActor
 {
@@ -80,6 +63,10 @@ public:
 	virtual void PopTarget_Implementation() override;
 	virtual void GetTargets_Implementation(TArray<AActor*>& Actors) const { Actors.Append(this->AddedActors); };
 	virtual void GetTargetPoints_Implementation(TArray<FVector>& Points) const override { Points.Append(this->AddedPoints); }
+
+	UFUNCTION(BlueprintNativeEvent, Category="Target|LineTrace")
+	FVector GetTraceBase() const;
+	FVector GetTraceBase_Implementation() const { return this->GetActorLocation(); }
 
 private:
 	FORCEINLINE void InvalidateTargetData();

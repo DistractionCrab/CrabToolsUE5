@@ -31,5 +31,5 @@ public:
 protected:
 
 	/* Shortcut without needing to use the interface calls. */
-	AActor* GetUsingActorNative() const { return this->UsingActor; }
+	FORCEINLINE AActor* GetUsingActorNative() const { return this->UsingActor; }
 };
