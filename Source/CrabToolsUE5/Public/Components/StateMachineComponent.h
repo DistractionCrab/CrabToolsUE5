@@ -51,5 +51,5 @@ private:
 	bool HasMachine();
 
 	UFUNCTION()
-	void StateChanged(const FStateChangedEventData& Data);
+	void TickUpdated(bool NeedsTick);
 };

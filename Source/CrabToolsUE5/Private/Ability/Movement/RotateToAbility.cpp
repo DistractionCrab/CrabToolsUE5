@@ -23,6 +23,7 @@ void URotateToAbility::Tick_Inner_Implementation(float DeltaTime)
 	FVector ToTarget = this->TargetPoint - this->GetOwner()->GetActorLocation();
 
 	bool Complete = false;
+
 	auto DeltaYaw = UUtilsLibrary::RotateAngleToDelta(
 		this->GetOwner()->GetActorRotation().Yaw,
 		ToTarget.Rotation().Yaw,

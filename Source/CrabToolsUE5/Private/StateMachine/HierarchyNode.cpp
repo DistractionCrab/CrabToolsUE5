@@ -64,7 +64,8 @@ void UHierarchyNode::Enter_Inner_Implementation() {
 }
 
 void UHierarchyNode::Tick_Inner_Implementation(float DeltaTime) {
-	if (this->SubMachine) {
+	if (this->SubMachine)
+	{
 		this->SubMachine->Tick(DeltaTime);
 		this->PerformExit();
 	}
@@ -101,11 +102,14 @@ FName FHierarchyEventValue::GetEvent() const
 void UHierarchyNode::StateChangedCallback(UStateMachine* Data)
 {
 	FName StateName = Data->GetCurrentStateName();
+	auto State = Data->GetCurrentState();
 
 	if (this->ExitStates.Contains(StateName))
 	{
 		this->EmitEvent(this->ExitStates[StateName].GetEvent());
 	}
+
+	//this->GetMachine()->UpdateTickRequirements(State->GetNode()->RequiresTick());
 }
 
 

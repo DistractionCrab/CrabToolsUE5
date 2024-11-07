@@ -462,6 +462,9 @@ private:
 
 public:
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTickRequirementUpdated, bool, NeedsTick);
+	FTickRequirementUpdated OnTickRequirementUpdated;
+
 	UPROPERTY(VisibleAnywhere, meta=(IgnorePropertySearch))
 	FName StartState;
 
@@ -592,6 +595,8 @@ public:
 	UState* MakeStateWithNode(FName StateName, UStateNode* Node);
 	void AddStateData(FName StateName, UState* Data);
 	// End Procedural Construction functions
+
+	void UpdateTickRequirements(bool NeedsTick);
 
 protected:
 

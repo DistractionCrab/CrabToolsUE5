@@ -10,7 +10,7 @@ UStateMachineComponent::UStateMachineComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 
@@ -26,6 +26,8 @@ void UStateMachineComponent::BeginPlay()
 
 		this->Machine->OnStateChanged.Add(Callback);
 		this->Machine->Initialize(this->GetOwner());
+
+		this->Machine->OnTickRequirementUpdated.AddDynamic(this, &UStateMachineComponent::TickUpdated);
 	}
 }
 
@@ -61,20 +63,7 @@ bool UStateMachineComponent::HasMachine() {
 	return this->Machine != nullptr;
 }
 
-void UStateMachineComponent::StateChanged(const FStateChangedEventData& Data)
+void UStateMachineComponent::TickUpdated(bool NeedsTick)
 {
-	if (IsValid(this->Machine))
-	{
-		if (auto RetData = this->Machine->GetCurrentState())
-		{
-			if (IsValid(RetData->GetNode()))
-			{
-				this->SetComponentTickEnabled(RetData->GetNode()->RequiresTick());
-			}
-			else
-			{
-				this->SetComponentTickEnabled(false);
-			}
-		}
-	}
+	this->SetComponentTickEnabled(NeedsTick);
 }

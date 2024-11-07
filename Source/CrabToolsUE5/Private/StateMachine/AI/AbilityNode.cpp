@@ -35,6 +35,19 @@ void UAbilityNode::Exit_Inner_Implementation()
 	}
 }
 
+bool UAbilityNode::RequiresTick_Implementation() const
+{
+	if (this->Selected)
+	{
+		return this->Selected->RequiresTick();
+	}
+	else
+	{
+	}
+	
+	return false;
+}
+
 void UAbilityNode::PostTransition_Inner_Implementation()
 {
 	if (!IsValid(this->Selected))
@@ -71,6 +84,14 @@ void UAbilityNode::EnterWithData_Inner_Implementation(UObject* Data)
 	}
 
 	this->Enter_Inner();
+}
+
+void UAbilityNode::Tick_Inner_Implementation(float DeltaTime)
+{
+	if (this->Selected)
+	{
+		this->Selected->Tick(DeltaTime);
+	}
 }
 
 void UAbilityNode::HandleFinish(UAbility* Abi)

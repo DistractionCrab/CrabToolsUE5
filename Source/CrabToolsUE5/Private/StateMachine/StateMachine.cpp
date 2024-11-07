@@ -142,6 +142,7 @@ void UStateMachine::UpdateState(FName Name)
 			if (CurrentState)
 			{
 				CurrentState->Node->PostTransition();
+				this->UpdateTickRequirements(CurrentState->Node->RequiresTick());
 			}
 
 			this->OnTransitionFinished.Broadcast(this);
@@ -198,6 +199,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data, bool UsePiped
 		if (CurrentState)
 		{
 			CurrentState->Node->PostTransition();
+			this->UpdateTickRequirements(CurrentState->Node->RequiresTick());
 		}
 
 		this->OnTransitionFinished.Broadcast(this);
@@ -205,11 +207,10 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data, bool UsePiped
 }
 
 void UStateMachine::Tick(float DeltaTime) {
-	if (this->CurrentStateName != NAME_None) {
-		auto State = this->GetCurrentState();
-		if (State && State->Node) {
-			State->Node->Tick(DeltaTime);
-		}		
+	auto State = this->GetCurrentState();
+
+	if (State && State->Node) {
+		State->Node->Tick(DeltaTime);
 	}
 }
 
@@ -267,6 +268,16 @@ void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 		}
 
 		if (CurrentState->Node) CurrentState->Node->EventWithData(EName, Data);
+	}
+}
+
+void UStateMachine::UpdateTickRequirements(bool NeedsTick)
+{
+	this->OnTickRequirementUpdated.Broadcast(NeedsTick);
+
+	if (this->ParentMachine)
+	{
+		this->ParentMachine->UpdateTickRequirements(NeedsTick);
 	}
 }
 

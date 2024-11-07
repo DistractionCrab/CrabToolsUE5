@@ -13,11 +13,12 @@ void UAbilityChain::Initialize_Inner_Implementation()
 void UAbilityChain::Start_Inner_Implementation()
 {
 	this->ActiveIndex = 0;
+
 	if (this->AbilityChain.Num() > 0)
 	{
 		auto& Abi = this->AbilityChain[0];
-		Abi->Start();
 		Abi->OnAbilityFinished.AddDynamic(this, &UAbilityChain::HandleFinish);
+		Abi->Start();
 	}
 	else
 	{
@@ -43,6 +44,19 @@ void UAbilityChain::Finish_Inner_Implementation()
 	}
 }
 
+bool UAbilityChain::RequiresTick_Implementation() const
+{
+	for (auto& Abi : this->AbilityChain)
+	{
+		if (Abi->RequiresTick())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void UAbilityChain::HandleFinish(UAbility* _Abi)
 {
 	auto& AbiOld = this->AbilityChain[this->ActiveIndex];
@@ -52,11 +66,9 @@ void UAbilityChain::HandleFinish(UAbility* _Abi)
 
 	if (this->ActiveIndex < this->AbilityChain.Num())
 	{
-		auto& AbiNew = this->AbilityChain[this->ActiveIndex];		
-
-		FScriptDelegate Script;
-		Script.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UAbilityChain, HandleFinish));
-		AbiNew->OnAbilityFinished.Add(Script);
+		auto& AbiNew = this->AbilityChain[this->ActiveIndex];
+		AbiNew->OnAbilityFinished.AddDynamic(this, &UAbilityChain::HandleFinish);
+		AbiNew->Start();
 	}
 	else
 	{

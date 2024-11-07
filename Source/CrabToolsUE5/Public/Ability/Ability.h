@@ -107,11 +107,6 @@ protected:
 	void Start_Inner();
 	virtual void Start_Inner_Implementation() {}
 
-	/* Start the ability; Used for initializing data. */
-	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
-	bool RequiresTick_Inner() const;
-	virtual bool RequiresTick_Inner_Implementation() const { return false; }
-
 	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
 	void Initialize_Inner();
 	virtual void Initialize_Inner_Implementation() {}

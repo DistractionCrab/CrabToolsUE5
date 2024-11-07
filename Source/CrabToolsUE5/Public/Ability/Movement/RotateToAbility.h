@@ -31,5 +31,5 @@ public:
 protected:
 
 	virtual void Tick_Inner_Implementation(float DeltaTime) override;
-	virtual bool RequiresTick_Inner_Implementation() const override { return true; }
+	virtual bool RequiresTick_Implementation() const override { return true; }
 };
