@@ -98,7 +98,7 @@ public:
 	const TArray<TObjectPtr<UStateNode>>& GetStateList() const { return this->Nodes; }
 	FStateArchetypeData CompileState(FNodeVerificationContext& Context, UObject* Outer);
 	void Delete();
-	void RenameNode(FName Name);
+	virtual void RenameNode(FName Name);
 	void UpdateStateArchetype(TSubclassOf<UState> StateClass);
 
 	virtual TSubclassOf<UStateNode> GetNodeClass() const;	

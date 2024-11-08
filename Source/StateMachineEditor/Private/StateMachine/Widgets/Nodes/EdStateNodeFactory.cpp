@@ -11,13 +11,13 @@
 
 TSharedPtr<class SGraphNode> FEdStateNodeFactory::CreateNode(UEdGraphNode* Node) const
 {
-	if (auto StateNode = Cast<UEdBaseStateNode>(Node))
-	{
-		return SNew(SEdStateNode, StateNode);
-	}
-	else if (auto StartNode = Cast<UEdStartStateNode>(Node)) 
+	if (auto StartNode = Cast<UEdStartStateNode>(Node)) 
 	{
 		return SNew(SEdStartStateNode, StartNode);
+	}
+	else if (auto StateNode = Cast<UEdBaseStateNode>(Node))
+	{
+		return SNew(SEdStateNode, StateNode);
 	}
 	else if (auto EventEdge = Cast<UEdTransition>(Node))
 	{

@@ -300,6 +300,7 @@ void UStateMachineSchema::GetGraphContextActions(FGraphContextMenuBuilder& Conte
 	}
 
 	this->AddExtensionAction(ContextMenuBuilder);
+	this->AddAliasAction(ContextMenuBuilder);
 }
 
 void UStateMachineSchema::AddExtensionAction(FGraphContextMenuBuilder& ContextMenuBuilder) const

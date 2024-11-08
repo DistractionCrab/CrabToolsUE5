@@ -1,6 +1,7 @@
 #include "StateMachine/EdGraph/EdTransition.h"
 #include "StateMachine/EdGraph/EdBaseNode.h"
 #include "StateMachine/EdGraph/EdStateNode.h"
+#include "StateMachine/EdGraph/EdAliasNode.h"
 #include "StateMachine/EdGraph/EdStateGraph.h"
 #include "StateMachine/EdGraph/EdEventObject.h"
 #include "StateMachine/StateMachineBlueprint.h"
@@ -106,28 +107,61 @@ TMap<FName, FTransitionData> UEdTransition::GetTransitionData(FNodeVerificationC
 
 	for (auto& Values : this->EventToConditionMap)
 	{
-		FTransitionData DataValue
+		auto Node = this->GetEndNode();
+
+		if (auto StateNode = Cast<UEdStateNode>(Node))
 		{
-			this->GetEndNode()->GetStateName(),
-			DuplicateObject(Values.Value.Condition, Context.GetOuter()),
-			DuplicateObject(Values.Value.DataCondition, Context.GetOuter()),
-		};
+			FTransitionData DataValue
+			{
+				StateNode->GetStateName(),
+				DuplicateObject(Values.Value.Condition, Context.GetOuter()),
+				DuplicateObject(Values.Value.DataCondition, Context.GetOuter()),
+			};
 
-		if (!this->GetStartNode()->HasEvent(Values.Key))
-		{
-			auto StartName = this->GetStartNode()->GetStateName();
-			auto EndName = this->GetEndNode()->GetStateName();
-			auto Msg = FString::Printf(TEXT("Transition from %s to %s uses unknown event: %s"),
-				*StartName.ToString(),
-				*EndName.ToString(),
-				*Values.Key.ToString());
+			if (!this->GetStartNode()->HasEvent(Values.Key))
+			{
+				auto StartName = this->GetStartNode()->GetStateName();
+				auto EndName = StateNode->GetStateName();
+				auto Msg = FString::Printf(TEXT("Transition from %s to %s uses unknown event: %s"),
+					*StartName.ToString(),
+					*EndName.ToString(),
+					*Values.Key.ToString());
 
-			Context.Error(Msg, this);
+				Context.Error(Msg, this);
 
-			continue;
+				continue;
+			}
+
+			Data.Add(Values.Key, DataValue);
 		}
+		else if (auto AliasNode = Cast<UEdAliasNode>(Node))
+		{
+			for (auto& SName : AliasNode->GetAliasedStates())
+			{
+				FTransitionData DataValue
+				{
+					SName,
+					DuplicateObject(Values.Value.Condition, Context.GetOuter()),
+					DuplicateObject(Values.Value.DataCondition, Context.GetOuter()),
+				};
 
-		Data.Add(Values.Key, DataValue);
+				if (!this->GetStartNode()->HasEvent(Values.Key))
+				{
+					auto StartName = this->GetStartNode()->GetStateName();
+					auto EndName = SName;
+					auto Msg = FString::Printf(TEXT("Transition from %s to %s uses unknown event: %s"),
+						*StartName.ToString(),
+						*EndName.ToString(),
+						*Values.Key.ToString());
+
+					Context.Error(Msg, this);
+
+					continue;
+				}
+
+				Data.Add(Values.Key, DataValue);
+			}
+		}
 	}
 
 	return Data;

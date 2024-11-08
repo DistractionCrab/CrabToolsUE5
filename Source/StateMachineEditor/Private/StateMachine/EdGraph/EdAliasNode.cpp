@@ -38,6 +38,35 @@ bool UEdAliasNode::Matches(UEdStateNode* Node) const
 	return this->AliasedStates.Contains(Node->GetStateName()) != this->bComplement;
 }
 
+TArray<FString> UEdAliasNode::GetAvailableStates() const
+{
+	TArray<FString> Names;
+
+	for (auto& State : this->GetStateGraph()->GetStates())
+	{
+		Names.Add(State->GetStateName().ToString());
+	}
+
+	Names.Sort([&](const FString& A, const FString& B) { return A < B; });
+
+	return Names;
+}
+
+TSet<FName> UEdAliasNode::GetAliasedStates() const
+{
+	TSet<FName> Names;
+
+	for (auto& State : this->GetStateGraph()->GetStates())
+	{
+		if (this->AliasedStates.Contains(State->GetStateName()) != this->bComplement)
+		{
+			Names.Add(State->GetStateName());
+		}
+	}
+
+	return Names;
+}
+
 void UEdAliasNode::Delete()
 {
 	this->Modify();

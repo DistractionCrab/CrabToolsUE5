@@ -14,10 +14,10 @@ class UEdAliasNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, Category="Alias")
 	FName AliasLabel;
 
-	UPROPERTY(EditDefaultsOnly, Category="Alias")
+	UPROPERTY(EditDefaultsOnly, Category="Alias", meta=(GetOptions="GetAvailableStates"))
 	TSet<FName> AliasedStates;
 
 	/* 
@@ -35,17 +35,25 @@ public:
 	
 	FName SetStateName(FName NewName) override;
 	void Delete();
-	void RenameNode(FName Name);
 	bool Matches(UEdStateNode* Node) const;
 
 	virtual FName GetStateName() const override;
 	/* Returns the name which should appear on graph nodes. */
-	virtual FName GetNodeName() const override { return this->AliasLabel; }
 	virtual bool HasEvent(FName EName) override;
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
+	virtual void RenameNode(FName Name) override;
+	virtual FName GetNodeName() const override { return this->AliasLabel; }
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	#endif
 
+	const TSet<FName>& GetAliases() const { return this->AliasedStates; }
+	bool IsComplement() const { return this->bComplement; }
+	TSet<FName> GetAliasedStates() const;
+
+private:
+
+	UFUNCTION()
+	TArray<FString> GetAvailableStates() const;
 };

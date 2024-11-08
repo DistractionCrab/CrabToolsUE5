@@ -6,6 +6,8 @@
 
 #define LOCTEXT_NAMESPACE "SEdStateNode"
 
+constexpr const char* INVALID_STATE_NAME = "?Unknown State Name?";
+
 void SEdStateNode::Construct(const FArguments& InArgs, UEdBaseStateNode* InNode) {
 	this->GraphNode = InNode;
 	this->UpdateGraphNode();
@@ -152,13 +154,19 @@ FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 		{
 			return StateMachineColors::NodeBorder::ExtensionOverride;
 		}
+		else
+		{
+			return StateMachineColors::NodeBorder::Root;
+		}
 	}
-	else if (auto AliasNode = Cast<UEdStateNode>(this->GetStateNode()))
+	else if (auto AliasNode = Cast<UEdAliasNode>(this->GetStateNode()))
 	{
 		return StateMachineColors::NodeBorder::Alias;
 	}
-
-	return StateMachineColors::NodeBorder::Root;
+	else
+	{
+		return StateMachineColors::NodeBorder::Root;
+	}	
 }
 
 const FSlateBrush* SEdStateNode::GetNameIcon() const
@@ -194,7 +202,7 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 				"StateMachineGraphEditorRenameNode", 
 				"State Machine Graph Editor: Rename Node"));
 		
-		if (UEdStateNode* CastNode = Cast<UEdStateNode>(this->GraphNode))
+		if (UEdBaseStateNode* CastNode = Cast<UEdBaseStateNode>(this->GraphNode))
 		{
 			CastNode->Modify();
 			CastNode->RenameNode(FName(InText.ToString()));
@@ -204,12 +212,12 @@ void SEdStateNode::OnNameTextCommited(const FText& InText, ETextCommit::Type Com
 
 FName SEdStateNode::GetStateName() const
 {
-	if (UEdStateNode* Node = Cast<UEdStateNode>(this->GraphNode))
+	if (UEdBaseStateNode* Node = Cast<UEdBaseStateNode>(this->GraphNode))
 	{
 		return Node->GetNodeName();
 	}
 
-	return NAME_None;
+	return INVALID_STATE_NAME;
 }
 
 void SEdStateNode::OnNodeNameChanged(FName OldName, FName Name)
