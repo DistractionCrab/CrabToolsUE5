@@ -1,5 +1,7 @@
 #include "Ability/Ability.h"
 
+DEFINE_LOG_CATEGORY(LogAbility);
+
 void UAbility::Initialize(AActor* POwner)
 {
 	if (!this->Owner)

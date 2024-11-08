@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "Delegates/DelegateSignatureImpl.inl"
 #include "Actors/Targeting/BaseTargetingActor.h"
+#include "Logging/LogMacros.h"
 #include "Ability.generated.h"
+
+CRABTOOLSUE5_API DECLARE_LOG_CATEGORY_EXTERN(LogAbility, Log, All);
 
 /* This interface is used for containers of abilitys, e.g. Targeting Controllers. */
 UINTERFACE(MinimalAPI, Blueprintable, BlueprintType)
