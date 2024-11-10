@@ -23,6 +23,11 @@ public:
 	void InteractWithData(AActor* User, UObject* Data);
 	virtual void InteractWithData_Implementation(AActor* User, UObject* Data) {  }
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	void EndInteract(AActor* User);
+	virtual void EndInteract_Implementation(AActor* User) {}
+
+	/* Returns the points where this interactable can be interacted with. Useful for AI pathing. */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction",
 		meta=(ForceAsFunction))
 	void GetLocations(UPARAM(ref) TArray<FVector>& Locations);
