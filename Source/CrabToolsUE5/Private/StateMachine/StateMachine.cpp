@@ -1038,6 +1038,27 @@ bool UStateNode::Verify(FNodeVerificationContext& Context) const
 	return bErrorFree && this->Verify_Inner(Context);
 }
 
+UWorld* UStateNode::GetWorld() const
+{
+	//Return null if the called from the CDO, or if the outer is being destroyed
+	if (!HasAnyFlags(RF_ClassDefaultObject) && !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable())
+	{
+		//Try to get the world from the owning actor if we have one
+		if (this->Owner)
+		{
+			return this->Owner->GetOwner()->GetWorld();
+		}
+	}
+
+	//Else return null - the latent action will fail to initialize
+	return nullptr;
+}
+
+bool UStateNode::RequiresTick_Implementation() const
+{
+	return false;
+}
+
 void UStateNode::EmitEvent(FName EName)
 {
 	if (this->Active())

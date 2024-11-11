@@ -20,8 +20,18 @@ class CRABTOOLSUE5_API UInputNode : public UStateNode
 
 	// Saved reference to the owner if it is a Pawn.
 	TWeakObjectPtr<APawn> PawnOwner;
+	TWeakObjectPtr<UEnhancedInputComponent> Component;
+
+	int Trigger;
+	int Start;
+	int Ongoing;
+	int Canceled;
+	int Completed;
 
 protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	bool bAlwaysBound = true;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* Action;
@@ -50,6 +60,8 @@ protected:
 public:
 
 	virtual void Initialize_Inner_Implementation() override;
+	virtual void Enter_Inner_Implementation() override;
+	virtual void Exit_Inner_Implementation() override;
 	
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "StateMachine|Input")
@@ -85,4 +97,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine|Input")
 	APawn* GetPawn() { return this->PawnOwner.Get();  }
+
+private:
+	
+	void BindCallbacks();
+	void UnbindCallbacks();
 };

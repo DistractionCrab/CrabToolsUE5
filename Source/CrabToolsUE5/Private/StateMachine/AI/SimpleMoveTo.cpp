@@ -59,7 +59,7 @@ void UAISimpleMoveToNode::MoveTo(UObject* Data)
 			Ctrl->StopMovement();
 		}
 
-		Ctrl->MoveToActor(Actor);
+		Ctrl->MoveToActor(Actor, 0.0f);
 	}
 	else
 	{
@@ -84,11 +84,11 @@ void UAISimpleMoveToNode::Enter_Inner_Implementation()
 		{
 			if (Value->DestinationActor)
 			{
-				Ctrl->MoveToActor(Value->DestinationActor);
+				Ctrl->MoveToActor(Value->DestinationActor, 0.0f);
 			}
 			else
 			{
-				Ctrl->MoveToLocation(Value->DestinationLocation);
+				Ctrl->MoveToLocation(Value->DestinationLocation, 0.0f);
 			}
 		}
 	}

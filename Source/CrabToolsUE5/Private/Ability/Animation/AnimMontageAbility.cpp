@@ -7,6 +7,8 @@ UAnimMontageAbility::UAnimMontageAbility()
 	#if WITH_EDITORONLY_DATA
 		this->ActorClass = ACharacter::StaticClass();
 	#endif
+
+		this->ComponentName = "CharacterMesh0"; // Default character mesh name.
 }
 
 void UAnimMontageAbility::Initialize_Inner_Implementation()
@@ -48,10 +50,12 @@ void UAnimMontageAbility::Start_Inner_Implementation()
 			if (this->Montage)
 			{
 				AnimInst->Montage_Play(Montage);
+				AnimInst->OnAllMontageInstancesEnded.AddDynamic(this, &UAnimMontageAbility::MontageEnded);
 			}
 			else
 			{
 				UE_LOG(LogAbility, Error, TEXT("No animation selected for AnimMontageAbility"));
+				this->Finish();
 			}
 		}
 	}

@@ -101,8 +101,7 @@ FName FHierarchyEventValue::GetEvent() const
 
 void UHierarchyNode::StateChangedCallback(UStateMachine* Data)
 {
-	FName StateName = Data->GetCurrentStateName();
-	auto State = Data->GetCurrentState();
+	FName StateName = Data->GetCurrentStateName();	
 
 	if (this->ExitStates.Contains(StateName))
 	{
@@ -112,6 +111,24 @@ void UHierarchyNode::StateChangedCallback(UStateMachine* Data)
 	//this->GetMachine()->UpdateTickRequirements(State->GetNode()->RequiresTick());
 }
 
+bool UHierarchyNode::RequiresTick_Implementation() const
+{
+	if (this->SubMachine)
+	{
+		if (auto Node = this->SubMachine->GetCurrentState()->GetNode())
+		{
+			return Node->RequiresTick();
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
 
 // Editor helper functions.
 #if WITH_EDITOR

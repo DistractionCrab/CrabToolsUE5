@@ -215,6 +215,7 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 
 	UPROPERTY(Transient, DuplicateTransient)
 	TObjectPtr<UStateMachine> Owner;
+
 	bool bActive = false;
 
 	#if WITH_EDITORONLY_DATA
@@ -223,14 +224,6 @@ class CRABTOOLSUE5_API UStateNode : public UObject
 		TSet<FName> EmittedEvents;
 		TSet<FName> PreEditEmittedEvents;
 	#endif
-
-protected:
-
-	/*
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StateMachine",
-		meta = (AllowPrivateAccess = true))
-	bool bRequiresTick = false;
-	*/
 
 public:
 
@@ -246,6 +239,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	virtual void SetOwner(UStateMachine* Parent);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="StateMachine")
 	FORCEINLINE bool Active() const { return this->bActive; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
@@ -276,7 +270,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	bool RequiresTick() const;
-	virtual bool RequiresTick_Implementation() const { return false; }
+	virtual bool RequiresTick_Implementation() const;
 
 	#if WITH_EDITOR
 		virtual void GetEmittedEvents(TSet<FName>& Events) const;
@@ -304,6 +298,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	UObject* GetPipedData();
 	virtual UObject* GetPipedData_Implementation() { return nullptr; }
+
+	virtual UWorld* GetWorld() const override;
 
 protected:
 

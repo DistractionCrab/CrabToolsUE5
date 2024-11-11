@@ -21,13 +21,9 @@ void UStateMachineComponent::BeginPlay()
 
 	if (this->Machine)
 	{
-		FScriptDelegate Callback;
-		Callback.BindUFunction(this, "StateChanged");
-
-		this->Machine->OnStateChanged.Add(Callback);
-		this->Machine->Initialize(this->GetOwner());
-
+		//this->Machine->OnStateChanged.AddDynamic(this, &UStateMachineComponent::Statechanged);
 		this->Machine->OnTickRequirementUpdated.AddDynamic(this, &UStateMachineComponent::TickUpdated);
+		this->Machine->Initialize(this->GetOwner());		
 	}
 }
 

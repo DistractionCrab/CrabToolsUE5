@@ -94,6 +94,7 @@ public:
 	virtual void Tick_Inner_Implementation(float DeltaTime) override;
 	virtual void Exit_Inner_Implementation() override;
 	virtual void PostTransition_Inner_Implementation() override;
+	virtual bool RequiresTick_Implementation() const override;
 
 	#if WITH_EDITOR
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

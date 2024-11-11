@@ -38,6 +38,7 @@ protected:
 	virtual void Finish_Inner_Implementation() override;
 	
 private:
+
 	#if WITH_EDITOR
 		UFUNCTION()
 		TArray<FString> GetComponentOptions() const;
@@ -45,4 +46,7 @@ private:
 
 	UFUNCTION()
 	void AnimNotify_AbilityPerform();
+
+	UFUNCTION()
+	void MontageEnded() { this->Finish(); }
 };

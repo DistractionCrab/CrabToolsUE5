@@ -9,67 +9,122 @@ void UInputNode::Initialize_Inner_Implementation() {
 	if (!this->Action) { return; }
 
 	if (this->PawnOwner.IsValid()) {
-		UEnhancedInputComponent* Eic = CastChecked<UEnhancedInputComponent>(this->PawnOwner->InputComponent);
-		
-		if (Eic) {
-			if (this->bTrigger){
-				Eic->BindAction(
-					this->Action, 
-					ETriggerEvent::Triggered, 
-					this, 
-					&UInputNode::TriggerCallback_Internal);
-			}
+		this->Component = CastChecked<UEnhancedInputComponent>(this->PawnOwner->InputComponent);		
 
-			if (this->bStart){
-				Eic->BindAction(
-					this->Action, 
-					ETriggerEvent::Started, 
-					this, 
-					&UInputNode::StartCallback_Internal);	
-			}
-
-			if (this->bOngoing){
-				Eic->BindAction(
-					this->Action, 
-					ETriggerEvent::Ongoing, 
-					this, 
-					&UInputNode::TriggerCallback_Internal);	
-			}
-
-			if (this->bCanceled){
-				Eic->BindAction(
-					this->Action, 
-					ETriggerEvent::Canceled, 
-					this, 
-					&UInputNode::CanceledCallback_Internal);	
-			}
-			else {
-				Eic->BindAction(
-					this->Action,
-					ETriggerEvent::Canceled,
-					this,
-					&UInputNode::FinishedCallback);
-			}
-
-			if (this->bCompleted){
-				Eic->BindAction(
-					this->Action, 
-					ETriggerEvent::Completed, 
-					this, 
-					&UInputNode::CompletedCallback_Internal);	
-			}
-			else {
-				Eic->BindAction(
-					this->Action,
-					ETriggerEvent::Completed,
-					this,
-					&UInputNode::FinishedCallback);
-			}
-
+		if (this->bAlwaysBound)
+		{
+			this->BindCallbacks();
 		}
 	}
 }
 
+void UInputNode::Enter_Inner_Implementation()
+{
+	if (!this->bAlwaysBound)
+	{
+		this->BindCallbacks();
+	}
+}
+
+void UInputNode::Exit_Inner_Implementation()
+{
+	if (!this->bAlwaysBound)
+	{
+		this->UnbindCallbacks();
+	}
+}
+
+void UInputNode::BindCallbacks()
+{
+	if (this->Component.IsValid())
+	{
+		if (this->bTrigger)
+		{
+			this->Trigger = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Triggered,
+				this,
+				&UInputNode::TriggerCallback_Internal).GetHandle();
+		}
+
+		if (this->bStart)
+		{
+			this->Start = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Started,
+				this,
+				&UInputNode::StartCallback_Internal).GetHandle();
+		}
+
+		if (this->bOngoing)
+		{
+			this->Ongoing = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Ongoing,
+				this,
+				&UInputNode::TriggerCallback_Internal).GetHandle();
+		}
+
+		if (this->bCanceled)
+		{
+			this->Canceled = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Canceled,
+				this,
+				&UInputNode::CanceledCallback_Internal).GetHandle();
+		}
+		else
+		{
+			this->Canceled = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Canceled,
+				this,
+				&UInputNode::FinishedCallback).GetHandle();
+		}
+
+		if (this->bCompleted)
+		{
+			this->Completed = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Completed,
+				this,
+				&UInputNode::CompletedCallback_Internal).GetHandle();
+		}
+		else
+		{
+			this->Completed = this->Component->BindAction(
+				this->Action,
+				ETriggerEvent::Completed,
+				this,
+				&UInputNode::FinishedCallback).GetHandle();
+		}
+	}
+}
+
+void UInputNode::UnbindCallbacks()
+{
+	if (this->Component.IsValid())
+	{
+		if (this->bTrigger)
+		{
+			this->Component->RemoveActionBindingForHandle(this->Trigger);
+		}
+
+		if (this->bStart)
+		{
+			this->Component->RemoveActionBindingForHandle(this->Start);
+		}
+
+		if (this->bOngoing)
+		{
+			this->Component->RemoveActionBindingForHandle(this->Ongoing);
+		}
+
+		this->Component->RemoveActionBindingForHandle(this->Canceled);
+
+		this->Component->RemoveActionBindingForHandle(this->Completed);
+	}
+}
 
 void UInputNode::TriggerCallback_Implementation(const FInputActionValue& Value) {}
 

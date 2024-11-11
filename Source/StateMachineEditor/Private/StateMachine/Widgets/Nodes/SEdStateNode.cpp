@@ -15,6 +15,7 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdBaseStateNode* InNode)
 	InNode->Events.OnNameChanged.AddRaw(this, &SEdStateNode::OnNodeNameChanged);
 }
 
+BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SEdStateNode::UpdateGraphNode()
 {
 	const FMargin NodePadding = FMargin(5);
@@ -138,6 +139,60 @@ void SEdStateNode::UpdateGraphNode()
 	this->CreatePinWidgets();
 }
 
+void SEdStateNode::CreatePinWidgets()
+{
+	UEdBaseStateNode* StateNode = CastChecked<UEdBaseStateNode>(GraphNode);
+
+	for (int32 PinIdx = 0; PinIdx < StateNode->Pins.Num(); PinIdx++)
+	{
+		UEdGraphPin* MyPin = StateNode->Pins[PinIdx];
+		if (!MyPin->bHidden)
+		{
+			TSharedPtr<SGraphPin> NewPin = SNew(SEdEventGraphPin, MyPin);
+
+			AddPin(NewPin.ToSharedRef());
+		}
+	}
+}
+
+void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
+{
+	PinToAdd->SetOwner(SharedThis(this));
+
+	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
+	const bool bAdvancedParameter = PinObj && PinObj->bAdvancedView;
+	if (bAdvancedParameter)
+	{
+		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
+	}
+
+	TSharedPtr<SVerticalBox> PinBox;
+	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
+	{
+		PinBox = LeftNodeBox;
+		InputPins.Add(PinToAdd);
+	}
+	else // Direction == EEdGraphPinDirection::EGPD_Output
+	{
+		PinBox = RightNodeBox;
+		OutputPins.Add(PinToAdd);
+	}
+
+	if (PinBox)
+	{
+		PinBox->AddSlot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.FillHeight(1.0f)
+			//.Padding(6.0f, 0.0f)
+			[
+				PinToAdd
+			];
+	}
+}
+
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 {
 	if (auto Node = Cast<UEdStateNode>(this->GetStateNode()))
@@ -222,10 +277,7 @@ FName SEdStateNode::GetStateName() const
 
 void SEdStateNode::OnNodeNameChanged(FName OldName, FName Name)
 {
-	if (this->InlineEditableText.IsValid())
-	{
-		this->InlineEditableText->SetText(FText::FromName(Name));
-	}
+	this->UpdateGraphNode();
 }
 
 EVisibility SEdStateNode::GetDragOverMarkerVisibility() const
@@ -239,57 +291,6 @@ FSlateColor SEdStateNode::GetBackgroundColor() const
 	
 }
 
-void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
-{
-	PinToAdd->SetOwner(SharedThis(this));
-
-	const UEdGraphPin* PinObj = PinToAdd->GetPinObj();
-	const bool bAdvancedParameter = PinObj && PinObj->bAdvancedView;
-	if (bAdvancedParameter)
-	{
-		PinToAdd->SetVisibility(TAttribute<EVisibility>(PinToAdd, &SGraphPin::IsPinVisibleAsAdvanced));
-	}
-
-	TSharedPtr<SVerticalBox> PinBox;
-	if (PinToAdd->GetDirection() == EEdGraphPinDirection::EGPD_Input)
-	{
-		PinBox = LeftNodeBox;
-		InputPins.Add(PinToAdd);
-	}
-	else // Direction == EEdGraphPinDirection::EGPD_Output
-	{
-		PinBox = RightNodeBox;
-		OutputPins.Add(PinToAdd);
-	}
-
-	if (PinBox)
-	{
-		PinBox->AddSlot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			.FillHeight(1.0f)
-			//.Padding(6.0f, 0.0f)
-			[
-				PinToAdd
-			];
-	}
-}
-
-void SEdStateNode::CreatePinWidgets()
-{
-	UEdBaseStateNode* StateNode = CastChecked<UEdBaseStateNode>(GraphNode);
-
-	for (int32 PinIdx = 0; PinIdx < StateNode->Pins.Num(); PinIdx++)
-	{
-		UEdGraphPin* MyPin = StateNode->Pins[PinIdx];
-		if (!MyPin->bHidden)
-		{
-			TSharedPtr<SGraphPin> NewPin = SNew(SEdEventGraphPin, MyPin);
-
-			AddPin(NewPin.ToSharedRef());
-		}
-	}
-}
 
 
 #undef LOCTEXT_NAMESPACE
