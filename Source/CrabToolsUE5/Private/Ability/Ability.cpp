@@ -21,6 +21,11 @@ void UAbility::Start()
 	}
 }
 
+UAbility* UAbility::GetParent() const
+{
+	return Cast<UAbility>(this->GetOuter());
+}
+
 void UAbility::Perform()
 {
 	if (this->bActive)

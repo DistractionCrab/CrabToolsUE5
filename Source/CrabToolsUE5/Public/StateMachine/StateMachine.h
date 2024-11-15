@@ -428,7 +428,7 @@ private:
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	TMap<FName, TObjectPtr<UStateNode>> SharedMachines;
 
-	UPROPERTY(Transient, BlueprintReadOnly, Category = "StateMachine",
+	UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess, IgnorePropertySearch))
 	FName CurrentStateName;
 

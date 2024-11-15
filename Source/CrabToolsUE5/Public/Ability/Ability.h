@@ -99,6 +99,10 @@ public:
 
 	virtual UWorld* GetWorld() const override;
 
+	/* Returns the outer of this ability as an ability. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Ability", meta=(HideSelfPin=true))
+	UAbility* GetParent() const;
+
 protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
