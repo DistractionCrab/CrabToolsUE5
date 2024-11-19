@@ -135,6 +135,7 @@ void UStateMachine::UpdateState(FName Name)
 				CurrentState->Enter();
 			}
 
+			this->StateChanged(StateChangedData);
 			this->OnStateChanged.Broadcast(StateChangedData);
 
 			this->bIsTransitioning = false;
@@ -145,6 +146,7 @@ void UStateMachine::UpdateState(FName Name)
 				this->UpdateTickRequirements(CurrentState->Node->RequiresTick());
 			}
 
+			this->PostTransition();
 			this->OnTransitionFinished.Broadcast(this);
 		}
 	}
@@ -193,6 +195,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data, bool UsePiped
 			CurrentState->EnterWithData(Data);
 		}
 
+		this->StateChanged(StateChangedData);
 		this->OnStateChanged.Broadcast(StateChangedData);
 		this->bIsTransitioning = false;
 
@@ -202,6 +205,7 @@ void UStateMachine::UpdateStateWithData(FName Name, UObject* Data, bool UsePiped
 			this->UpdateTickRequirements(CurrentState->Node->RequiresTick());
 		}
 
+		this->PostTransition();
 		this->OnTransitionFinished.Broadcast(this);
 	}
 }
@@ -217,6 +221,18 @@ void UStateMachine::Tick(float DeltaTime) {
 
 void UStateMachine::Reset() {
 	this->UpdateState(this->StartState);
+}
+
+UStateMachine* UStateMachine::GetRootMachine()
+{
+	if (this->ParentMachine)
+	{
+		return this->ParentMachine->GetRootMachine();
+	}
+	else
+	{
+		return this;
+	}
 }
 
 void UStateMachine::SendEvent(FName EName)

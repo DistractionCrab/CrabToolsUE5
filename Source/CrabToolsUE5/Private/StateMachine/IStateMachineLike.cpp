@@ -27,6 +27,10 @@ bool FSMPropertySearch::Matches(FProperty* F) const
 				return true;
 			}
 		}
+		else if (auto DProp = CastField<FMulticastInlineDelegateProperty>(F))
+		{
+			return DProp->SignatureFunction->IsSignatureCompatibleWith(this->FunctionSignature);
+		}
 		else
 		{
 			return true;
@@ -67,6 +71,18 @@ FSMPropertySearch FSMPropertySearch::Property(FFieldClass* FieldClass)
 	FSMPropertySearch Params;
 
 	Params.FClass = FieldClass;
+
+	return Params;
+}
+
+FSMPropertySearch FSMPropertySearch::InlineDelegate(UFunction* Signature)
+{
+	check(Signature);
+
+	FSMPropertySearch Params;
+
+	Params.FClass = FMulticastInlineDelegateProperty::StaticClass();
+	Params.FunctionSignature = Signature;
 
 	return Params;
 }

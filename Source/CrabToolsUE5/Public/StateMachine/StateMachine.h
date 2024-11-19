@@ -249,6 +249,10 @@ public:
 		meta=(HideSelfPin))
 	UStateMachine* GetMachine() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
+		meta = (HideSelfPin))
+	UStateMachine* GetRootMachine() const { return this->Owner->GetRootMachine(); }
+
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
 	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) const;
 
@@ -504,9 +508,6 @@ public:
 		meta = (ExpandEnumAsExecs = "Branches"))
 	UStateNode* GetCurrentStateAs(TSubclassOf<UStateNode> Class, ESearchResult& Branches);
 
-	/*
-	* Tick function to be called regularly. This is managed by the owner object.
-	*/
 	void Tick(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
@@ -520,6 +521,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	TArray<FString> StateOptions();
+
+	UFUNCTION(BlueprintNativeEvent, Category="StateMachine")
+	void StateChanged(const FStateChangedEventData& Data);
+	void StateChanged_Implementation(const FStateChangedEventData& Data) {}
+
+	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
+	void PostTransition();
+	void PostTransition_Implementation() {}
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="StateMachine")
+	UStateMachine* GetRootMachine();
 
 	UFUNCTION()
 	TArray<FString> ConditionOptions() const;

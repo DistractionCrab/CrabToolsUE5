@@ -15,17 +15,37 @@ struct FSMPropertyReference
     {
         if (this->PropertyRef && this->StateMachine)
         {
+            if (this->PropertyRef->GetClass() == FObjectProperty::StaticClass())
+            {
+                return *this->PropertyRef->ContainerPtrToValuePtr<T*>(this->StateMachine);
+            }
             if (this->PropertyRef->GetClass() == FStructProperty::StaticClass())
+            {
+                return this->PropertyRef->ContainerPtrToValuePtr<T>(this->StateMachine);
+            }
+            else if (this->PropertyRef->GetClass() == FBoolProperty::StaticClass())
             {
                 return this->PropertyRef->ContainerPtrToValuePtr<T>(this->StateMachine);
             }
             else
             {
-                return *this->PropertyRef->ContainerPtrToValuePtr<T*>(this->StateMachine);
+                return this->PropertyRef->ContainerPtrToValuePtr<T>(this->StateMachine);
             }
         }
 
         return nullptr;
+    }
+
+    template <class T> void SetValue(T Value)
+    {
+        if (auto BField = CastField<FBoolProperty>(this->PropertyRef))
+        {
+            BField->SetPropertyValue_InContainer(this->StateMachine, Value);
+        }
+        else
+        {
+            this->PropertyRef->SetValue_InContainer(this->StateMachine, &Value);
+        }
     }
 
     operator bool() { return this->PropertyRef != nullptr; }
@@ -95,11 +115,13 @@ private:
     FFieldClass* FClass = nullptr;
     UScriptStruct* Struct = nullptr;
     UClass* Class = nullptr;
+    UFunction* FunctionSignature = nullptr;
 
 public:
     static FSMPropertySearch ObjectProperty(UClass* Class);
     static FSMPropertySearch StructProperty(UScriptStruct* Struct);
     static FSMPropertySearch Property(FFieldClass* FieldClass);
+    static FSMPropertySearch InlineDelegate(UFunction* Signature);
 
     bool Matches(FProperty* F) const;
 

@@ -124,10 +124,8 @@ void UAISimpleMoveToNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 
 void UAISimpleMoveToNode::BindCallback()
 {
-	auto CtrlQ = this->GetAIController();
-	
+	auto CtrlQ = this->GetAIController();	
 	CtrlQ->ReceiveMoveCompleted.AddDynamic(this, &UAISimpleMoveToNode::OnMoveCompleted);
-
 }
 
 void UAISimpleMoveToNode::UnbindCallback()
