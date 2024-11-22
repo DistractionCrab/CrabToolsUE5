@@ -23,7 +23,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Ability")
 	UAbility* GetAbility();
-	UAbility* GetAbility_Implementation() { return nullptr; }
+	virtual UAbility* GetAbility_Implementation() { return nullptr; }
 };
 
 /**
@@ -31,7 +31,7 @@ public:
  * a discrete action that happens on request, and an finish.
  */
 UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
-class CRABTOOLSUE5_API UAbility : public UObject
+class CRABTOOLSUE5_API UAbility : public UObject, public IHasAbilityInterface
 {
 	GENERATED_BODY()
 	
@@ -102,6 +102,8 @@ public:
 	/* Returns the outer of this ability as an ability. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Ability", meta=(HideSelfPin=true))
 	UAbility* GetParent() const;
+
+	virtual UAbility* GetAbility_Implementation() override { return this; }
 
 protected:
 

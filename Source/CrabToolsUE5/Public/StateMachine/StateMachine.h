@@ -251,7 +251,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
 		meta = (HideSelfPin))
-	UStateMachine* GetRootMachine() const { return this->Owner->GetRootMachine(); }
+	UStateMachine* GetRootMachine() const;
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
 	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) const;

@@ -892,6 +892,11 @@ void UStateNode::Event(FName EName) {
 	}
 }
 
+UStateMachine* UStateNode::GetRootMachine() const
+{
+	return this->Owner->GetRootMachine();
+}
+
 void UStateNode::Event_Inner_Implementation(FName EName) {
 	// Does Nothing by default.
 }
