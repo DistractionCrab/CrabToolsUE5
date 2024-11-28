@@ -13,16 +13,11 @@ class CRABTOOLSUE5_API UAIMoveToInteractNode : public UAISimpleMoveToNode
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Transient)
-	TObjectPtr<UObject> Target;
-
 public:
 
 	UAIMoveToInteractNode();
 
 	virtual void Initialize_Inner_Implementation() override;
-	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
-	virtual void Enter_Inner_Implementation() override;
 	virtual void Exit_Inner_Implementation() override;
 	virtual void PostTransition_Inner_Implementation() override;
 
@@ -33,7 +28,7 @@ private:
 	UFUNCTION()
 	void OnInteractableAdded(TScriptInterface<IInteractableInterface> Interactable);
 
-	void SetTarget(UObject* Data);
+	void ComputeTarget();
 
 	class UInteractionSystem* GetInteractionComponent() const;
 

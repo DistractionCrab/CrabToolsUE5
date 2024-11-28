@@ -20,33 +20,6 @@ void UAIMoveToInteractNode::Initialize_Inner_Implementation()
 	check(IsValid(this->GetInteractionComponent()));
 }
 
-void UAIMoveToInteractNode::EnterWithData_Inner_Implementation(UObject* Data)
-{
-	if (IsValid(Data))
-	{
-		this->SetTarget(Data);
-		this->BindEvents();
-
-		Super::EnterWithData_Inner_Implementation(Data);
-	}
-	else
-	{
-		this->Enter();
-	}
-}
-
-void UAIMoveToInteractNode::Enter_Inner_Implementation()
-{
-	if (auto Data = this->GetMovementData())
-	{
-		this->SetTarget(Data->DestinationActor);
-	}
-
-	this->BindEvents();
-
-	Super::Enter_Inner_Implementation();
-}
-
 void UAIMoveToInteractNode::Exit_Inner_Implementation()
 {
 	Super::Exit_Inner_Implementation();
@@ -69,9 +42,9 @@ bool UAIMoveToInteractNode::HandleInteraction()
 
 	auto InteractComp = this->GetInteractionComponent();
 
-	if (InteractComp->HasObject(this->Target))
+	if (InteractComp->HasObject(this->GoalActor))
 	{
-		InteractComp->Select(this->Target);
+		InteractComp->Select(this->GoalActor);
 		InteractComp->Interact();
 
 		bDidInteract = true;
@@ -82,19 +55,17 @@ bool UAIMoveToInteractNode::HandleInteraction()
 
 bool UAIMoveToInteractNode::HasInteractable() const
 {
-	return this->GetInteractionComponent()->HasObject(this->Target);
+	return this->GetInteractionComponent()->HasObject(this->GoalActor);
 }
 
-void UAIMoveToInteractNode::SetTarget(UObject* Data)
+void UAIMoveToInteractNode::ComputeTarget()
 {
-	if (IsValid(Data))
+	if (IsValid(this->GoalActor))
 	{
-		if (Data->Implements<UInteractableInterface>())
+		if (this->GoalActor->Implements<UInteractableInterface>())
 		{
-			this->Target = Data;
-
 			TArray<FVector> Locations;
-			IInteractableInterface::Execute_GetLocations(Data, Locations);
+			IInteractableInterface::Execute_GetLocations(this->GoalActor, Locations);
 
 			if (Locations.Num() > 0)
 			{
@@ -105,30 +76,29 @@ void UAIMoveToInteractNode::SetTarget(UObject* Data)
 		}
 		else
 		{
-			this->Target = nullptr;
+			this->GoalActor = nullptr;
 		}
 	}
 }
 
 void UAIMoveToInteractNode::PostTransition_Inner_Implementation()
 {
-	if (!IsValid(this->Target))
+	if (!IsValid(this->GoalActor))
 	{
 		this->EmitEvent(Events::AI::CANNOT_INTERACT);
 	}
+	else if (!this->GoalActor->Implements<UInteractableInterface>())
+	{
+		this->EmitEvent(Events::AI::CANNOT_INTERACT);
+	} 
+	else if (this->HasInteractable())
+	{
+		this->EmitEvent(Events::AI::ARRIVE);
+	}
 	else
 	{
-		if (!this->Target->Implements<UInteractableInterface>())
-		{
-			this->EmitEvent(Events::AI::CANNOT_INTERACT);
-		}
-		else
-		{
-			if (this->HasInteractable())
-			{
-				this->EmitEvent(Events::AI::ARRIVE);
-			}
-		}
+		this->ComputeTarget();
+		Super::PostTransition_Inner_Implementation();
 	}
 }
 
@@ -146,7 +116,7 @@ void UAIMoveToInteractNode::BindEvents()
 
 void UAIMoveToInteractNode::OnInteractableAdded(TScriptInterface<IInteractableInterface> Interactable)
 {
-	if (Interactable.GetObject() == this->Target)
+	if (Interactable.GetObject() == this->GoalActor)
 	{
 		this->EmitEvent(Events::AI::ARRIVE);
 	}

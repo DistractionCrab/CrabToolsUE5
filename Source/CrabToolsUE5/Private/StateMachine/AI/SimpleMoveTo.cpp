@@ -34,23 +34,56 @@ void UAISimpleMoveToNode::Exit_Inner_Implementation()
 	this->bUseOverrideLocation = false;
 }
 
-void UAISimpleMoveToNode::EnterWithData_Inner_Implementation(UObject* Data)
+void UAISimpleMoveToNode::PostTransition_Inner_Implementation()
 {
 	this->BindCallback();
 
-	if (this->bUseOverrideLocation)
+	if (this->GoalActor)
 	{
-		this->GetAIController()->MoveToLocation(this->OverrideLocation);
+		if (this->bUseOverrideLocation)
+		{
+			this->GetAIController()->MoveToLocation(this->OverrideLocation);
+		}
+		else
+		{
+			this->MoveTo();
+		}
 	}
 	else
 	{
-		this->MoveTo(Data);
+		this->BindCallback();
+
+		if (auto Value = this->GetMovementData())
+		{
+			auto Ctrl = this->GetAIController();
+
+			if (this->bUseOverrideLocation)
+			{
+				Ctrl->MoveToLocation(this->OverrideLocation);
+			}
+			else
+			{
+				if (Value->DestinationActor)
+				{
+					Ctrl->MoveToActor(Value->DestinationActor, 0.0f);
+				}
+				else
+				{
+					Ctrl->MoveToLocation(Value->DestinationLocation, 0.0f);
+				}
+			}
+		}
 	}
 }
 
-void UAISimpleMoveToNode::MoveTo(UObject* Data)
+void UAISimpleMoveToNode::EnterWithData_Inner_Implementation(UObject* Data)
 {
-	if (auto Actor = Cast<AActor>(Data))
+	this->GoalActor = Cast<AActor>(Data);	
+}
+
+void UAISimpleMoveToNode::MoveTo()
+{
+	if (this->GoalActor)
 	{
 		auto Ctrl = this->GetAIController();
 
@@ -59,7 +92,7 @@ void UAISimpleMoveToNode::MoveTo(UObject* Data)
 			Ctrl->StopMovement();
 		}
 
-		Ctrl->MoveToActor(Actor, 0.0f);
+		Ctrl->MoveToActor(this->GoalActor, 0.0f);
 	}
 	else
 	{
@@ -67,32 +100,6 @@ void UAISimpleMoveToNode::MoveTo(UObject* Data)
 	}
 }
 
-
-void UAISimpleMoveToNode::Enter_Inner_Implementation()
-{
-	this->BindCallback();
-
-	if (auto Value = this->GetMovementData())
-	{	
-		auto Ctrl = this->GetAIController();
-
-		if (this->bUseOverrideLocation)
-		{ 
-			Ctrl->MoveToLocation(this->OverrideLocation);
-		}
-		else
-		{
-			if (Value->DestinationActor)
-			{
-				Ctrl->MoveToActor(Value->DestinationActor, 0.0f);
-			}
-			else
-			{
-				Ctrl->MoveToLocation(Value->DestinationLocation, 0.0f);
-			}
-		}
-	}
-}
 
 void UAISimpleMoveToNode::SetOverrideLocation(FVector Location)
 {

@@ -115,7 +115,7 @@ public:
 	/* Only use to build states. Do not use for currently in use States/State Machines */
 	void AppendNodeCopy(UStateNode* Node);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine")
+	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(HideSelfPin))
 	AActor* GetOwner() const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")

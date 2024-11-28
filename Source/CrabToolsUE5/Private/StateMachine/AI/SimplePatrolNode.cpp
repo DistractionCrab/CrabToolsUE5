@@ -26,7 +26,7 @@ void UAISimplePatrolNode::Initialize_Inner_Implementation()
 	check(this->GetAIController());
 }
 
-void UAISimplePatrolNode::Enter_Inner_Implementation()
+void UAISimplePatrolNode::PostTransition_Inner_Implementation()
 {
 	bool bDoReset = true;
 
@@ -58,18 +58,23 @@ void UAISimplePatrolNode::OnMoveCompleted(FAIRequestID RequestID, EPathFollowing
 {
 	this->GetState()->Step();
 
-	if (Result == EPathFollowingResult::Success)
+	switch (Result)
 	{
-		this->EmitEvent(Events::AI::ARRIVE);
-		if (this->Active())
-		{
+		case EPathFollowingResult::Success:
+			this->EmitEvent(Events::AI::ARRIVE);
+			if (this->Active())
+			{
+				this->MoveToNext();
+			}
+			break;
+		case EPathFollowingResult::Blocked:
 			this->MoveToNext();
-		}
+			break;
+		default:
+			this->EmitEvent(Events::AI::LOST);
+			break;
 	}
-	else if (Result == EPathFollowingResult::Blocked)
-	{
-		this->MoveToNext();
-	}
+
 }
 
 void UAISimplePatrolNode::MoveToNext()

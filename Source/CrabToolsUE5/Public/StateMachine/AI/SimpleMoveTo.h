@@ -18,7 +18,7 @@ class CRABTOOLSUE5_API UAISimpleMoveToNode : public UAIBaseNode
 private:
 
 	/* The name of the property to get FMovetoData from. */
-	UPROPERTY(EditAnywhere, Category = "StateMachine|AI",
+	UPROPERTY(EditAnywhere, Category = "AI",
 		meta = (AllowPrivateAccess = true, GetOptions = "GetPropertyOptions"))
 	FName PropertyName;
 	FSMPropertyReference PropertyRef;
@@ -29,17 +29,19 @@ private:
 	FVector OverrideLocation;
 	bool bUseOverrideLocation = false;
 
+protected:
+
+	UPROPERTY(VisibleAnywhere, Transient, Category="AI")
+	TObjectPtr<AActor> GoalActor;
+
 public:
 
 	UAISimpleMoveToNode();
 
 	virtual void EnterWithData_Inner_Implementation(UObject* Data) override;
-	virtual void Enter_Inner_Implementation() override;
 	virtual void Exit_Inner_Implementation() override;
 	virtual void Initialize_Inner_Implementation() override;
-	
-	UFUNCTION()
-	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
+	virtual void PostTransition_Inner_Implementation() override;
 
 	#if WITH_EDITOR
 		virtual void PostLinkerChange() override;
@@ -59,8 +61,11 @@ protected:
 
 private:
 
+	UFUNCTION()
+	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
+
 	void BindCallback();
 	void UnbindCallback();
 
-	void MoveTo(UObject* Obj);
+	void MoveTo();
 };
