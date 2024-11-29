@@ -13,13 +13,13 @@ struct FPatrolPathState
 
 private:
 
-	/* The index in the patrol path to get. */
-	UPROPERTY(EditDefaultsOnly, Category="PatrolPath")
+	/* The initial index in the patrol path to get. */
+	UPROPERTY(EditAnywhere, Category="PatrolPath")
 	int PathIndex;
 	int CurrentIndex;
 
 	/* Whether or not we are following the path forward.*/
-	UPROPERTY(EditDefaultsOnly, Category = "PatrolPath")
+	UPROPERTY(EditAnywhere, Category = "PatrolPath")
 	bool bDirection;
 
 	UPROPERTY(EditAnywhere, Category = "PatrolPath")

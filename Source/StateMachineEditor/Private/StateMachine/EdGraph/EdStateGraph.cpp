@@ -506,36 +506,36 @@ FString UEdStateGraph::GetDisplayName() const
 
 bool UEdStateGraph::CanOverrideStart() const
 {
-	if (this->GraphType == EStateMachineGraphType::EXTENDED_GRAPH)
+	switch (this->GraphType)
 	{
-		if (auto BPGC = this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->GetParent())
-		{
-			if (this->OverridenMachine.IsNone()) { return false; }
-
-			if (auto Arch = BPGC->GetMachineArchetypeData(this->GetFName()))
+		case EStateMachineGraphType::MAIN_GRAPH: return true;
+		case EStateMachineGraphType::SUB_GRAPH: return true;
+		case EStateMachineGraphType::EXTENDED_GRAPH:
+			if (auto BPGC = this->GetBlueprintOwner()->GetStateMachineGeneratedClass()->GetParent())
 			{
-				return Arch->bCanOverrideStart;
+				if (this->OverridenMachine.IsNone()) { return false; }
+
+				if (auto Arch = BPGC->GetMachineArchetypeData(this->GetFName()))
+				{
+					return Arch->bCanOverrideStart;
+				}
+				else
+				{
+					UE_LOG(LogStateMachine, Error, TEXT("Extended graph cannot find parent submachine: %s::%s"),
+						*this->GetBlueprintOwner()->GetName(),
+						*this->GetName());
+
+					return false;
+				}
 			}
 			else
 			{
 				UE_LOG(LogStateMachine, Error, TEXT("Extended graph cannot find parent submachine: %s::%s"),
 					*this->GetBlueprintOwner()->GetName(),
 					*this->GetName());
-
 				return false;
 			}
-		}
-		else
-		{
-			UE_LOG(LogStateMachine, Error, TEXT("Extended graph cannot find parent submachine: %s::%s"),
-				*this->GetBlueprintOwner()->GetName(),
-				*this->GetName());
-			return false;
-		}
-	}
-	else
-	{
-		return this->GetStartNode()->CanOverride();
+		default: return false;
 	}
 }
 
