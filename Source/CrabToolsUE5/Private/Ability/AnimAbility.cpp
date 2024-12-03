@@ -5,6 +5,8 @@ UAnimAbility::UAnimAbility()
 {
 	#if WITH_EDITORONLY_DATA
 		this->ActorClass = ACharacter::StaticClass();
+		// Default name for character meshes.
+		this->ComponentName = "CharacterMesh0";
 	#endif
 }
 
@@ -32,6 +34,7 @@ void UAnimAbility::Start_Inner_Implementation()
 	{
 		if (auto AnimInst = this->Component->GetAnimInstance())
 		{
+
 			AnimInst->AddExternalNotifyHandler(
 				this,
 				GET_FUNCTION_NAME_CHECKED(UAnimAbility, AnimNotify_AbilityFinish));
