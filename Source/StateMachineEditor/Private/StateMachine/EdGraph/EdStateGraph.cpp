@@ -24,6 +24,19 @@ UEdStateGraph::UEdStateGraph()
 	this->MachineArchetype = this->CreateDefaultSubobject<UStateMachine>(TEXT("Default Machine"));
 }
 
+void UEdStateGraph::Initialize(UStateMachineBlueprint* BP)
+{
+
+}
+
+void UEdStateGraph::SetDebugMachine(UStateMachine* Machine)
+{
+	if (IsValid(Machine))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Setting state machine to debug."));
+	}
+}
+
 void UEdStateGraph::NotifyGraphChanged(const FEdGraphEditAction& Action)
 {
 	Super::NotifyGraphChanged(Action);

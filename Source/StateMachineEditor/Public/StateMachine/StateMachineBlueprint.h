@@ -98,6 +98,8 @@ public:
 			FPropertyChangedEvent& PropertyChangedEvent) override;
 	#endif	
 
+	virtual void SetObjectBeingDebugged(UObject* Obj) override;
+
 private:
 
 	void InspectObject(UObject* Obj);

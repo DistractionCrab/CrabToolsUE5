@@ -6,6 +6,8 @@
 #include "HAL/IConsoleManager.h"
 #include "Internationalization/Internationalization.h"
 
+#include "SBlueprintEditorSelectedDebugObjectWidget.h"
+#include "BlueprintEditorContext.h"
 
 #include "StateMachine/Editor.h"
 #include "IStateMachineEditorModule.h"

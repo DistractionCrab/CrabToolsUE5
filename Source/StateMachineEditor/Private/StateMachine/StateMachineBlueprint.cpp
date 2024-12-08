@@ -45,6 +45,8 @@ UEdStateGraph* UStateMachineBlueprint::GetMainGraph()
 		this->MainGraph->SetGraphType(EStateMachineGraphType::MAIN_GRAPH);
 		const UEdGraphSchema* Schema = this->MainGraph->GetSchema();
 		Schema->CreateDefaultNodesForGraph(*this->MainGraph);
+
+		this->MainGraph->Initialize(this);
 	}
 
 	return this->MainGraph;
@@ -65,7 +67,19 @@ UEdStateGraph* UStateMachineBlueprint::AddSubGraph()
 
 	this->SubGraphs.Add(NewGraph);
 
+	NewGraph->Initialize(this);
+
 	return NewGraph;
+}
+
+void UStateMachineBlueprint::SetObjectBeingDebugged(UObject* Obj)
+{
+	Super::SetObjectBeingDebugged(Obj);
+
+	if (auto SM = Cast<UStateMachine>(Obj))
+	{
+		this->MainGraph->SetDebugMachine(SM);
+	}
 }
 
 FName UStateMachineBlueprint::GetNewGraphName() const

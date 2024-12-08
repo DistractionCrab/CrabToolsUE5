@@ -150,6 +150,8 @@ public:
 	/* Creates a new event and returns it. */
 	UEdEventObject* CreateEvent();	
 
+	void Initialize(UStateMachineBlueprint* BP);
+
 	/* 
 	 * Attempts to rename the given event to a new name. Returns the name of the event; If the
 	 * renaming was successful it'll be To. If the renaming failed, it'll return current name.
@@ -230,6 +232,7 @@ public:
 	TSubclassOf<UState> GetStateClass() const;
 
 	void UpdateDefaultStateClass(TSubclassOf<UState> StateClass);
+	void SetDebugMachine(UStateMachine* Machine);
 
 private:
 
@@ -247,4 +250,6 @@ private:
 	FName GetLocallyDefinedStartState() const;
 
 	TSet<FName> GetAllPublicStates() const;
+
+
 };
