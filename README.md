@@ -12,4 +12,4 @@ efficient and optimized design. The following systems are currently available:
 - Interaction System: Simple base system for creating and interacting with objects in the environment. Useful for both players and AI.
 
 ## State Machine Usage
-![alt text](https://github.com/RuinDelvers/CrabToolsUE5/blob/main/SampleImages/StateMachineSample.png?raw=true)
+![alt text](https://raw.githubusercontent.com/RuinDelvers/CrabToolsUE5/refs/heads/main/SampleImages/StateMachineSample.PNG)
