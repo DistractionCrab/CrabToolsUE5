@@ -5,13 +5,17 @@
 #include "EdGraph/EdGraphNode.h"
 #include "SGraphPin.h"
 #include "StateMachine/StateMachine.h"
-
 #include "StateMachine/EdGraph/EdStateNode.h"
 
 
 class STATEMACHINEEDITOR_API SEdStateNode : public SGraphNode
 {
+protected:
+
+	TSharedPtr<SErrorText> ErrorText;
+
 public:
+
 	SLATE_BEGIN_ARGS(SEdStateNode) {}
 	SLATE_END_ARGS()
 
@@ -26,6 +30,8 @@ public:
 	virtual void UpdateGraphNode() override;
 	virtual const FSlateBrush* GetNameIcon() const;
 
+	virtual void GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const override;
+
 	FName GetStateName() const;
 	UEdBaseStateNode* GetStateNode() const { return Cast<UEdBaseStateNode>(this->GraphNode); }
 
@@ -33,5 +39,7 @@ private:
 	//bool OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage);
 	void OnNameTextCommited(const FText& InText, ETextCommit::Type CommitInfo);
 	void OnNodeNameChanged(FName OldName, FName Name);
+
+	void OnErrorTextUpdate(FText ErrText);
 };
 

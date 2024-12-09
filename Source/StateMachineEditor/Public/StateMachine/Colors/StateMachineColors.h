@@ -35,4 +35,9 @@ namespace StateMachineColors
 	{
 		const FLinearColor Default(0.02f, 0.02f, 0.02f);
 	}
+
+	namespace Message
+	{
+		const FLinearColor ActiveTimeColor(1.f, 0.5f, 0.25f);
+	}
 }

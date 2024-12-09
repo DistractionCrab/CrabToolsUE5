@@ -13,7 +13,7 @@ void UAbility::Initialize(AActor* POwner)
 
 void UAbility::Start()
 {
-	if (!this->bActive)
+	if (!this->bActive && this->bUseable)
 	{
 		this->bActive = true;
 		this->Start_Inner();
@@ -33,6 +33,18 @@ void UAbility::Perform()
 		this->Perform_Inner();
 		this->OnAbilityPerformed.Broadcast(this);
 	}
+}
+
+void UAbility::SetUseable(bool bNewUseable)
+{
+	this->bUseable = bNewUseable;
+	this->OnAbilityUseabilityChanged.Broadcast(this, bNewUseable);
+}
+
+void UAbility::Delete()
+{
+	this->Delete_Inner();
+	this->OnAbilityDeleted.Broadcast(this);
 }
 
 void UAbility::Tick(float DeltaTime)

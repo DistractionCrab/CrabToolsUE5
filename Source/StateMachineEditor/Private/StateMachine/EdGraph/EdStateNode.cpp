@@ -16,12 +16,9 @@ UEdStateNode::UEdStateNode() {
 	this->StateClass = CreateDefaultSubobject<UState>(TEXT("DefaultStateClass"));
 }
 
-UEdStateNode::~UEdStateNode() {
+UEdStateNode::~UEdStateNode()
+{
 
-}
-
-TSubclassOf<UStateNode> UEdStateNode::GetNodeClass() const {
-	return UStateNode::StaticClass();
 }
 
 FName UEdStateNode::GetStateName() const
@@ -208,6 +205,18 @@ TArray<FString> UEdStateNode::GetInheritableStates() const
 	return Names;
 }
 
+bool UEdStateNode::IsActive() const
+{
+	if (this->DebugStateObject)
+	{
+		return this->DebugStateObject->IsActive();
+	}
+	else
+	{
+		return false;
+	}
+}
+
 bool UEdStateNode::UpdateStateArchetypeOverride()
 {
 	bool bOverrideWasModified = false;
@@ -276,6 +285,11 @@ void UEdStateNode::UpdateStateArchetype(TSubclassOf<UState> NewStateClass)
 			this->StateClass = NewObject<UState>(this, NewStateClass);
 		}
 	}
+}
+
+void UEdStateNode::SetDebugObject(UState* State)
+{
+	this->DebugStateObject = State;
 }
 
 #if WITH_EDITOR

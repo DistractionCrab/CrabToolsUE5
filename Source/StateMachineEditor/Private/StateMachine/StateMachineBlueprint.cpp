@@ -80,6 +80,10 @@ void UStateMachineBlueprint::SetObjectBeingDebugged(UObject* Obj)
 	{
 		this->MainGraph->SetDebugMachine(SM);
 	}
+	else
+	{
+		this->MainGraph->SetDebugMachine(nullptr);
+	}
 }
 
 FName UStateMachineBlueprint::GetNewGraphName() const

@@ -26,6 +26,9 @@ public:
 
 		DECLARE_MULTICAST_DELEGATE(FNodeDeleted)
 		FNodeDeleted OnNodeDeleted;
+
+		DECLARE_MULTICAST_DELEGATE_OneParam(FNodeError, FText)
+		FNodeError OnNodeError;
 	} 
 	Events;
 

@@ -46,6 +46,9 @@ class UEdStateGraph : public UEdGraph, public IStateMachineLike
 
 private:
 
+	UPROPERTY()
+	TObjectPtr<UStateMachine> DebugStateMachine;
+
 	UPROPERTY(EditDefaultsOnly, Category = "StateMachine",
 		meta = (AllowPrivateAccess,
 			EditCondition = "GraphType == EStateMachineGraphType::SUB_GRAPH || GraphType == EStateMachineGraphType::SUB_GRAPH",
@@ -196,6 +199,8 @@ public:
 	FName GetClassPrefix() const;
 	FName RenameNode(UEdBaseStateNode* Node, FName NewName);
 
+	UEdStateNode* GetStateNodeByName(FName Name) const;
+
 	FName GetGraphName() const;
 	FORCEINLINE void SetGraphType(EStateMachineGraphType GType) { this->GraphType = GType; }
 	FORCEINLINE EStateMachineGraphType GetGraphType() const { return this->GraphType; }
@@ -251,5 +256,7 @@ private:
 
 	TSet<FName> GetAllPublicStates() const;
 
+	UFUNCTION()
+	void OnDebugStateChanged(const FStateChangedEventData& Data);
 
 };

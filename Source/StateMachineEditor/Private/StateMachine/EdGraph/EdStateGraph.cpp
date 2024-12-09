@@ -22,6 +22,7 @@ UEdStateGraph::UEdStateGraph()
 	DefaultStateClass(nullptr)
 {
 	this->MachineArchetype = this->CreateDefaultSubobject<UStateMachine>(TEXT("Default Machine"));
+	this->DefaultStateClass = UState::StaticClass();
 }
 
 void UEdStateGraph::Initialize(UStateMachineBlueprint* BP)
@@ -33,7 +34,24 @@ void UEdStateGraph::SetDebugMachine(UStateMachine* Machine)
 {
 	if (IsValid(Machine))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Setting state machine to debug."));
+		if (this->DebugStateMachine)
+		{
+			this->DebugStateMachine->OnStateChanged.RemoveAll(this);
+		}
+
+		Machine->OnStateChanged.AddDynamic(this, &UEdStateGraph::OnDebugStateChanged);
+
+		if (auto StateNode = this->GetStateNodeByName(Machine->GetCurrentStateName()))
+		{
+			StateNode->SetDebugObject(Machine->GetCurrentStateData());
+		}
+	}
+	else
+	{
+		for (const auto StateNode : this->GetStates())
+		{
+			StateNode->SetDebugObject(nullptr);
+		}
 	}
 }
 
@@ -100,6 +118,22 @@ FName UEdStateGraph::GetNewStateName()
 	DefaultName.AppendInt(index);
 
 	return FName(DefaultName);
+}
+
+UEdStateNode* UEdStateGraph::GetStateNodeByName(FName Name) const
+{
+	for (const auto& Node : this->Nodes)
+	{
+		if (auto StateNode = Cast<UEdStateNode>(Node))
+		{
+			if (StateNode->GetStateName() == Name)
+			{
+				return StateNode;
+			}
+		}
+	}
+
+	return nullptr;
 }
 
 UEdStartStateNode* UEdStateGraph::GetStartNode() const
@@ -1083,6 +1117,14 @@ void UEdStateGraph::UpdateDefaultStateClass(TSubclassOf<UState> StateClass)
 				StateNode->UpdateStateArchetype(StateClass);
 			}
 		}
+	}
+}
+
+void UEdStateGraph::OnDebugStateChanged(const FStateChangedEventData& Data)
+{
+	if (auto StateNode = this->GetStateNodeByName(Data.To))
+	{
+		StateNode->SetDebugObject(Data.ToState);
 	}
 }
 

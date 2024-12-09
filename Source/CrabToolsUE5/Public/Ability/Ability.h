@@ -40,6 +40,8 @@ class CRABTOOLSUE5_API UAbility : public UObject, public IHasAbilityInterface
 	TObjectPtr<AActor> Owner;
 
 	bool bActive = false;
+	UPROPERTY(BlueprintReadOnly, Category="Ability", meta=(AllowPrivateAccess))
+	bool bUseable = true;
 
 	UPROPERTY(Transient)
 	TObjectPtr<ABaseTargetingActor> Targeting;
@@ -64,6 +66,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Ability")
 	FAbilityCanceled OnAbilityCanceled;
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAbilityUseabilityChanged, UAbility*, Ability, bool, bNewUseability);
+	UPROPERTY(BlueprintAssignable, Category = "Ability")
+	FAbilityUseabilityChanged OnAbilityUseabilityChanged;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilityDeleted, UAbility*, Ability);
+	UPROPERTY(BlueprintAssignable, Category = "Ability")
+	FAbilityDeleted OnAbilityDeleted;
+
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
@@ -78,6 +88,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Ability")
 	void Tick(float DeltaTime);
 
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	void SetUseable(bool bNewUseable);
+	bool GetUseable() const { return this->bUseable; }
+
 	/* Call this to finish the ability if you are the controller. */
 	UFUNCTION(BlueprintCallable, Category="Ability")
 	void Finish();
@@ -85,6 +99,13 @@ public:
 	/* Called when the ability was canceled. Can be used even when not active. */
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	void Cancel();
+
+	UFUNCTION(BlueprintCallable, Category = "Ability")
+	void Delete();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Ability")
+	void Delete_Inner();
+	virtual void Delete_Inner_Implementation() {}
 
 	UFUNCTION(BlueprintCallable, Category = "Ability")
 	bool IsActive() const { return this->bActive; }

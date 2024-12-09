@@ -43,6 +43,10 @@ class UEdStateNode : public UEdBaseStateNode
 {
 	GENERATED_BODY()
 
+	/* The the current state of the select state machine debug object in the editor. */
+	UPROPERTY()
+	TObjectPtr<UState> DebugStateObject;
+
 	UPROPERTY(EditDefaultsOnly, Category="StateMachine")
 	EStateNodeType NodeType = EStateNodeType::INLINE_NODE;
 
@@ -100,8 +104,9 @@ public:
 	void Delete();
 	virtual void RenameNode(FName Name);
 	void UpdateStateArchetype(TSubclassOf<UState> StateClass);
+	void SetDebugObject(UState* State);
+	UState* GetDebugObject() const { return this->DebugStateObject; }
 
-	virtual TSubclassOf<UStateNode> GetNodeClass() const;	
 	virtual FName GetStateName() const override;
 	/* Returns the name which should appear on graph nodes. */
 	virtual FName GetNodeName() const override { return this->StateName; }
@@ -116,6 +121,8 @@ public:
 		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 		virtual void PostLinkerChange() override;
 	#endif
+
+	virtual bool IsActive() const;
 
 private:
 

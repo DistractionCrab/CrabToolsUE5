@@ -239,6 +239,14 @@ void UStateMachine::SendEvent(FName EName)
 {
 	if (this->bIsTransitioning) { return; }
 
+	#if STATEMACHINE_DEBUG_DATA
+		FStateMachineDebugDataFrame Frame;
+
+		Frame.Event = EName;
+		Frame.StartState = this->CurrentStateName;
+		Frame.Time = this->GetWorld()->GetTimeSeconds();
+	#endif
+
 	auto CurrentState = this->GetCurrentState();
 
 	if (CurrentState)
@@ -253,18 +261,32 @@ void UStateMachine::SendEvent(FName EName)
 			if (TData.Condition->Check())
 			{
 				this->UpdateState(TData.Destination);
+
+				#if STATEMACHINE_DEBUG_DATA
+					Frame.EndState = this->CurrentStateName;
+					this->DebugData.CurrentStateTime = Frame.Time;
+				#endif
+
 				return;
 			}
 		}
 		
 		if (CurrentState->Node) CurrentState->Node->Event(EName);
-	}	
+	}
 }
 
 
 void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 {
 	if (this->bIsTransitioning) { return; }
+
+	#if STATEMACHINE_DEBUG_DATA
+		FStateMachineDebugDataFrame Frame;
+
+		Frame.Event = EName;
+		Frame.StartState = this->CurrentStateName;
+		Frame.Time = this->GetWorld()->GetTimeSeconds();
+	#endif
 
 	auto CurrentState = this->GetCurrentState();
 
@@ -279,6 +301,12 @@ void UStateMachine::SendEventWithData(FName EName, UObject* Data)
 			if (TData.DataCondition->Check(Data))
 			{
 				this->UpdateStateWithData(TData.Destination, Data);
+
+				#if STATEMACHINE_DEBUG_DATA
+					Frame.EndState = this->CurrentStateName;
+					this->DebugData.CurrentStateTime = Frame.Time;
+				#endif
+
 				return;
 			}
 		}
@@ -306,6 +334,11 @@ void UStateMachine::SetActive(bool bNewActive)
 			State->GetNode()->SetActive(bNewActive);
 		}
 	}
+}
+
+bool UStateMachine::IsActiveState(const UState* State) const
+{
+	return this->GetCurrentStateData() == State;
 }
 
 #if WITH_EDITOR
@@ -853,6 +886,22 @@ TArray<FString> UStateMachine::GetStateOptions(const UObject* Asker) const
 	return Names;
 }
 
+UWorld* UStateMachine::GetWorld() const
+{
+	//Return null if the called from the CDO, or if the outer is being destroyed
+	if (!HasAnyFlags(RF_ClassDefaultObject) && !GetOuter()->HasAnyFlags(RF_BeginDestroyed) && !GetOuter()->IsUnreachable())
+	{
+		//Try to get the world from the owning actor if we have one
+		if (this->Owner)
+		{
+			return this->Owner->GetOwner()->GetWorld();
+		}
+	}
+
+	//Else return null - the latent action will fail to initialize
+	return nullptr;
+}
+
 #pragma endregion
 
 #pragma region NodeCode
@@ -1303,7 +1352,19 @@ void UState::ExitWithData(UObject* Data)
 	}
 }
 
+bool UState::IsActive() const
+{
+	return this->GetMachine()->IsActiveState(this);
+}
+
 AActor* UState::GetOwner() const
 {
 	return this->OwnerMachine->GetOwner();
 }
+
+#if STATEMACHINE_DEBUG_DATA
+bool FStateMachineDebugDataFrame::DidTransition()
+{
+	return !this->EndState.IsNone() && this->EndState != this->StartState;
+}
+#endif

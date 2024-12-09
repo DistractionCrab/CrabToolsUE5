@@ -13,11 +13,14 @@ void SEdStateNode::Construct(const FArguments& InArgs, UEdBaseStateNode* InNode)
 	this->UpdateGraphNode();
 	
 	InNode->Events.OnNameChanged.AddRaw(this, &SEdStateNode::OnNodeNameChanged);
+	InNode->Events.OnNodeError.AddRaw(this, &SEdStateNode::OnErrorTextUpdate);
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SEdStateNode::UpdateGraphNode()
 {
+	SGraphNode::UpdateGraphNode();
+
 	const FMargin NodePadding = FMargin(5);
 	const FMargin NamePadding = FMargin(2);
 
@@ -30,8 +33,7 @@ void SEdStateNode::UpdateGraphNode()
 
 	const FSlateBrush* NodeTypeIcon = GetNameIcon();
 
-	FLinearColor TitleShadowColor(0.6f, 0.6f, 0.6f);
-	TSharedPtr<SErrorText> ErrorText;
+	FLinearColor TitleShadowColor(0.6f, 0.6f, 0.6f);	
 	TSharedPtr<SVerticalBox> NodeBody;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, this->GraphNode);
 	
@@ -139,6 +141,11 @@ void SEdStateNode::UpdateGraphNode()
 	this->CreatePinWidgets();
 }
 
+void SEdStateNode::OnErrorTextUpdate(FText ErrText)
+{
+	this->ErrorText->SetError(ErrText);
+}
+
 void SEdStateNode::CreatePinWidgets()
 {
 	UEdBaseStateNode* StateNode = CastChecked<UEdBaseStateNode>(GraphNode);
@@ -192,6 +199,26 @@ void SEdStateNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
+void SEdStateNode::GetNodeInfoPopups(FNodeInfoContext* Context, TArray<FGraphInformationPopupInfo>& Popups) const
+{
+	if (auto StateNode = Cast<UEdStateNode>(this->GraphNode))
+	{
+		if (StateNode->IsActive())
+		{
+			if (auto State = StateNode->GetDebugObject())
+			{
+				float ActiveTime = State->GetMachine()->GetDebugData().CurrentStateTime;
+				float CurrentTime = State->GetMachine()->GetWorld()->GetTimeSeconds();
+
+				Popups.Emplace(
+					nullptr,
+					StateMachineColors::Message::ActiveTimeColor,
+					FString::Printf(TEXT("Active Time: %f"), CurrentTime - ActiveTime));
+			}
+		}
+	}
+}
 
 FSlateColor SEdStateNode::GetBorderBackgroundColor() const
 {

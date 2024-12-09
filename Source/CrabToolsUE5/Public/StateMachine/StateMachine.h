@@ -19,6 +19,29 @@ class UStateMachine;
 class UNodeTransition;
 class UStateMachineBlueprintGeneratedClass;
 
+#define STATEMACHINE_DEBUG_DATA WITH_EDITOR || UE_BUILD_DEBUG
+
+#if STATEMACHINE_DEBUG_DATA
+	struct FStateMachineDebugDataFrame
+	{
+		FName Event;
+		/* The game-world time in seconds. */
+		float Time = 0.0f;
+		FName StartState;
+		FName EndState;
+
+		bool DidTransition();
+	};
+
+	struct FStateMachineDebugDataStack
+	{
+		TArray<FStateMachineDebugDataFrame> DataFrames;
+
+		// The time the current state was started.
+		float CurrentStateTime = -1.0;
+	};
+#endif
+
 /* Structure used to pass to listeners for when states change.*/
 USTRUCT(BlueprintType)
 struct FStateChangedEventData
@@ -132,6 +155,9 @@ public:
 	void EnterWithData(UObject* Data);
 	void Exit();
 	void ExitWithData(UObject* Data);
+
+	UFUNCTION(BlueprintCallable, Category="StateMachine")
+	bool IsActive() const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
 	void Enter_Inner();
@@ -391,6 +417,10 @@ class CRABTOOLSUE5_API UStateMachine : public UObject, public IEventListenerInte
 	GENERATED_BODY()
 
 private:
+	#if STATEMACHINE_DEBUG_DATA
+		FStateMachineDebugDataStack DebugData;
+	#endif
+
 	/* Struct used for identifying unique states. */
 	struct Transition
 	{
@@ -510,11 +540,19 @@ public:
 
 	void Tick(float DeltaTime);
 
+	/* This function returns the current state if it is loaded, null if it is not.*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	UState* GetCurrentStateData() const;
 
+	/*
+	 * This function returns the current state. It will load in the current state from any
+	 * State Machine Blueprints that are necessary.
+	 */
 	UState* GetCurrentState();
 	UState* GetStateData(FName Name);
+
+	UFUNCTION(BlueprintCallable, Category="StateMachine")
+	bool IsActiveState(const UState* State) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	FName GetCurrentStateName() const;
@@ -605,6 +643,12 @@ public:
 	// End Procedural Construction functions
 
 	void UpdateTickRequirements(bool NeedsTick);
+
+	#if STATEMACHINE_DEBUG_DATA
+		const FStateMachineDebugDataStack& GetDebugData() const { return this->DebugData; }
+	#endif
+
+	virtual UWorld* GetWorld() const override;
 
 protected:
 
