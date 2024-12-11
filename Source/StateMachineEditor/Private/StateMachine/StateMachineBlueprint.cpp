@@ -79,10 +79,25 @@ void UStateMachineBlueprint::SetObjectBeingDebugged(UObject* Obj)
 	if (auto SM = Cast<UStateMachine>(Obj))
 	{
 		this->MainGraph->SetDebugMachine(SM);
+
+		for (const auto& SubGraph : this->SubGraphs)
+		{
+			auto Name = SubGraph->GetGraphName().ToString();
+
+			if (auto SubMachine = Cast<UStateMachine>(SM->GetSubMachine(Name)))
+			{
+				SubGraph->SetDebugMachine(SubMachine);
+			}
+		}
 	}
 	else
 	{
 		this->MainGraph->SetDebugMachine(nullptr);
+
+		for (const auto SubGraph : this->SubGraphs)
+		{
+			SubGraph->SetDebugMachine(nullptr);
+		}
 	}
 }
 
