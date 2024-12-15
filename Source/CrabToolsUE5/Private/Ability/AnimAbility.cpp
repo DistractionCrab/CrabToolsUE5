@@ -34,7 +34,6 @@ void UAnimAbility::Start_Inner_Implementation()
 	{
 		if (auto AnimInst = this->Component->GetAnimInstance())
 		{
-
 			AnimInst->AddExternalNotifyHandler(
 				this,
 				GET_FUNCTION_NAME_CHECKED(UAnimAbility, AnimNotify_AbilityFinish));
@@ -43,6 +42,14 @@ void UAnimAbility::Start_Inner_Implementation()
 				this,
 				GET_FUNCTION_NAME_CHECKED(UAnimAbility, AnimNotify_AbilityPerform));
 		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("AnimAbility(%s) - Could not find anim instance."), *this->GetName());
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("AnimAbility(%s) - Could not find skeletal mesh component."), *this->GetName());
 	}
 }
 
