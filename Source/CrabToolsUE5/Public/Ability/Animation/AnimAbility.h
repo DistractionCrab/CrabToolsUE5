@@ -14,6 +14,9 @@ class CRABTOOLSUE5_API UAnimAbility : public UAbility
 {
 	GENERATED_BODY()
 
+
+protected:
+
 	#if WITH_EDITORONLY_DATA
 		UPROPERTY(EditDefaultsOnly, Category = "Animation", meta = (AllowPrivateAccess))
 		TSubclassOf<AActor> ActorClass;
@@ -26,6 +29,9 @@ class CRABTOOLSUE5_API UAnimAbility : public UAbility
 	UPROPERTY(Transient)
 	TObjectPtr<USkeletalMeshComponent> Component;
 
+	UPROPERTY(EditAnywhere, Category="Ability", meta=(GetOptions="GetCustomPhases"))
+	TSet<FName> CustomPhases;
+
 public:
 
 	UAnimAbility();
@@ -34,13 +40,9 @@ protected:
 
 	void Initialize_Inner_Implementation() override;
 	void Start_Inner_Implementation() override;
+	void Finish_Inner_Implementation() override;
 	
 private:
-
-	#if WITH_EDITOR
-		UFUNCTION()
-		TArray<FString> GetComponentOptions() const;
-	#endif //WITH_EDITOR
 
 	UFUNCTION()
 	void AnimNotify_AbilityFinish();
@@ -48,4 +50,17 @@ private:
 	UFUNCTION()
 	void AnimNotify_AbilityPerform();
 
+	#if WITH_EDITOR
+		void FilterPhases();
+
+		UFUNCTION()
+		TArray<FString> GetComponentOptions() const;
+
+		UFUNCTION()
+		TArray<FString> GetCustomPhases() const;
+
+		virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+		virtual void PostLoad() override;
+		virtual void PostLinkerChange() override;
+	#endif //WITH_EDITOR
 };

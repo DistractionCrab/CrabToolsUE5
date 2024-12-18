@@ -121,7 +121,7 @@ public:
 	virtual UWorld* GetWorld() const override;
 
 	/* Returns the outer of this ability as an ability. */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Ability", meta=(HideSelfPin=true))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Ability")
 	UAbility* GetParent() const;
 
 	virtual UAbility* GetAbility_Implementation() override { return this; }

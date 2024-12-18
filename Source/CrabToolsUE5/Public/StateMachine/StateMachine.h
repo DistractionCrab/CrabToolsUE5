@@ -138,7 +138,7 @@ public:
 	/* Only use to build states. Do not use for currently in use States/State Machines */
 	void AppendNodeCopy(UStateNode* Node);
 
-	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(HideSelfPin))
+	UFUNCTION(BlueprintCallable, Category = "StateMachine")
 	AActor* GetOwner() const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine")
@@ -271,31 +271,29 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	AActor* GetOwner() const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
-		meta=(HideSelfPin))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	UStateMachine* GetMachine() const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine",
-		meta = (HideSelfPin))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "StateMachine")
 	UStateMachine* GetRootMachine() const;
 
 	UFUNCTION(BlueprintCallable, Category = "RPG", meta = (ExpandEnumAsExecs = "Result", DeterminesOutputType = "SClass"))
 	UStateMachine* GetMachineAs(TSubclassOf<UStateMachine> SClass, ESearchResult& Result) const;
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine",
-		meta = (HideSelfPin))
+		meta = (HideSelfPin=true))
 	void EmitEvent(FName EName);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine",
-		meta = (HideSelfPin))
+		meta = (HideSelfPin=true))
 	void EmitEventWithData(FName EName, UObject* Data);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta=(DisplayName="EmitEvent"),
-		meta = (HideSelfPin))
+		meta = (HideSelfPin=true))
 	void EmitEventSlot(const FEventSlot& ESlot);
 
 	UFUNCTION(BlueprintCallable, Category = "StateMachine", meta = (DisplayName = "EmitEventWithData"),
-		meta = (HideSelfPin))
+		meta = (HideSelfPin=true))
 	void EmitEventSlotWithData(const FEventSlot& ESlot, UObject* Data);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "StateMachine")
